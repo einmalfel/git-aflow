@@ -1,0 +1,131 @@
+Only master is a permanent branch
+2 release-live-ranged branches:
+    <rel_name>/base
+    <rel_name>/devel
+All the temporary branches below are prefixed with <rel_name>/ too,
+which is omitted for short.
+
+creating development feature:
+    development feature is a feature that is not (immediately) user-visible.
+    it can be a code refactoring, cleanup, some internal foundation etc.
+    $ git af devf start <name> [ <dep_feature> ]
+	checks that no feature of any type with same name exists in devel
+	branches off from base (or <dep_feature>)
+		into devf/<name> and switches to it
+    do commits
+    $ git af devf finish <name>
+	branches off from devel into testing/<name> and switches to it
+	merges devf/<name> into testing/<name>
+    resolve merge conflicts if any, and do some testing if needed
+    $ git af devf commit [ <name> | -a ]
+	creates a lightweight tag (ltag) for devf/<name> named devf_<name>
+	merges testing/<name> into devel using --ff-only
+	removes testing/<name>
+	removes devf/<name>
+
+landing development features:
+    When enought development features accumulated, do
+    $ git af base land { <name> | -a }
+	branches off from base into basetest/`date` and switches to it
+	merges devf_<name> (or devf_*) into basetest/`date`
+    resolve merge conflicts if any, and do some testing if needed
+    $ git af base commit
+	merges current branch (making sure it starts with basetest/) into base
+		using --ff-only
+	removes basetest/*
+
+creating user-visible features:
+    $ git af feature start <name> [ <dep_feature> ]
+	checks that no feature of any type with same name exists in devel
+	branches off from base (or <dep_feature>)
+		into feature/<name> and switches to it
+    do commits
+    $ git af feature finish <name>
+	branches off from devel into testing/<name> and switches to it
+	merges feature/<name> into testing/<name>
+    resolve merge conflicts if any, and do some testing if needed
+    $ git af feature commit [ <name> | -a ]
+	creates an annotated tag (atag) for feature/<name> named feature_<name>
+	you enter the detailed feature description into the tag
+	merges testing/<name> into devel using --ff-only
+	removes testing/<name>
+	removes feature/<name>
+
+staging features (both types):
+    when feature is tested and approved, do:
+    $ git af stage <name>
+	branches off from master into testing/<name> and switches to it
+	merges devf_<name> or feature_<name> into testing/<name>
+    resolve merge conflicts if any, and do some testing if needed
+    $ git af stage commit
+	merges current branch (making sure it starts with testing/) into master
+		using --ff-only
+	removes testing/*
+
+listing features (both types):
+    $ git af list features [ -a ]
+	traverses all user-visible features feature_*
+	with -a lists also development features devf_*
+
+creating hotfix for specific feature:
+    $ git af hff start <name> <feature_name>
+	branches off from devf_<feature_name> or feature_<feature_name>
+		into hff/devf_<feature_name>/<name>
+		or hff/feature_<feature_name>/<name>
+		and switches to it
+    do commits
+    $ git af hff finish <name>
+	creates an atag named hff_devf_<feature_name>_<name> or
+		hff_feature_<feature_name>_<name>
+	you type a hotfix description
+	merges current branch into every branch that has the feature branch
+		merged into
+	removes current hotfix branch
+
+creating hotfix for specific releases:
+    $ git af hfr start <name> <min_rel_name>
+	branches off from <min_rel_name> into hfr/<min_rel_name>/<name>
+		and switches to it
+    do commits
+    $ git af hfr finish <name> <max_rel_name>
+	creates an atag named hfr_<name>
+	you type a hotfix description
+	merges current hotfix branch into every release branch
+	    from <min_rel_name>..<max_rel_name> range.
+	    The range can include master and devel. devel is considered
+	    newer than master in this case.
+	removes current hotfix branch
+    if the problem is present in branch base, you should use
+    $ git af base hfland <name>
+	merges hfr_<name> into base
+
+creating hotfix release:
+    $ git checkout <existing_rel_branch>
+    just tar up the release branch that contains all needed hotfixes
+
+creating minor release:
+    $ git checkout <existing_rel_branch>
+    $ git af fmerge <feature1> ...
+	merges specified user-visible features (with their hotfixes)
+	to current branch
+    do testing and hotfixes
+    tar up the release
+
+creating major release:
+    $ git af release start <rel_name>
+	makes sure no unfinished release exists
+	branches off from master into reltest/<rel_name> and switches to it
+    do release hardening commits and testing
+    $ git af release finish
+	branches into release/<rel_name>
+	branches into <rel_name>/base
+	branches into <rel_name>/devel
+	switches into release/<rel_name>
+	removes reltest/<rel_name>
+
+rebasing to new release:
+    after a new major release was created, the developers should
+    sooner or later rebase their work to the new base and devel branches.
+    $ git af rebase [ <from_name> ]
+	rebases all the (unfinished) feature branches, base and devel
+	into the resp branches of the last major release
