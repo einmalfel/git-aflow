@@ -83,17 +83,19 @@ creating hotfix for specific feature:
 	removes current hotfix branch
 
 creating hotfix for specific releases:
-    $ git af hfr start <name> <min_rel_name>
+    $ git af hfr start <name> [ <min_rel_name> ]
 	branches off from <min_rel_name> into hfr/<min_rel_name>/<name>
 		and switches to it
     do commits
-    $ git af hfr finish <name> <max_rel_name>
+    $ git af hfr finish <name> [ <max_rel_name> ]
 	creates an atag named hfr_<name>
 	you type a hotfix description
 	merges current hotfix branch into every release branch
 	    from <min_rel_name>..<max_rel_name> range.
 	    The range can include master and devel. devel is considered
 	    newer than master in this case.
+	    <min_rel_name> is defaulted to master if omited
+	    <max_rel_name> is defaulted to devel if omited
 	removes current hotfix branch
     if the problem is present in branch base, you should use
     $ git af base hfland <name>
@@ -106,15 +108,16 @@ creating hotfix release:
 creating minor release:
     $ git checkout <existing_rel_branch>
     $ git af fmerge <feature1> ...
-	merges specified user-visible features (with their hotfixes)
-	to current branch
+	merges specified user-visible features from master
+	(with their hotfixes) to current branch
     do testing and hotfixes
     tar up the release
 
 creating major release:
     $ git af release start <rel_name>
 	makes sure no unfinished release exists
-	branches off from master into reltest/<rel_name> and switches to it
+	branches off from base into reltest/<rel_name> and switches to it
+	merges master into current branch
     do release hardening commits and testing
     $ git af release finish
 	branches into release/<rel_name>
