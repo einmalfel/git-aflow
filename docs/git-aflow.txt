@@ -8,20 +8,20 @@ which is omitted for short.
 creating development feature:
     development feature is a feature that is not (immediately) user-visible.
     it can be a code refactoring, cleanup, some internal foundation etc.
-    $ git af devf start <name> [ <dep_feature> ]
+    $ git af feature start <name> [ <dep_feature> ]
 	checks that no feature of any type with same name exists in devel
 	branches off from base (or <dep_feature>)
-		into devf/<name> and switches to it
+		into feature/<name> and switches to it
     do commits
-    $ git af devf finish <name>
+    $ git af feature finish -dev <name>
 	branches off from devel into testing/<name> and switches to it
-	merges devf/<name> into testing/<name>
+	merges feature/<name> into testing/<name>
     resolve merge conflicts if any, and do some testing if needed
-    $ git af devf commit [ <name> | -a ]
-	creates a lightweight tag (ltag) for devf/<name> named devf_<name>
+    $ git af feature commit [ <name> | -a ]
+	creates a lightweight tag (ltag) for feature/<name> named devf_<name>
 	merges testing/<name> into devel using --ff-only
 	removes testing/<name>
-	removes devf/<name>
+	removes feature/<name>
 
 landing development features:
     When enought development features accumulated, do
