@@ -1,4 +1,4 @@
-Only master is a permanent branch
+Only master is a permanent branch.
 2 release-live-ranged branches:
     <rel_name>/base
     <rel_name>/devel
@@ -8,20 +8,20 @@ which is omitted for short.
 creating development feature:
     development feature is a feature that is not (immediately) user-visible.
     it can be a code refactoring, cleanup, some internal foundation etc.
-    $ git af devf start <name> [ <dep_feature> ]
+    $ git af feature start <name> [ <dep_feature> ]
 	checks that no feature of any type with same name exists in devel
 	branches off from base (or <dep_feature>)
-		into devf/<name> and switches to it
+		into feature/<name> and switches to it
     do commits
-    $ git af devf finish <name>
+    $ git af feature finish -dev <name>
 	branches off from devel into testing/<name> and switches to it
-	merges devf/<name> into testing/<name>
+	merges feature/<name> into testing/<name>
     resolve merge conflicts if any, and do some testing if needed
-    $ git af devf commit [ <name> | -a ]
-	creates a lightweight tag (ltag) for devf/<name> named devf_<name>
+    $ git af feature commit [ <name> | -a ]
+	creates a lightweight tag (ltag) for feature/<name> named devf_<name>
 	merges testing/<name> into devel using --ff-only
 	removes testing/<name>
-	removes devf/<name>
+	removes feature/<name>
 
 landing development features:
     When enought development features accumulated, do
@@ -62,6 +62,15 @@ staging features (both types):
 		using --ff-only
 	removes testing/*
 
+rebaseing unpuplished features:
+    developer may decide to rebase feature after a base branch update.
+    $ git af feature rebase <name>
+	rebases feature/<name> on new base
+
+rebaseing puplished features:
+    since rebasing published branch is impossible, you should simply
+    merge the new base branch to your feature branch when needed.
+
 listing features (both types):
     $ git af list features [ -a ]
 	traverses all user-visible features feature_*
@@ -83,17 +92,19 @@ creating hotfix for specific feature:
 	removes current hotfix branch
 
 creating hotfix for specific releases:
-    $ git af hfr start <name> <min_rel_name>
+    $ git af hfr start <name> [ <min_rel_name> ]
 	branches off from <min_rel_name> into hfr/<min_rel_name>/<name>
 		and switches to it
     do commits
-    $ git af hfr finish <name> <max_rel_name>
+    $ git af hfr finish <name> [ <max_rel_name> ]
 	creates an atag named hfr_<name>
 	you type a hotfix description
 	merges current hotfix branch into every release branch
 	    from <min_rel_name>..<max_rel_name> range.
 	    The range can include master and devel. devel is considered
 	    newer than master in this case.
+	    <min_rel_name> is defaulted to master if omited
+	    <max_rel_name> is defaulted to devel if omited
 	removes current hotfix branch
     if the problem is present in branch base, you should use
     $ git af base hfland <name>
@@ -106,15 +117,16 @@ creating hotfix release:
 creating minor release:
     $ git checkout <existing_rel_branch>
     $ git af fmerge <feature1> ...
-	merges specified user-visible features (with their hotfixes)
-	to current branch
+	merges specified user-visible features from master
+	(with their hotfixes) to current branch
     do testing and hotfixes
     tar up the release
 
 creating major release:
     $ git af release start <rel_name>
 	makes sure no unfinished release exists
-	branches off from master into reltest/<rel_name> and switches to it
+	branches off from base into reltest/<rel_name> and switches to it
+	merges master into current branch
     do release hardening commits and testing
     $ git af release finish
 	branches into release/<rel_name>
@@ -127,5 +139,29 @@ rebasing to new release:
     after a new major release was created, the developers should
     sooner or later rebase their work to the new base and devel branches.
     $ git af rebase [ <from_name> ]
+	checks if the base and devel branches exist for the latest
+	    release branch, and creates them if needed (non-tracking)
 	rebases all the (unfinished) feature branches, base and devel
 	into the resp branches of the last major release
+
+pushing work to remote:
+    $ git af push
+	checks if master branch is tracking, and if not -
+	    sets up tracking for it (happens after repo creation)
+	checks if any non-tracking release branches exist, and sets
+	    tracking for them (happens after new release)
+	checks if the latest devel and base branch are tracking, and if not -
+	    sets up tracking for them (happens after a rebase to new release)
+	pushes all tracking branches that has unpushed local commits
+	if there were push rejects, pulls from the remote (with merges),
+	    switches to the pulled branch and prints an error message
+    if there were pull merges, you resolve the conflicts and do the testing,
+	after wchich, retry the command.
+
+publishing specific features:
+    if you want your new feature to be worked on collaboratively,
+    you may decide to publish it before completion.
+    $ git af feature publish <name>
+	sets up remote tracking for the feature branch feature/<name>
+    $ git af push
+	will push your feature branch to remote
