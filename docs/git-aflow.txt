@@ -1,7 +1,7 @@
-Only master is a permanent branch
+Only master is a permanent branch. It may be tracking the remote.
 2 release-live-ranged branches:
-    <rel_name>/base
-    <rel_name>/devel
+    <rel_name>/base	(non-tracking)
+    <rel_name>/devel	(tracking, if master is tracking)
 All the temporary branches below are prefixed with <rel_name>/ too,
 which is omitted for short.
 
@@ -130,5 +130,29 @@ rebasing to new release:
     after a new major release was created, the developers should
     sooner or later rebase their work to the new base and devel branches.
     $ git af rebase [ <from_name> ]
+	checks if the base and devel branches exist for the latest
+	    release branch, and creates them if needed (non-tracking)
 	rebases all the (unfinished) feature branches, base and devel
 	into the resp branches of the last major release
+
+pushing work to remote:
+    $ git af push
+	checks if master branch is tracking, and if not -
+	    sets up tracking for it (happens after repo creation)
+	checks if any non-tracking release branches exist, and sets
+	    tracking for them (happens after new release)
+	checks if the latest devel branch is tracking, and if not -
+	    sets up tracking for it (happens after a rebase to new release)
+	pushes all tracking branches that has unpushed local commits
+	if there were push rejects, pulls from the remote (with merges),
+	    switches to the pulled branch and prints an error message
+    if there were pull merges, you resolve the conflicts and do the testing,
+	after wchich, retry the command.
+
+publishing specific features:
+    if you want your new feature to be worked on collaboratively,
+    you may decide to publish it before completion.
+    $ git af feature publish <name>
+	sets up remote tracking for the feature branch feature/<name>
+    $ git af push
+	will push your feature branch to remote
