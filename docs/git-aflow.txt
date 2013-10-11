@@ -5,20 +5,28 @@ Only master is a permanent branch.
 All the temporary branches below are prefixed with <rel_name>/ too,
 which is omitted for short.
 
-creating development feature:
-    development feature is a feature that is not (immediately) user-visible.
-    it can be a code refactoring, cleanup, some internal foundation etc.
+creating features:
     $ git af feature start <name> [ <dep_feature> ]
 	checks that no feature of any type with same name exists in devel
 	branches off from base (or <dep_feature>)
 		into feature/<name> and switches to it
     do commits
-    $ git af feature finish -dev <name>
+    $ git af feature finish [ -dev ] <name>
 	branches off from devel into testing/<name> and switches to it
 	merges feature/<name> into testing/<name>
-    resolve merge conflicts if any, and do some testing if needed
+	if merge conflicts, it shows the commits and the features that
+		caused the conflicts, aborts the merge and removes the
+		testing/<name> branch. You should land the conflicting
+		features using "land" command, or merge them using
+		"fmerge" command. The conflict resolution is not allowed
+		during the "feature finish" command.
+	if -dev is specified, creates a lightweight tag (ltag) for
+		feature/<name> named devf_<name>
+	otherwise, creates an annotated tag (atag) for
+		feature/<name> named feature_<name>
+		you enter the detailed feature description into the tag
+    you do some testing if needed
     $ git af feature commit [ <name> | -a ]
-	creates a lightweight tag (ltag) for feature/<name> named devf_<name>
 	merges testing/<name> into devel using --ff-only
 	removes testing/<name>
 	removes feature/<name>
@@ -33,23 +41,6 @@ landing development features:
 	merges current branch (making sure it starts with basetest/) into base
 		using --ff-only
 	removes basetest/*
-
-creating user-visible features:
-    $ git af feature start <name> [ <dep_feature> ]
-	checks that no feature of any type with same name exists in devel
-	branches off from base (or <dep_feature>)
-		into feature/<name> and switches to it
-    do commits
-    $ git af feature finish <name>
-	branches off from devel into testing/<name> and switches to it
-	merges feature/<name> into testing/<name>
-    resolve merge conflicts if any, and do some testing if needed
-    $ git af feature commit [ <name> | -a ]
-	creates an annotated tag (atag) for feature/<name> named feature_<name>
-	you enter the detailed feature description into the tag
-	merges testing/<name> into devel using --ff-only
-	removes testing/<name>
-	removes feature/<name>
 
 staging features (both types):
     when feature is tested and approved, do:
@@ -127,6 +118,7 @@ creating major release:
 	makes sure no unfinished release exists
 	branches off from base into reltest/<rel_name> and switches to it
 	merges master into current branch
+    revert some features that you don't need with "frevert" command
     do release hardening commits and testing
     $ git af release finish
 	branches into release/<rel_name>
@@ -134,6 +126,10 @@ creating major release:
 	branches into <rel_name>/devel
 	switches into release/<rel_name>
 	removes reltest/<rel_name>
+
+reverting features:
+    $ git af frevert <name>
+	reverts feature_<name> from the current branch, if it was merged
 
 rebasing to new release:
     after a new major release was created, the developers should
@@ -143,6 +139,7 @@ rebasing to new release:
 	    release branch, and creates them if needed (non-tracking)
 	rebases all the (unfinished) feature branches, base and devel
 	into the resp branches of the last major release
+	recreates the tags, adding numerical suffixes
 
 pushing work to remote:
     $ git af push
