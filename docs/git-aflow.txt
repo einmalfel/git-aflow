@@ -132,5 +132,8 @@ rebasing to new release:
     after a new major release was created, the developers should
     sooner or later rebase their work to the new base and devel branches.
     $ git af rebase [ <from_name> ]
-	rebases all the (unfinished) feature branches, base and devel
-	into the resp branches of the last major release
+	rebases all the (unfinished) feature branches
+		into the resp branches of the last major release
+	rebases all the features from local backup/* that are present
+		in old devel branch, but are not present in the new
+		devel branch. The backup/ prefix is removed in the process.
