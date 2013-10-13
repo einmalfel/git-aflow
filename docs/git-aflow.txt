@@ -107,9 +107,11 @@ creating hotfix release:
 
 creating minor release:
     $ git checkout <existing_rel_branch>
-    $ git af fmerge <feature1> ...
+    $ git af release fmerge <feature1> ...
+	checks the presence of the fiature in master
+	checks all of its dependencies to be either in master or base
 	merges specified user-visible features from master
-	(with their hotfixes) to current branch
+		(with their hotfixes) to current branch
     do testing and hotfixes
     tar up the release
 
