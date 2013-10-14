@@ -16,10 +16,13 @@ creating features:
 	merges feature/<name> into testing/<name>
 	if merge conflicts, it shows the commits and the features that
 		caused the conflicts, aborts the merge and removes the
-		testing/<name> branch. You should land the conflicting
-		features using "land" command, or merge them using
-		"fmerge" command. The conflict resolution is not allowed
-		during the "feature finish" command.
+		testing/<name> branch.
+		It then tries to merge the conflicting feature directly
+		(fmerge) into feature/<name>.
+		You should resolve the conflicts and commit the results,
+		then retry with "finish" command. Alternatively, you may
+		decide to abort the merge and move the conflicting
+		features to base using "land" command.
 	if -dev is specified, creates a lightweight tag (ltag) for
 		feature/<name> named devf_<name>
 	otherwise, creates an annotated tag (atag) for
@@ -110,7 +113,7 @@ creating minor release:
     $ git af release fmerge <feature1> ...
 	checks the presence of the fiature in master
 	checks all of its dependencies to be either in master or base
-	merges specified user-visible features from master
+	merges specified user-visible features
 		(with their hotfixes) to current branch
     do testing and hotfixes
     tar up the release
