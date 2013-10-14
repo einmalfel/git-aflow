@@ -29,7 +29,7 @@ creating features:
     $ git af feature commit [ <name> | -a ]
 	merges testing/<name> into devel using --ff-only
 	removes testing/<name>
-	removes feature/<name>
+	moves feature/<name> to backup/
 
 landing development features:
     When enought development features accumulated, do
