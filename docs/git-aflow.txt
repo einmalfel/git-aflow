@@ -107,9 +107,11 @@ creating hotfix release:
 
 creating minor release:
     $ git checkout <existing_rel_branch>
-    $ git af fmerge <feature1> ...
+    $ git af release fmerge <feature1> ...
+	checks the presence of the fiature in master
+	checks all of its dependencies to be either in master or base
 	merges specified user-visible features from master
-	(with their hotfixes) to current branch
+		(with their hotfixes) to current branch
     do testing and hotfixes
     tar up the release
 
@@ -136,10 +138,14 @@ rebasing to new release:
     sooner or later rebase their work to the new base and devel branches.
     $ git af rebase [ <from_name> ]
 	checks if the base and devel branches exist for the latest
-	    release branch, and creates them if needed (non-tracking)
-	rebases all the (unfinished) feature branches, base and devel
-	into the resp branches of the last major release
-	recreates the tags, adding numerical suffixes
+	    release branch, and creates them from master, if needed
+	    (non-tracking)
+	rebases all the (unfinished) feature branches
+	    into the resp branches of the last major release
+	rebases all the features from local backup/* that are present
+	    in old devel branch, but are not present in the new
+	    devel branch. The backup/ prefix is removed in the process.
+	you need to start from "feature finish" again after that.
 
 pushing work to remote:
     $ git af push
