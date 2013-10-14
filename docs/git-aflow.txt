@@ -171,3 +171,8 @@ publishing specific features:
 	sets up remote tracking for the feature branch feature/<name>
     $ git af push
 	will push your feature branch to remote
+
+merging features:
+    this is mainly for the use by another tools. Not to be used directly.
+    $ git af fmerge <name>
+	merges feature_<name> into the current branch
