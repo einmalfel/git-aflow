@@ -55,6 +55,8 @@ staging features (both types):
 	merges current branch (making sure it starts with testing/) into master
 		using --ff-only
 	removes testing/*
+    Note that staged development features are still not visible by
+		default to the release manager.
 
 rebaseing unpuplished features:
     developer may decide to rebase feature after a base branch update.
