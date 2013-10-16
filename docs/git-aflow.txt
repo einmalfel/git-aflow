@@ -56,7 +56,8 @@ staging features (both types):
 		using --ff-only
 	removes testing/*
     Note that staged development features are still not visible by
-		default to the release manager.
+		default to the release manager. It therefore will likely
+		to go into the next major release only.
 
 rebaseing unpuplished features:
     developer may decide to rebase feature after a base branch update.
