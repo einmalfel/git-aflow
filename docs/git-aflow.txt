@@ -148,6 +148,7 @@ rebasing to new release:
 	rebases all the features from local backup/* that are present
 	    in old devel branch, but are not present in the new
 	    devel branch. The backup/ prefix is removed in the process.
+	removes backup/*
 	you need to start from "feature finish" again after that.
 
 pushing work to remote:
