@@ -1,0 +1,15 @@
+#Python temporary files
+*__pycache__/
+
+#Distutils temporary files
+*build/
+*dist/
+*MANIFEST
+
+#Eclipse/PyDev project files
+*.project
+*.pydevproject
+
+#Text editor backup files
+*~
+
