@@ -18,6 +18,9 @@ import os
 import re
 
 
+init()
+
+
 def env_is_set(name):
     return 1 if name in os.environ and os.environ[name] == '1' else 0
 
@@ -57,9 +60,11 @@ def git_diff(from_treeish, to_treeish):
                                   to_treeish, '--'])
 
 
+def init():
+    global regex
+    regex = re.compile('^@@ -\S+ +\S+ @@.*$')
 bases = {}
 groups = []
-regex = re.compile('^@@ -\S+ +\S+ @@.*$')
 
 dprint("launched as: " + ' '.join(sys.argv))
 
