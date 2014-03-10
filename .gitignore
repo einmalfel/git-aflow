@@ -1,2 +1,8 @@
 #Python temporary files
 *__pycache__/
+
+#Distutils temporary files
+*build/
+*dist/
+*MANIFEST
+
