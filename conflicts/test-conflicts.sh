@@ -58,7 +58,7 @@ first_failing_combination()
 conflicts=$PWD/conflicts.py
 for arg in $@ ; do if echo $arg | grep -q "conflicts=" ; then eval $arg ; echo Using $conflicts ; fi ; done
 if test -x $PWD/$conflicts ; then conflicts=$PWD/$conflicts ; fi
-if ! test -x $conflicts ; then die "$conflicts does not exists or does not have execution permissions" ; fi
+if ! test -x $conflicts && ! which $conflicts; then die "$conflicts does not exists or does not have execution permissions" ; fi
 
 mkdir -p tst && cd tst || die "cannot chdir to tst"
 
