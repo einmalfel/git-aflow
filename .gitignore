@@ -6,3 +6,7 @@
 *dist/
 *MANIFEST
 
+#Eclipse/PyDev project files
+*.project
+*.pydevproject
+
