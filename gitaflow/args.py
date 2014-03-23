@@ -22,6 +22,10 @@ def parse_args(args_list):
         prog='git-aflow',
         description='Git-aflow helper scripts'
         )
+    main_parser.add_argument(
+        '--version', action='version', version='%(prog)s '
+        + str(sys.modules['gitaflow'].VERSION)
+        )
     main_subparsers = main_parser.add_subparsers(
         title='Subcommands',
         dest='subcommand'
