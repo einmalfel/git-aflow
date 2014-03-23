@@ -7,6 +7,9 @@ import logging
 
 
 def setup_logging(verbosity, file_name):
+    """setup_logging(verbosity, file_name)
+    sets up log level, file name and string format
+    """
     if verbosity < 0:
         loglevel = logging.CRITICAL
     if verbosity == 0:
