@@ -6,7 +6,7 @@ import sys
 import logging
 
 
-def setup_logging(verbosity):
+def setup_logging(verbosity, file_name):
     if verbosity < 0:
         loglevel = logging.CRITICAL
     if verbosity == 0:
@@ -17,12 +17,13 @@ def setup_logging(verbosity):
         loglevel = logging.DEBUG
 
     logging.basicConfig(
+        filename=file_name,
         format='%(levelname)s %(module)s:%(lineno)d %(asctime)s %(message)s',
         level=loglevel
         )
 
 
 def execute(args_namespace):
-    setup_logging(args_namespace.verbosity)
+    setup_logging(args_namespace.verbosity, args_namespace.log_file)
     logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION)
                  + '. Processing namespace ' + str(args_namespace))

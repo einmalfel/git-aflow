@@ -26,6 +26,7 @@ def parse_args(args_list):
         '--version', action='version', version='%(prog)s '
         + str(sys.modules['gitaflow'].VERSION)
         )
+    main_parser.add_argument('--log-file', '-l')
     output_mode = main_parser.add_mutually_exclusive_group()
     output_mode.add_argument(
         '-v', '--verbosity', action='count', default=0,
