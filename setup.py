@@ -2,12 +2,12 @@
 
 
 from distutils.core import setup
-
+import gitaflow
 
 setup(name='gitaflow',
-      version='0.1',
+      version=gitaflow.VERSION,
       description='Implementation of git branching model, alternative to git-flow',
-      packages=['gitaflow'],
+      packages=['gitaflow', 'gitwrapper'],
       scripts=['git-af'],
       maintainer="Vasily Makarov",
       maintainer_email="einmalfel@gmail.com",
