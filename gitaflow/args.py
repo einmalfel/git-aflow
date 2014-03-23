@@ -26,6 +26,16 @@ def parse_args(args_list):
         '--version', action='version', version='%(prog)s '
         + str(sys.modules['gitaflow'].VERSION)
         )
+    output_mode = main_parser.add_mutually_exclusive_group()
+    output_mode.add_argument(
+        '-v', '--verbosity', action='count', default=0,
+        help='Increase output verbosity. Every instance of -v increments the \
+        verbosity level by one'
+        )
+    output_mode.add_argument(
+        '-q', '--quiet', action='store_const', const=-1, dest='verbosity',
+        help='Suppress warning and error messages'
+        )
     main_subparsers = main_parser.add_subparsers(
         title='Subcommands',
         dest='subcommand'

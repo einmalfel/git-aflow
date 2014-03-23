@@ -2,6 +2,24 @@
 Process args for git af
 """
 
+import logging
+
+
+def setup_logging(verbosity):
+    if verbosity < 0:
+        loglevel = logging.CRITICAL
+    if verbosity == 0:
+        loglevel = logging.WARNING
+    elif verbosity == 1:
+        loglevel = logging.INFO
+    else:
+        loglevel = logging.DEBUG
+
+    logging.basicConfig(
+        format='%(levelname)s %(module)s:%(lineno)d %(asctime)s %(message)s',
+        level=loglevel
+        )
+
 
 def execute(args_namespace):
-    pass
+    setup_logging(args_namespace.verbosity)
