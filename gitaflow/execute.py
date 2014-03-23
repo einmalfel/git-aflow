@@ -2,6 +2,7 @@
 Process args for git af
 """
 
+import sys
 import logging
 
 
@@ -23,3 +24,5 @@ def setup_logging(verbosity):
 
 def execute(args_namespace):
     setup_logging(args_namespace.verbosity)
+    logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION)
+                 + '. Processing namespace ' + str(args_namespace))
