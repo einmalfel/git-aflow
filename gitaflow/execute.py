@@ -1,10 +1,8 @@
-"""execute.py
-Process args for git af
-"""
+"""Process args for git af"""
 
-import sys
 import logging
 import os
+import sys
 
 import gitwrapper.wrapper
 
