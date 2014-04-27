@@ -14,6 +14,11 @@ def is_valid_iteration_name(name):
 
 
 def start_iteration(iteration_name):
+    for tag in gitwrapper.wrapper.get_tags_by_target(MASTER_NAME):
+        if is_iteration(tag):
+            print('There is already an iteration ' + tag +
+                  ' started from the top of master branch')
+            return False
     if not is_valid_iteration_name(iteration_name):
         print('Please, correct your iteration name. ".."'
 ', "~", "^", ":", "?", "*", "[", "@", "\", spaces and ASCII control characters'
