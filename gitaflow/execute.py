@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+import gitaflow.init
 import gitwrapper.wrapper
 
 
@@ -46,3 +47,6 @@ def execute(args_namespace):
         logging.info('trying to launch git-aflow without git installed')
         print("Git not found. You need to install it to use git-aflow")
         sys.exit(1)
+
+    if args_namespace.subcommand == 'init':
+        gitaflow.init.init_aflow(args_namespace.name)
