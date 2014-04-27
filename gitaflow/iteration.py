@@ -38,6 +38,7 @@ def start_iteration(iteration_name):
         gitwrapper.wrapper.delete_branch(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
         return False
+    print('Iteration ' + iteration_name + ' created successfully')
     return True
 
 
