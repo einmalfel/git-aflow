@@ -152,6 +152,17 @@ def parse_args(args_list):
         help='List all finished topics in repo'
         )
 
+    init_parser = main_subparsers.add_parser(
+        'init',
+        help='Initialize git-aflow for existing git repo',
+        description='Initialize git-aflow for existing git repo. Call this '
+            'from the top of master branch'
+        )
+    init_parser.add_argument(
+        'name',
+        help='Name of first iteration.'
+        )
+
     args = main_parser.parse_args(args_list)
 
     if args.subcommand is None:
