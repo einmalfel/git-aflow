@@ -67,7 +67,7 @@ def is_ancestor(ancestor, descendant):
     result = get_exit_code(['git', 'merge-base', '--is-ancestor',
                             ancestor, descendant])
     if (result != 0 and result != 1):
-        logging.critical("error in ancestor check " + result)
+        logging.critical("Error in ancestor check " + result)
     return result == 0
 
 
@@ -93,7 +93,7 @@ def create_branch(name, start_point=None):
     result = (0 == get_exit_code(['git', 'branch', name] +
                            ([start_point] if start_point else [])))
     if not result:
-        logging.warning('failed to create branch ' + name)
+        logging.warning('Failed to create branch ' + name)
     return result
 
 
@@ -104,21 +104,21 @@ def create_tag(name, target=None):
     result = (0 == get_exit_code(['git', 'tag', name] +
                                  ([target] if target else [])))
     if not result:
-        logging.warning('failed to create tag ' + name)
+        logging.warning('Failed to create tag ' + name)
     return result
 
 
 def delete_tag(name):
     result = (0 == get_exit_code(['git', 'tag', '-d', name]))
     if not result:
-        logging.warning('failed to delete tag ' + name)
+        logging.warning('Failed to delete tag ' + name)
     return result
 
 
 def delete_branch(name):
     result = (0 == get_exit_code(['git', 'branch', '-d', name]))
     if not result:
-        logging.warning('failed to delete branch ' + name)
+        logging.warning('Failed to delete branch ' + name)
     return result
 
 
