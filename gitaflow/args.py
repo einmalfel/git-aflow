@@ -1,5 +1,5 @@
 """args.py
-this module is about args parsing and checking for 'git af'
+This module is about args parsing and checking for 'git af'
 
 TODO:
  - show values for defaults e.g. 'Name of topic to fix.
@@ -53,8 +53,8 @@ def parse_args(args_list):
     topic_start_parser.add_argument('name', help='Name for new topic branch')
     topic_finish_parser = topic_subparsers.add_parser(
         'finish',
-        help='Finish topic and put it into devel',
-        description='Finish topic and put it into devel'
+        help='Finish topic and put it into develop',
+        description='Finish topic and put it into develop'
         )
     topic_finish_parser.add_argument(
         'name',
@@ -63,8 +63,8 @@ def parse_args(args_list):
         )
     topic_stage_parser = topic_subparsers.add_parser(
         'stage',
-        help='Finish topic and put it into devel',
-        description='Finish topic and put it into devel'
+        help='Finish topic and put it into develop',
+        description='Finish topic and put it into develop'
         )
     topic_stage_parser.add_argument(
         'name',
@@ -114,7 +114,7 @@ def parse_args(args_list):
     release_finish_parser.add_argument(
         'name',
         nargs='?',
-        help='Which release to finish. Defaults to currently checkouted'
+        help='Which release to finish. Defaults to currently checked out'
         )
 
     list_parser = main_subparsers.add_parser(
