@@ -1,9 +1,10 @@
-"""execute.py
-Process args for git af
-"""
+"""Process args for git af"""
 
-import sys
 import logging
+import os
+import sys
+
+import gitwrapper.wrapper
 
 
 def setup_logging(verbosity, file_name):
@@ -30,3 +31,18 @@ def execute(args_namespace):
     setup_logging(args_namespace.verbosity, args_namespace.log_file)
     logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION) +
                  '. Processing namespace ' + str(args_namespace))
+
+    # here is first git call, so do coupla checks:
+    # - we are inside git repo
+    # - git present
+    # TODO ? suggest commands to install git
+    try:
+        if not gitwrapper.wrapper.in_git_repo():
+            logging.info('trying to launch aflow outside of git repo: ' +
+                         os.getcwd())
+            print('No git repo found. Please, chdir to repo')
+            sys.exit(1)
+    except FileNotFoundError:
+        logging.info('trying to launch git-aflow without git installed')
+        print("Git not found. You need to install it to use git-aflow")
+        sys.exit(1)
