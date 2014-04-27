@@ -12,7 +12,7 @@ def setup_logging(verbosity, file_name):
     """
     if verbosity < 0:
         loglevel = logging.CRITICAL
-    if verbosity == 0:
+    elif verbosity == 0:
         loglevel = logging.WARNING
     elif verbosity == 1:
         loglevel = logging.INFO
