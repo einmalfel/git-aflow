@@ -12,7 +12,7 @@ def setup_logging(verbosity, file_name):
     """
     if verbosity < 0:
         loglevel = logging.CRITICAL
-    if verbosity == 0:
+    elif verbosity == 0:
         loglevel = logging.WARNING
     elif verbosity == 1:
         loglevel = logging.INFO
@@ -28,5 +28,5 @@ def setup_logging(verbosity, file_name):
 
 def execute(args_namespace):
     setup_logging(args_namespace.verbosity, args_namespace.log_file)
-    logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION)
-                 + '. Processing namespace ' + str(args_namespace))
+    logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION) +
+                 '. Processing namespace ' + str(args_namespace))
