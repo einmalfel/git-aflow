@@ -15,8 +15,10 @@ def init_aflow(iteration_name):
         logging.info('Trying to init git-aflow in already initialized repo')
         print("There is a git-aflow repo already, aborting")
         sys.exit(1)
-    start_iteration(iteration_name)
-
+    if start_iteration(iteration_name):
+        print("Git-aflow initialized successfully")
+    else:
+        print("Git-aflow initialization failed")
 
 def in_aflow_repo():
     return [] != get_iteration_list()
