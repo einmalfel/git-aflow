@@ -3,8 +3,9 @@
 
 import logging
 
-from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
 import gitwrapper.wrapper
+
+from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
 
 
 def is_valid_iteration_name(name):

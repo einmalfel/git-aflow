@@ -8,8 +8,9 @@ search for refs/tags/tag_name/*
 """
 
 
-import re
 import logging
+import re
+
 from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
 
 
