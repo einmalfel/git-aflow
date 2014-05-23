@@ -72,6 +72,9 @@ def rev_parse(treeish):
 
 
 def get_branch_list(patterns=[]):
+    """ List all branches if pattern is empty list, branches matching any
+    pattern otherwise
+    """
     return re.sub('[ *]', '', get_stdout(['git', 'branch', '--list'] +
                                          patterns)).splitlines()
 
