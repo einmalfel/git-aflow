@@ -23,7 +23,7 @@ def start_iteration(iteration_name):
     if not is_valid_iteration_name(iteration_name):
         print('Please, correct your iteration name. ".."'
 ', "~", "^", ":", "?", "*", "[", "@", "\", spaces and ASCII control characters'
-' are not allowed. Input something like "iter_1" or "start":\n')
+' are not allowed. Input something like "iter_1" or "start"')
         return False
     develop_name = get_develop(iteration_name)
     staging_name = get_staging(iteration_name)
