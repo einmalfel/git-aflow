@@ -50,3 +50,6 @@ def execute(args_namespace):
 
     if args_namespace.subcommand == 'init':
         gitaflow.init.init_aflow(args_namespace.name)
+    elif args_namespace.subcommand == 'topic':
+        if args_namespace.subsubcommand == 'start':
+            topic.start(args_namespace.name)

@@ -14,6 +14,11 @@ def is_valid_iteration_name(name):
 
 
 def start_iteration(iteration_name):
+    for tag in gitwrapper.wrapper.get_tags_by_target(MASTER_NAME):
+        if is_iteration(tag):
+            print('There is already an iteration ' + tag +
+                  ' started from the top of master branch')
+            return False
     if not is_valid_iteration_name(iteration_name):
         print('Please, correct your iteration name. ".."'
 ', "~", "^", ":", "?", "*", "[", "@", "\", spaces and ASCII control characters'
@@ -38,6 +43,7 @@ def start_iteration(iteration_name):
         gitwrapper.wrapper.delete_branch(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
         return False
+    print('Iteration ' + iteration_name + ' created successfully')
     return True
 
 
@@ -65,7 +71,7 @@ def get_current_iteration():
     branch = gitwrapper.wrapper.get_current_branch()
     if branch:
         if '/' in branch:
-            iteration = branch.lsplit('/')
+            iteration = branch.split('/', 1)[0]
             if is_iteration(iteration):
                 logging.info('found iteration ' + iteration + ' for branch ' +
                               branch)
