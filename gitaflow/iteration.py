@@ -77,8 +77,8 @@ def get_current_iteration():
                 logging.info('found iteration ' + iteration + ' for branch ' +
                               current_branch)
                 return iteration
-    iterations = {tag.get_SHA(tag): tag
-             for tag in get_iteration_list()}
+    iterations = {tag.get_SHA(iter_tag): iter_tag
+             for iter_tag in get_iteration_list()}
     position = commit.get_current_SHA()
     while position:
         if position in iterations:
