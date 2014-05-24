@@ -139,11 +139,16 @@ Here they are: ' + ', '.join(intersection))
         return False
 
     logging.info('All good, creating branch ' + branch_name)
-    if misc.checkout(branch_name, True):
+    if not branch.create(branch_name, ci):
+        logging.critical("Something went wrong, cannot create \
+topic branch")
+        return False
+    if misc.checkout(branch_name):
         print('Topic ' + name + ' created. You are in ' + branch_name +
               ' branch')
         return True
     else:
-        logging.critical("Something went wrong, cannot create & checkout \
-topic branch")
+        logging.critical("Something went wrong, cannot checkout \
+topic branch. Deleting branch and stopping")
+        branch.delete(branch_name)
         return False
