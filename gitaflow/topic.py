@@ -4,7 +4,7 @@
 import logging
 import re
 
-import gitwrapper.wrapper
+from gitwrapper import misc, branch, commit
 
 from . import iteration
 from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
@@ -45,7 +45,7 @@ def is_valid_topic_branch(branch_name, topic_name=None):
     exists and branch name has correct format)
     Otherwise, also checks if it is valid branch name for given topic
     """
-    if not gitwrapper.wrapper.is_valid_ref_name(branch_name):
+    if not misc.is_valid_ref_name(branch_name):
         return False
     result = parse_topic_branch_name(branch_name)
     logging.debug('Branch name parsed ' + str(result))
@@ -64,7 +64,7 @@ def topic_branches(name):
     """Returns topic branch names list for all versions of given topic.
     Name should be given without iteration prefix and version suffix
     """
-    topics = gitwrapper.wrapper.get_branch_list(['*' + name + '*'])
+    topics = branch.get_branch_list(['*' + name + '*'])
     return [topic for topic in topics if is_valid_topic_branch(topic, name)]
 
 
@@ -78,13 +78,13 @@ def topic_merges_in_history(name):
     heads += [iteration.get_develop(i) for i in iters]
     heads += [iteration.get_staging(i) for i in iters]
     logging.info('Searching ' + name + ' in branches ' + str(heads))
-    SHAs = gitwrapper.wrapper.find_commits(heads, True,
+    SHAs = commit.find_commits(heads, True,
                 ["^Merge branch '[^/]*/" + name + ".*' into .*$"])
     logging.debug('Found: ' + str(SHAs))
     result = []
     for SHA in SHAs:
         branch, merged_to = parse_merge_commit_headline(
-                                gitwrapper.wrapper.get_commit_headline(SHA))
+                                commit.get_commit_headline(SHA))
         if is_valid_topic_branch(branch, name):
             if merged_to == MASTER_NAME:
                 result += [SHA]
@@ -108,13 +108,13 @@ def start(name):
         logging.info('Wrong topic name. Stopping')
         return False
     logging.info('Check working tree')
-    if not gitwrapper.wrapper.is_working_tree_clean():
+    if not misc.is_working_tree_clean():
         print('Your working tree is dirty. Please, stash or reset your \
 changes before starting topic')
         logging.info('Working tree is dirty stopping, stopping')
         return False
-    intersection = frozenset(gitwrapper.wrapper.get_untracked_files()) &\
-        frozenset(gitwrapper.wrapper.list_files_differ('HEAD', ci))
+    intersection = frozenset(misc.get_untracked_files()) &\
+        frozenset(misc.list_files_differ('HEAD', ci))
     if intersection:
         print('You have some untracked files which you may loose when \
 switching to new topic branch. Please, delete or commit them. \
@@ -139,7 +139,7 @@ Here they are: ' + ', '.join(intersection))
         return False
 
     logging.info('All good, creating branch ' + branch_name)
-    if gitwrapper.wrapper.checkout(branch_name, True):
+    if misc.checkout(branch_name, True):
         print('Topic ' + name + ' created. You are in ' + branch_name +
               ' branch')
         return True
