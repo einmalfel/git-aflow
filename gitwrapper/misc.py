@@ -14,9 +14,9 @@ def is_working_tree_clean(untracked=False):
                       ([] if untracked else ['-uno'])) == ''
 
 
-def checkout(treeish, create_branch=False):
+def checkout(treeish, create=False):
     return get_exit_code(['git', 'checkout'] +
-                         (['-b'] if create_branch else []) + [treeish]) == 0
+                         (['-b'] if create else []) + [treeish]) == 0
 
 
 def get_untracked_files():

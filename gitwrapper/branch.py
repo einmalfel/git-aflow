@@ -7,7 +7,7 @@ import re
 from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
 
 
-def get_branch_list(patterns=[]):
+def get_list(patterns=[]):
     """ List all branches if pattern is empty list, branches matching any
     pattern otherwise
     """
@@ -15,19 +15,19 @@ def get_branch_list(patterns=[]):
                                          patterns)).splitlines()
 
 
-def get_current_branch():
+def get_current():
     """Returns current branch name or None if in detached HEAD state"""
     output, code = get_stdout_and_exit_code(['git', 'symbolic-ref',
                                              '--short', '--q', 'HEAD'])
     return output if code == 0 else None
 
 
-def get_branch_SHA(name):
+def get_head_SHA(name):
     return get_stdout(['git', 'show-ref', '--verify', '--hash',
                        'refs/heads/' + name])
 
 
-def branch_exists(name):
+def exists(name):
     return 0 == get_exit_code(['git', 'show-ref', '--verify', '-q',
                        'refs/heads/' + name])
 
@@ -38,7 +38,7 @@ def get_branches_containing(treeish):
                               ])).splitlines()
 
 
-def create_branch(name, start_point=None):
+def create(name, start_point=None):
     """ Starts branch from start_point or from HEAD if no start_point
     specified. Returns True if success, False otherwise
     """
@@ -49,7 +49,7 @@ def create_branch(name, start_point=None):
     return result
 
 
-def delete_branch(name):
+def delete(name):
     result = (0 == get_exit_code(['git', 'branch', '-d', name]))
     if not result:
         logging.warning('Failed to delete branch ' + name)

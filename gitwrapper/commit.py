@@ -6,16 +6,16 @@ import logging
 from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
 
 
-def get_commit_headline(treeish):
+def get_headline(treeish):
     return get_stdout(['git', 'log', '--format=%s', '-n1', treeish])
 
 
-def find_commits(start_commits=[], first_parent=False,
+def find(start_commits=[], first_parent=False,
                               regexps=[], match_all=False):
     """Searches for commits starting from start_commits and going to the
     beginning of history.
-    Reduces results with regexps if any. Matches any of given regexps, unless
-    match_all is set to True.
+    Reduces results with regexps (in commit message) if any. Matches any of
+    given regexps, unless match_all is set to True.
     If first_parent is set to True, exclude merged branches from search.
     Returns list of SHA"""
     return get_stdout(['git', 'rev-list'] +
@@ -25,7 +25,7 @@ def find_commits(start_commits=[], first_parent=False,
                 (start_commits if start_commits else ['--all'])).splitlines()
 
 
-def get_current_commit_SHA():
+def get_current_SHA():
     return get_stdout(['git', 'rev-parse', 'HEAD'])
 
 

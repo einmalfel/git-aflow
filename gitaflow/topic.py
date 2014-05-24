@@ -64,7 +64,7 @@ def topic_branches(name):
     """Returns topic branch names list for all versions of given topic.
     Name should be given without iteration prefix and version suffix
     """
-    topics = branch.get_branch_list(['*' + name + '*'])
+    topics = branch.get_list(['*' + name + '*'])
     return [topic for topic in topics if is_valid_topic_branch(topic, name)]
 
 
@@ -78,13 +78,13 @@ def topic_merges_in_history(name):
     heads += [iteration.get_develop(i) for i in iters]
     heads += [iteration.get_staging(i) for i in iters]
     logging.info('Searching ' + name + ' in branches ' + str(heads))
-    SHAs = commit.find_commits(heads, True,
+    SHAs = commit.find(heads, True,
                 ["^Merge branch '[^/]*/" + name + ".*' into .*$"])
     logging.debug('Found: ' + str(SHAs))
     result = []
     for SHA in SHAs:
         branch, merged_to = parse_merge_commit_headline(
-                                commit.get_commit_headline(SHA))
+                                commit.get_headline(SHA))
         if is_valid_topic_branch(branch, name):
             if merged_to == MASTER_NAME:
                 result += [SHA]
