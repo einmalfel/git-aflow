@@ -3,6 +3,8 @@ tag, branch and commit modules.
 """
 
 
+import logging
+
 from gitwrapper.aux import get_exit_code, get_stdout
 
 
@@ -14,9 +16,11 @@ def is_working_tree_clean(untracked=False):
                       ([] if untracked else ['-uno'])) == ''
 
 
-def checkout(treeish, create=False):
-    return get_exit_code(['git', 'checkout'] +
-                         (['-b'] if create else []) + [treeish]) == 0
+def checkout(treeish):
+    result = get_exit_code(['git', 'checkout'] + [treeish]) == 0
+    if not result:
+        logging.warning("failed to checkout " + treeish)
+    return result
 
 
 def get_untracked_files():
