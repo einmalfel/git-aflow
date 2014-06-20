@@ -79,6 +79,31 @@ def get_iteration_list():
     return [t for t in tag.get_list() if is_iteration(t)]
 
 
+def get_iteration_by_sha(sha):
+    iterations = {tag.get_sha(t): t for t in get_iteration_list()}
+    position = sha
+    while position:
+        if position in iterations:
+            logging.info('found latest iteration ' + iterations[position] +
+                         ' for SHA ' + sha + ' BP: ' + position)
+            return iterations[position]
+        position = commit.get_parent(position, 1)
+    logging.warning('Cannot get iteration for ' + sha)
+    return None
+
+
+def get_iteration_by_branch(branch_name):
+    iteration = parse_branch_name(branch_name)[0]
+    if is_iteration(iteration):
+        logging.info('found iteration ' + iteration + ' for branch ' +
+                     branch_name)
+        return iteration
+    if branch.exists(branch_name):
+        return get_iteration_by_sha(branch.get_head_sha(branch_name))
+    logging.warning('Failed to get iteration for branch ' + branch_name)
+    return None
+
+
 def get_current_iteration():
     """Calculates current iteration.
     We cannot store iteration in something like "current_iteration" tag, cause
