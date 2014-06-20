@@ -1,6 +1,5 @@
 """Branch-related functionality wrapper"""
 
-
 import logging
 import re
 
@@ -22,14 +21,14 @@ def get_current():
     return output if code == 0 else None
 
 
-def get_head_SHA(name):
+def get_head_sha(name):
     return get_stdout(['git', 'show-ref', '--verify', '--hash',
                        'refs/heads/' + name])
 
 
 def exists(name):
     return 0 == get_exit_code(['git', 'show-ref', '--verify', '-q',
-                       'refs/heads/' + name])
+                              'refs/heads/' + name])
 
 
 def get_branches_containing(treeish):
@@ -43,7 +42,7 @@ def create(name, start_point=None):
     specified. Returns True if success, False otherwise
     """
     result = (0 == get_exit_code(['git', 'branch', name] +
-                           ([start_point] if start_point else [])))
+                                 ([start_point] if start_point else [])))
     if not result:
         logging.warning('Failed to create branch ' + name)
     return result

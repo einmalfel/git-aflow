@@ -5,7 +5,6 @@ import os
 import sys
 
 from gitwrapper import misc
-
 from . import init, topic
 
 
@@ -25,8 +24,7 @@ def setup_logging(verbosity, file_name):
     logging.basicConfig(
         filename=file_name,
         format='%(levelname)s %(module)s:%(lineno)d %(asctime)s %(message)s',
-        level=loglevel
-        )
+        level=loglevel)
 
 
 def execute(args_namespace):

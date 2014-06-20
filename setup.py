@@ -6,7 +6,6 @@ TODO: Importing gitaflow there may be unsafe, setup.py should not fail with
 ImportError trying to import module dependencies
 """
 
-
 from distutils.core import setup
 
 import gitaflow

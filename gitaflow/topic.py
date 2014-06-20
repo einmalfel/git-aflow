@@ -35,7 +35,7 @@ def parse_merge_message(message):
         if topic_type:
             description = topic_type + linesep + description
         topic_type = EUF_NAME
-    return (headline, topic_type, description)
+    return headline, topic_type, description
 
 
 def parse_merge_headline(headline):
@@ -54,7 +54,7 @@ def parse_merge_headline(headline):
                               headline)
         if not re_result:
             logging.warning('Failed to parse merge headline: ' + headline)
-            return (None, None)
+            return None, None
         else:
             logging.warning('Warning: incorrect branch name: ' +
                             re_result.groups()[1] + '. Which iteration does ' +
@@ -80,48 +80,47 @@ def parse_revert_headline(headline):
             headline)
         if not re_result:
             logging.warning('Failed to parse revert headline: ' + headline)
-            return (None, None)
+            return None, None
         else:
             logging.warning('Warning: incorrect branch name: ' +
                             re_result.groups()[1] + '. Which iteration does ' +
                             'this branch belong to?')
     if not re_result:
         logging.warning('Failed to parse revert headline: ' + headline)
-        return (None, None)
+        return None, None
     result = re_result.groups()
     return result if result[1] is not None else (result[0], 'master')
 parse_revert_headline.regexp = None
 
 
-def get_merged_topics(treeish, iteration_name=None, recursive=False):
+def get_merged_topics(treeish, iter_name=None, recursive=False):
     """List all topics which were merged in treeish and weren't reverted.
     If you don't know branch iteration it will calculate it.
     Returns list of tuple in order topics were merged.
     Tuple format: (topic name, version, last commit SHA, type, description).
     If several versions of topic founded returns all of them.
     """
-    if not iteration_name:
-        iteration_name = iteration.parse_branch_name(treeish)[0]
-        if not iteration_name:
-            iteration_name = iteration.get_iteration_by_SHA(
-                                                    misc.rev_parse(treeish))
+    if not iter_name:
+        iter_name = iteration.parse_branch_name(treeish)[0]
+        if not iter_name:
+            iter_name = iteration.get_iteration_by_sha(misc.rev_parse(treeish))
     result = []
-    commits = commit.get_commits_between(iteration_name, treeish, True,
+    commits = commit.get_commits_between(iter_name, treeish, True,
                                          ['^Revert "Merge branch .*"$',
                                           "^Merge branch .*$"])
-    for SHA in commits:
-        message = commit.get_full_message(SHA)
+    for sha in commits:
+        message = commit.get_full_message(sha)
         headline, topic_type, description = parse_merge_message(message)
         if headline.startswith('Merge branch'):
             merged_branch = parse_merge_headline(headline)[0]
             if merged_branch:
                 tname, tversion = parse_topic_branch_name(merged_branch)[1:3]
                 # TODO handle revert revert case
-                tSHA = commit.get_parent(SHA, 2)
-                result += [(tname, tversion, tSHA, topic_type, description)]
+                tsha = commit.get_parent(sha, 2)
+                result += [(tname, tversion, tsha, topic_type, description)]
                 logging.debug('Searching for topics in ' + treeish + ' Add ' +
                               tname + ' version: ' + str(tversion) + ' SHA: ' +
-                              tSHA + ' description: ' + description +
+                              tsha + ' description: ' + description +
                               ' type: ' + topic_type)
         elif headline.startswith('Revert "Merge branch '):
             reverted_branch = parse_revert_headline(headline)[0]
@@ -136,7 +135,7 @@ def get_merged_topics(treeish, iteration_name=None, recursive=False):
     if recursive:
         recursive_result = []
         for topic in result:
-            for merged_in_topic in get_merged_topics(topic[2], iteration_name,
+            for merged_in_topic in get_merged_topics(topic[2], iter_name,
                                                      True) + [topic]:
                 for already_added in recursive_result:
                     if (already_added[0] == merged_in_topic[0] and
@@ -165,9 +164,10 @@ def parse_topic_branch_name(name, raw_version=False, no_iteration=False):
     groups = result.groups()
     if not no_iteration and not groups[0]:
         return None
-    return (groups[0],
-        groups[1],
-        groups[2] if raw_version else (1 if not groups[2] else int(groups[2])))
+    if not raw_version:
+        return groups[0], groups[1], 1 if not groups[2] else int(groups[2])
+    else:
+        return groups
 parse_topic_branch_name.regexp = None
 
 
@@ -215,22 +215,19 @@ def topic_merges_in_history(name):
     heads += [iteration.get_develop(i) for i in iters]
     heads += [iteration.get_staging(i) for i in iters]
     logging.info('Searching ' + name + ' in branches ' + str(heads))
-    SHAs = commit.find(heads, True,
-                ["^Merge branch '[^/]+/" + name + "'.*$"])
-    logging.debug('Found: ' + str(SHAs))
+    shas = commit.find(heads, True, ["^Merge branch '[^/]+/" + name + "'.*$"])
+    logging.debug('Found: ' + str(shas))
     result = []
-    for SHA in SHAs:
-        branch, merged_to = parse_merge_headline(
-                                commit.get_headline(SHA))
-        if is_valid_topic_branch(branch, name):
+    for sha in shas:
+        ms_branch, merged_to = parse_merge_headline(commit.get_headline(sha))
+        if is_valid_topic_branch(ms_branch, name):
             if merged_to == MASTER_NAME:
-                result += [SHA]
+                result += [sha]
             else:
-                mt_iteration, mt_branch =\
-                        iteration.parse_branch_name(merged_to)
-                if iteration.is_iteration(mt_iteration) and\
-                    (mt_branch == DEVELOP_NAME or mt_branch == STAGING_NAME):
-                    result += [SHA]
+                mt_iteration, mt_branch = iteration.parse_branch_name(merged_to)
+                if ((mt_branch == DEVELOP_NAME or mt_branch == STAGING_NAME) and
+                        iteration.is_iteration(mt_iteration)):
+                    result += [sha]
     logging.debug('After checks: ' + str(result))
     return result
 
@@ -245,9 +242,10 @@ git-aflow repo')
     branch_name = ci + '/' + name
     logging.info('Checking name ' + branch_name)
     if not is_valid_topic_branch(branch_name):
-        print('Please correct topic name. ".."'
-', "~", "^", ":", "?", "*", "[", "@", "\", spaces and ASCII control characters'
-' are not allowed. Input something like "fix_issue18" or "do_api_refactoring"')
+        print('Please correct topic name. "..", "~", "^", ":", "?", "*", ' +
+              '"[", "@", "\", spaces and ASCII control characters' +
+              ' are not allowed. Input something like "fix_issue18" or ' +
+              '"do_api_refactoring"')
         logging.info('Wrong topic name. Stopping')
         return False
     logging.info('Check working tree')
@@ -259,10 +257,10 @@ changes before starting topic')
     intersection = frozenset(misc.get_untracked_files()) &\
         frozenset(misc.list_files_differ('HEAD', ci))
     if intersection:
-        print('You have some untracked files which you may loose when \
-switching to new topic branch. Please, delete or commit them. \
-Here they are: ' + ', '.join(intersection) + '.' + linesep +
-'Use "git clean" to remove all untracked files')
+        print('You have some untracked files which you may loose when ' +
+              'switching to new topic branch. Please, delete or commit them. ' +
+              'Here they are: ' + ', '.join(intersection) + '.' + linesep +
+              'Use "git clean" to remove all untracked files')
         logging.info('User may lose untracked file, stopping')
         return False
 
@@ -275,10 +273,10 @@ Here they are: ' + ', '.join(intersection) + '.' + linesep +
         return False
 
     logging.info('Ok, now check if there was such topic somewhere in history')
-    SHAs = topic_merges_in_history(name)
-    if SHAs:
+    shas = topic_merges_in_history(name)
+    if shas:
         print('Cannot start topic, it already exists in history, see SHA: ' +
-              ', '.join(SHAs))
+              ', '.join(shas))
         logging.info('Topics with given name exist in history, stopping')
         return False
 
@@ -414,7 +412,7 @@ contain only master and branches from current iteration')
                 if not is_topic_newer([tname, int(tversion), None, None, None],
                                       own_topics):
                     logging.info('We already have same or newer version of ' +
-                             topic + ' in ' + cb)
+                                 topic + ' in ' + cb)
                     print('We already have same or newer version of ' +
                           topic + ' in ' + cb + '. Skipping..')
                     continue
