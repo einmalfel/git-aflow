@@ -15,7 +15,7 @@ def parse_branch_name(branch_name):
     """
     if branch_name == MASTER_NAME:
         return None, MASTER_NAME
-    if parse_branch_name.regexp == None:
+    if parse_branch_name.regexp is None:
         parse_branch_name.regexp =\
             re.compile('^([^/]*)/(.*)$')
     result = parse_branch_name.regexp.search(branch_name)

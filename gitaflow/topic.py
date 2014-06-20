@@ -44,7 +44,7 @@ def parse_merge_headline(headline):
     ('a/b_v2', 'a/develop')
     If cannot parse, returns (None, None)
     """
-    if parse_merge_headline.regexp == None:
+    if parse_merge_headline.regexp is None:
         parse_merge_headline.regexp =\
             re.compile("^Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?$")
     # when branch is merged into master headline does not contain "into.." part
@@ -70,7 +70,7 @@ def parse_revert_headline(headline):
     ('a/b_v2', 'a/develop')
     If cannot parse, return (None, None)
     """
-    if parse_revert_headline.regexp == None:
+    if parse_revert_headline.regexp is None:
         parse_revert_headline.regexp = re.compile(
             "^Revert \"Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?\"$")
     re_result = parse_revert_headline.regexp.search(headline)
@@ -153,7 +153,7 @@ def parse_topic_branch_name(name, raw_version=False, no_iteration=False):
     E.g.: iter/name_v produces ("iter", "name_v", 1), cause first version
     of topic doesn't have any suffix and suffix ends with number
     """
-    if parse_topic_branch_name.regexp == None:
+    if parse_topic_branch_name.regexp is None:
         parse_topic_branch_name.regexp =\
             re.compile('^(?:([^/]+)/)?(.+?)(?:_v(\d+))?$')
     result = parse_topic_branch_name.regexp.search(name)
