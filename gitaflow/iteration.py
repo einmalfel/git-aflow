@@ -113,23 +113,8 @@ def get_current_iteration():
     """
     current_branch = branch.get_current()
     if current_branch:
-        if '/' in current_branch:
-            iteration = current_branch.split('/', 1)[0]
-            if is_iteration(iteration):
-                logging.info('found iteration ' + iteration + ' for branch ' +
-                              current_branch)
-                return iteration
-    iterations = {tag.get_SHA(iter_tag): iter_tag
-             for iter_tag in get_iteration_list()}
-    position = commit.get_current_SHA()
-    while position:
-        if position in iterations:
-            logging.info('found latest iteration ' + iterations[position] +
-                         ' for branch ' + position)
-            return iterations[position]
-        position = commit.get_main_ancestor(position)
-    logging.critical('cannot get iteration for ' +
-                     (current_branch if current_branch else 'detached HEAD'))
+        return get_iteration_by_branch(current_branch)
+    return get_iteration_by_sha(commit.get_current_sha())
 
 
 def get_develop(iteration=None):
