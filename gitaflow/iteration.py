@@ -32,9 +32,9 @@ def is_valid_iteration_name(name):
 
 
 def start_iteration(iteration_name):
-    for tag in tag.find_by_target(MASTER_NAME):
-        if is_iteration(tag):
-            print('There is already an iteration ' + tag +
+    for tag_ in tag.find_by_target(MASTER_NAME):
+        if is_iteration(tag_):
+            print('There is already an iteration ' + tag_ +
                   ' started from the top of master branch')
             return False
     if not is_valid_iteration_name(iteration_name):
@@ -118,20 +118,20 @@ def get_staging(iteration=None):
 
 
 def is_staging(branch_name):
-    iteration, branch = parse_branch_name(branch_name)
-    return is_iteration(iteration) and branch == STAGING_NAME
+    iteration, name = parse_branch_name(branch_name)
+    return is_iteration(iteration) and name == STAGING_NAME
 
 
 def is_develop(branch_name):
-    iteration, branch = parse_branch_name(branch_name)
-    return is_iteration(iteration) and branch == DEVELOP_NAME
+    iteration, name = parse_branch_name(branch_name)
+    return is_iteration(iteration) and name == DEVELOP_NAME
 
 
 def is_master(branch_name):
-    iteration, branch = parse_branch_name(branch_name)
+    iteration, name = parse_branch_name(branch_name)
     return branch_name == MASTER_NAME and iteration is None
 
 
 def is_release(branch_name):
-    iteration, branch = parse_branch_name(branch_name)
-    return is_iteration(iteration) and branch.startswith(RELEASE_NAME + '/')
+    iteration, name = parse_branch_name(branch_name)
+    return is_iteration(iteration) and name.startswith(RELEASE_NAME + '/')
