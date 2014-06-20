@@ -10,7 +10,7 @@ ArgumentParser
 
 import argparse
 import sys
-
+from os import linesep
 
 def parse_args(args_list):
     """parse_args(args_list)
@@ -20,7 +20,7 @@ def parse_args(args_list):
 
     main_parser = argparse.ArgumentParser(
         prog='git-aflow',
-        description='Git-aflow helper scripts'
+        description='Git-aflow helper tool'
         )
     main_parser.add_argument(
         '--version', action='version', version='%(prog)s '
@@ -152,6 +152,65 @@ def parse_args(args_list):
         help='List all finished topics in repo'
         )
 
+    merge_parser = main_subparsers.add_parser(
+        'merge',
+        help='Merge topics into current branch',
+        description='Merge topics into current branch'
+        )
+    merge_parser.add_argument(
+        '-d', '--dependencies',
+        action='store_true',
+        help='Merge topics specified as positional arguments. This is default.'
+        )
+    merge_type = merge_parser.add_mutually_exclusive_group()
+    merge_type.add_argument(
+        '-D', '--DEV', dest='merge_type',
+        action='store_const', const='DEV',
+        help='Set DEV type to topic while merging'
+        )
+    merge_type.add_argument(
+        '-E', '--EUF', dest='merge_type',
+        action='store_const', const='EUF',
+        help='Set EUF type to topic while merging'
+        )
+    merge_type.add_argument(
+        '-F', '--FIX', dest='merge_type',
+        action='store_const', const='FIX',
+        help='Set FIX type to topic while merging'
+        )
+    merge_object = merge_parser.add_mutually_exclusive_group()
+    merge_object.add_argument(
+        '-a', '--all', dest='merge_object',
+        action='store_const', const='all',
+        help='Merge all topics from source'
+        )
+    merge_object.add_argument(
+        '-u', '--update', dest='merge_object',
+        action='store_const', const='update',
+        help='Merge only topics which version in source is greater then \
+version in current branch'
+        )
+    merge_object.add_argument(
+        '-c', '--choose', dest='merge_object',
+        action='store_const', const=None,
+        help='Merge topics specified as positional arguments. This is default.'
+        )
+    merge_parser.add_argument(
+        'topic', nargs='*',
+        help='List of topics to merge into current. It will merge topics of \
+given versions if they are present in sources or merge newest versions if no \
+version specified. E.g. git af merge topicA topicB_v2 merges latest version \
+of topicA and second version of topicB')
+    merge_parser.add_argument(
+        '-s', '--source', action='append',
+        help='Sources to search for topics. This could be master and any \
+branches from current iteration. By default it is master+staging if you are \
+in release branch, staging if you are in master and develop in other cases. \
+You may specify more then one source (e.g. -s source1 -ssource2)')
+    merge_parser.add_argument(
+        '-e', '--edit-description',
+        help='You may replace topic description with yours')
+
     init_parser = main_subparsers.add_parser(
         'init',
         help='Initialize git-aflow for existing git repo',
@@ -175,5 +234,17 @@ def parse_args(args_list):
     elif args.subcommand == 'topic':
         if args.subsubcommand is None:
             topic_parser.print_help()
+            return None
+    elif args.subcommand == 'merge':
+        if args.merge_object is None and not args.topic:
+            merge_parser.error('Please, specify topics you wish to merge, or \
+one of [-u|-a] options.' + linesep)
+            merge_parser.print_usage()
+            return None
+        if args.merge_object is not None and args.topic:
+            merge_parser.error('Cannot process --all or --update with topic \
+list. You may choose to merge all topics from sources OR update your topics \
+OR specify a list of topics to merge.' + linesep)
+            merge_parser.print_usage()
             return None
     return args

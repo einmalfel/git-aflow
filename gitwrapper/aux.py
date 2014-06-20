@@ -1,5 +1,5 @@
-import subprocess
 import logging
+import subprocess
 
 
 def get_stdout(command_and_args):
