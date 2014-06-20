@@ -36,19 +36,25 @@ def parse_merge_headline(headline):
 parse_merge_headline.regexp = None
 
 
-def parse_topic_branch_name(name):
+def parse_topic_branch_name(name, raw_version=False, no_iteration=False):
     """Returns (iteration, name, version) tuple or None if cannot parse
     E.g.: iter/name_v produces ("iter", "name_v", 1), cause first version
     of topic doesn't have any suffix and suffix ends with number
     """
     if parse_topic_branch_name.regexp == None:
         parse_topic_branch_name.regexp =\
-            re.compile('^([^/]*)/(.*?)(?:_v(\d+))?$')
+            re.compile('^(?:([^/]+)/)?(.+?)(?:_v(\d+))?$')
     result = parse_topic_branch_name.regexp.search(name)
+    logging.debug('Parsing branch name ' + name + ' result: ' +
+                  (str(result.groups()) if result else ' failed'))
     if not result:
         return None
     groups = result.groups()
-    return (groups[0], groups[1], 1 if groups[2] == None else int(groups[2]))
+    if not no_iteration and not groups[0]:
+        return None
+    return (groups[0],
+        groups[1],
+        groups[2] if raw_version else (1 if not groups[2] else int(groups[2])))
 parse_topic_branch_name.regexp = None
 
 
