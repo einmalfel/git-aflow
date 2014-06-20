@@ -2,10 +2,27 @@
 
 
 import logging
+import re
 
 from gitwrapper import misc, branch, tag, commit
+from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, RELEASE_NAME
 
-from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
+
+def parse_branch_name(branch_name):
+    """Returns (iteration, name) tuple or (None, None) if cannot parse.
+    E.g.: parse_branch_name("master") produces (None, "master")
+    parse_branch_name("iter1/topic_v2") produces ("iter1", "topic_v2")
+    """
+    if branch_name == MASTER_NAME:
+        return (None, MASTER_NAME)
+    if parse_branch_name.regexp == None:
+        parse_branch_name.regexp =\
+            re.compile('^([^/]*)/(.*)$')
+    result = parse_branch_name.regexp.search(branch_name)
+    if not result:
+        return (None, None)
+    return result.groups()
+parse_branch_name.regexp = None
 
 
 def is_valid_iteration_name(name):
@@ -69,25 +86,25 @@ def get_current_iteration():
     TODO: Assuming user will not run git commands while git-af running, this
     func probably needs cache.
     """
-    branch = branch.get_current()
-    if branch:
-        if '/' in branch:
-            iteration = branch.split('/', 1)[0]
+    current_branch = branch.get_current()
+    if current_branch:
+        if '/' in current_branch:
+            iteration = current_branch.split('/', 1)[0]
             if is_iteration(iteration):
                 logging.info('found iteration ' + iteration + ' for branch ' +
-                              branch)
+                              current_branch)
                 return iteration
-    iterations = {tag.get_SHA(tag): tag
-             for tag in get_iteration_list()}
+    iterations = {tag.get_SHA(iter_tag): iter_tag
+             for iter_tag in get_iteration_list()}
     position = commit.get_current_SHA()
     while position:
         if position in iterations:
             logging.info('found latest iteration ' + iterations[position] +
-                         ' for branch ' + branch)
+                         ' for branch ' + position)
             return iterations[position]
         position = commit.get_main_ancestor(position)
     logging.critical('cannot get iteration for ' +
-                     (branch if branch else 'detached HEAD'))
+                     (current_branch if current_branch else 'detached HEAD'))
 
 
 def get_develop(iteration=None):
@@ -98,3 +115,23 @@ def get_develop(iteration=None):
 def get_staging(iteration=None):
     return ((iteration if iteration else get_current_iteration()) +
             '/' + STAGING_NAME)
+
+
+def is_staging(branch_name):
+    iteration, branch = parse_branch_name(branch_name)
+    return is_iteration(iteration) and branch == STAGING_NAME
+
+
+def is_develop(branch_name):
+    iteration, branch = parse_branch_name(branch_name)
+    return is_iteration(iteration) and branch == DEVELOP_NAME
+
+
+def is_master(branch_name):
+    iteration, branch = parse_branch_name(branch_name)
+    return branch_name == MASTER_NAME and iteration is None
+
+
+def is_release(branch_name):
+    iteration, branch = parse_branch_name(branch_name)
+    return is_iteration(iteration) and branch.startswith(RELEASE_NAME + '/')
