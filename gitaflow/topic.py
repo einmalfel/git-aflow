@@ -237,6 +237,11 @@ def topic_merges_in_history(name):
 
 def start(name):
     ci = iteration.get_current_iteration()
+    if ci is None:
+        print('Could not get current iteration, we are probably not in \
+git-aflow repo')
+        logging.info('No CI, stopping')
+        return False
     branch_name = ci + '/' + name
     logging.info('Checking name ' + branch_name)
     if not is_valid_topic_branch(branch_name):
