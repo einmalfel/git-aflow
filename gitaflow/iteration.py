@@ -2,11 +2,27 @@
 
 
 import logging
+import re
 
 from gitwrapper import misc, branch, tag, commit
 from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, RELEASE_NAME
 
 
+def parse_branch_name(branch_name):
+    """Returns (iteration, name) tuple or (None, None) if cannot parse.
+    E.g.: parse_branch_name("master") produces (None, "master")
+    parse_branch_name("iter1/topic_v2") produces ("iter1", "topic_v2")
+    """
+    if branch_name == MASTER_NAME:
+        return (None, MASTER_NAME)
+    if parse_branch_name.regexp == None:
+        parse_branch_name.regexp =\
+            re.compile('^([^/]*)/(.*)$')
+    result = parse_branch_name.regexp.search(branch_name)
+    if not result:
+        return (None, None)
+    return result.groups()
+parse_branch_name.regexp = None
 
 
 def is_valid_iteration_name(name):
