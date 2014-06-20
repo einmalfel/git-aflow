@@ -1,6 +1,7 @@
 """Iteration management functionality"""
 
-
+import atexit
+from functools import lru_cache
 import logging
 import re
 
@@ -62,6 +63,7 @@ def start_iteration(iteration_name):
         logging.critical('Failed to create iteration ' + iteration_name)
         return False
     print('Iteration ' + iteration_name + ' created successfully')
+    get_iteration_by_sha.cache_clear()
     return True
 
 
@@ -79,6 +81,7 @@ def get_iteration_list():
     return [t for t in tag.get_list() if is_iteration(t)]
 
 
+@lru_cache()
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
     position = sha
@@ -90,6 +93,8 @@ def get_iteration_by_sha(sha):
         position = commit.get_parent(position, 1)
     logging.warning('Cannot get iteration for ' + sha)
     return None
+atexit.register(lambda: logging.debug('get_iteration_by_SHA cache info:' +
+                                      str(get_iteration_by_sha.cache_info())))
 
 
 def get_iteration_by_branch(branch_name):
@@ -108,8 +113,6 @@ def get_current_iteration():
     """Calculates current iteration.
     We cannot store iteration in something like "current_iteration" tag, cause
     user may switch branches without git-aflow.
-    TODO: Assuming user will not run git commands while git-af running, this
-    func probably needs cache.
     """
     current_branch = branch.get_current()
     if current_branch:
