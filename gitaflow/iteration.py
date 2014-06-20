@@ -4,8 +4,9 @@
 import logging
 
 from gitwrapper import misc, branch, tag, commit
+from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, RELEASE_NAME
 
-from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
+
 
 
 def is_valid_iteration_name(name):
