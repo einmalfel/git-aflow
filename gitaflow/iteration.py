@@ -69,6 +69,8 @@ def start_iteration(iteration_name):
 
 def is_iteration(name):
     """Checks whether there is a base point with given name"""
+    if name is None:
+        return False
     result = (tag.exists(name) and
             branch.exists(get_develop(name)) and
             branch.exists(get_staging(name)))
