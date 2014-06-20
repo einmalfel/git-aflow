@@ -226,7 +226,8 @@ def topic_merges_in_history(name):
             if merged_to == MASTER_NAME:
                 result += [SHA]
             else:
-                mt_iteration, mt_branch = merged_to.split('/', 1)
+                mt_iteration, mt_branch =\
+                        iteration.parse_branch_name(merged_to)
                 if iteration.is_iteration(mt_iteration) and\
                     (mt_branch == DEVELOP_NAME or mt_branch == STAGING_NAME):
                     result += [SHA]
