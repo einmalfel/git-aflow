@@ -216,7 +216,7 @@ def topic_merges_in_history(name):
     heads += [iteration.get_staging(i) for i in iters]
     logging.info('Searching ' + name + ' in branches ' + str(heads))
     SHAs = commit.find(heads, True,
-                ["^Merge branch '[^/]*/" + name + ".*' into .*$"])
+                ["^Merge branch '[^/]+/" + name + "'.*$"])
     logging.debug('Found: ' + str(SHAs))
     result = []
     for SHA in SHAs:
