@@ -261,7 +261,8 @@ changes before starting topic')
     if intersection:
         print('You have some untracked files which you may loose when \
 switching to new topic branch. Please, delete or commit them. \
-Here they are: ' + ', '.join(intersection))
+Here they are: ' + ', '.join(intersection) + '.' + linesep +
+'Use "git clean" to remove all untracked files')
         logging.info('User may lose untracked file, stopping')
         return False
 
