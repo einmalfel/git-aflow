@@ -64,6 +64,35 @@ def parse_merge_headline(headline):
 parse_merge_headline.regexp = None
 
 
+def parse_revert_headline(headline):
+    """Returns (merged_branch, merged_into) tuple
+    E.g.: "Revert "Merge branch 'a/b_v2' into a/develop"" produces
+    ('a/b_v2', 'a/develop')
+    If cannot parse, return (None, None)
+    """
+    if parse_revert_headline.regexp == None:
+        parse_revert_headline.regexp = re.compile(
+            "^Revert \"Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?\"$")
+    re_result = parse_revert_headline.regexp.search(headline)
+    if not re_result:
+        re_result = re.search(
+            "^Revert \"Merge branch '([^/]*/.*)' into (.*)\"$",
+            headline)
+        if not re_result:
+            logging.warning('Failed to parse revert headline: ' + headline)
+            return (None, None)
+        else:
+            logging.warning('Warning: incorrect branch name: ' +
+                            re_result.groups()[1] + '. Which iteration does ' +
+                            'this branch belong to?')
+    if not re_result:
+        logging.warning('Failed to parse revert headline: ' + headline)
+        return (None, None)
+    result = re_result.groups()
+    return result if result[1] is not None else (result[0], 'master')
+parse_revert_headline.regexp = None
+
+
 def parse_topic_branch_name(name, raw_version=False, no_iteration=False):
     """Returns (iteration, name, version) tuple or None if cannot parse
     E.g.: iter/name_v produces ("iter", "name_v", 1), cause first version
