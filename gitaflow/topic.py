@@ -175,8 +175,14 @@ def is_valid_topic_branch(branch_name, topic_name=None):
     """If no topic name passed, checks if topic branch name is valid (iteration
     exists and branch name has correct format)
     Otherwise, also checks if it is valid branch name for given topic
+    TODO: check if there are releases with same name
     """
     if not misc.is_valid_ref_name(branch_name):
+        return False
+    if iteration.is_develop(branch_name) or\
+            iteration.is_master(branch_name) or\
+            iteration.is_release(branch_name) or\
+            iteration.is_staging(branch_name):
         return False
     result = parse_topic_branch_name(branch_name)
     logging.debug('Branch name parsed ' + str(result))
