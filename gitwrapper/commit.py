@@ -10,6 +10,10 @@ def get_headline(treeish):
     return get_stdout(['git', 'log', '--format=%s', '-n1', treeish])
 
 
+def get_full_message(treeish):
+    return get_stdout(['git', 'show', '--format=%B', '-s', treeish])
+
+
 def find(start_commits=[], first_parent=False,
                               regexps=[], match_all=False):
     """Searches for commits starting from start_commits and going to the
