@@ -6,12 +6,13 @@ import re
 from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
 
 
-def get_list(patterns=[]):
+def get_list(patterns=None):
     """ List all branches if pattern is empty list, branches matching any
-    pattern otherwise
+    pattern (shell wildcard) otherwise
     """
-    return re.sub('[ *]', '', get_stdout(['git', 'branch', '--list'] +
-                                         patterns)).splitlines()
+    output = get_stdout(['git', 'branch', '--list'] +
+                        (patterns if patterns else []))
+    return re.sub('[ *]', '', output).splitlines()
 
 
 def get_current():

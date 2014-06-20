@@ -50,7 +50,7 @@ def get_main_ancestor(treeish):
     return output if code == 0 else None
 
 
-def get_commits_between(treeish1, treeish2, reverse=False, regexps=[],
+def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
                         match_all=False):
     """Get list of commits between treeish1 and treeish2 in form of list of
     SHA including treeish2 and excluding treeish1.
@@ -62,10 +62,11 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=[],
     matching all regexps otherwise.
     """
     return get_stdout(['git', 'rev-list', '--ancestry-path', '--topo-order',
-        '--first-parent', treeish1 + '..' + treeish2] +
-            (['--reverse'] if reverse else []) +
-            (['--all-match'] if match_all else []) +
-            ['--grep=' + regexp for regexp in regexps]).splitlines()
+                      '--first-parent', treeish1 + '..' + treeish2] +
+                      (['--reverse'] if reverse else []) +
+                      (['--all-match'] if match_all else []) +
+                      (['--grep=' + r for r in regexps] if regexps else [])
+                      ).splitlines()
 
 
 def merge(treeish, description):
