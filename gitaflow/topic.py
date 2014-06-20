@@ -10,18 +10,30 @@ from . import iteration
 from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
 
 
-def parse_merge_commit_headline(headline):
+def parse_merge_headline(headline):
     """Returns (merged_branch, merged_into) tuple
     E.g.: "Merge branch 'a/b_v2' into a/develop" produces
     ('a/b_v2', 'a/develop')
-    If cannot parse, return None
+    If cannot parse, returns (None, None)
     """
-    if parse_merge_commit_headline.regexp == None:
-        parse_merge_commit_headline.regexp =\
-            re.compile("^Merge branch '([^/]*/.*)' into ([^/]*/.*)$")
-    result = parse_merge_commit_headline.regexp.search(headline)
-    return None if not result else result.groups()
-parse_merge_commit_headline.regexp = None
+    if parse_merge_headline.regexp == None:
+        parse_merge_headline.regexp =\
+            re.compile("^Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?$")
+    # when branch is merged into master headline does not contain "into.." part
+    re_result = parse_merge_headline.regexp.search(headline)
+    if not re_result:
+        re_result = re.search("^Merge branch '([^/]*/.*)' into (.*)?$",
+                              headline)
+        if not re_result:
+            logging.warning('Failed to parse merge headline: ' + headline)
+            return (None, None)
+        else:
+            logging.warning('Warning: incorrect branch name: ' +
+                            re_result.groups()[1] + '. Which iteration does ' +
+                            'this branch belong to?')
+    result = re_result.groups()
+    return result if result[1] is not None else (result[0], 'master')
+parse_merge_headline.regexp = None
 
 
 def parse_topic_branch_name(name):
@@ -83,7 +95,7 @@ def topic_merges_in_history(name):
     logging.debug('Found: ' + str(SHAs))
     result = []
     for SHA in SHAs:
-        branch, merged_to = parse_merge_commit_headline(
+        branch, merged_to = parse_merge_headline(
                                 commit.get_headline(SHA))
         if is_valid_topic_branch(branch, name):
             if merged_to == MASTER_NAME:
