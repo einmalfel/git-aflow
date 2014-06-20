@@ -93,6 +93,62 @@ def parse_revert_headline(headline):
 parse_revert_headline.regexp = None
 
 
+def get_merged_topics(treeish, iteration_name=None, recursive=False):
+    """List all topics which were merged in treeish and weren't reverted.
+    If you don't know branch iteration it will calculate it.
+    Returns list of tuple in order topics were merged.
+    Tuple format: (topic name, version, last commit SHA, type, description).
+    If several versions of topic founded returns all of them.
+    """
+    if not iteration_name:
+        iteration_name = iteration.parse_branch_name(treeish)[0]
+        if not iteration_name:
+            iteration_name = iteration.get_iteration_by_SHA(
+                                                    misc.rev_parse(treeish))
+    result = []
+    commits = commit.get_commits_between(iteration_name, treeish, True,
+                                         ['^Revert "Merge branch .*"$',
+                                          "^Merge branch .*$"])
+    for SHA in commits:
+        message = commit.get_full_message(SHA)
+        headline, topic_type, description = parse_merge_message(message)
+        if headline.startswith('Merge branch'):
+            merged_branch = parse_merge_headline(headline)[0]
+            if merged_branch:
+                tname, tversion = parse_topic_branch_name(merged_branch)[1:3]
+                # TODO handle revert revert case
+                tSHA = commit.get_parent(SHA, 2)
+                result += [(tname, tversion, tSHA, topic_type, description)]
+                logging.debug('Searching for topics in ' + treeish + ' Add ' +
+                              tname + ' version: ' + str(tversion) + ' SHA: ' +
+                              tSHA + ' description: ' + description +
+                              ' type: ' + topic_type)
+        elif headline.startswith('Revert "Merge branch '):
+            reverted_branch = parse_revert_headline(headline)[0]
+            if reverted_branch:
+                rname, rversion = parse_topic_branch_name(reverted_branch)[1:3]
+                for merged in result:
+                    if merged[0] == rname and merged[1] == rversion:
+                        result.remove(merged)
+                        logging.debug('Searching for topics in ' + treeish +
+                                      ' Remove ' + rname + ' version ' +
+                                      str(rversion))
+    if recursive:
+        recursive_result = []
+        for topic in result:
+            for merged_in_topic in get_merged_topics(topic[2], iteration_name,
+                                                     True) + [topic]:
+                for already_added in recursive_result:
+                    if (already_added[0] == merged_in_topic[0] and
+                            already_added[1] >= merged_in_topic[1]):
+                        break
+                else:
+                    recursive_result.append(merged_in_topic)
+        return recursive_result
+    else:
+        return result
+
+
 def parse_topic_branch_name(name, raw_version=False, no_iteration=False):
     """Returns (iteration, name, version) tuple or None if cannot parse
     E.g.: iter/name_v produces ("iter", "name_v", 1), cause first version
