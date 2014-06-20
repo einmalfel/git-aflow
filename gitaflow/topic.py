@@ -1,13 +1,41 @@
 """Topic management functionality"""
 
-
 import logging
+from os import linesep
 import re
 
 from gitwrapper import misc, branch, commit
-
 from . import iteration
-from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME
+from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
+    FIX_NAME, DEV_NAME, EUF_NAME
+
+
+def parse_merge_message(message):
+    """Parses merge commit message into tuple (headline, type, description).
+    If unable to parse, returns (None, None, None)
+    Merge commit format is:
+    "Merge branch....
+    FIX|DEV|EUF
+    Description
+    Description
+    ...."
+    If type is omitted sets it to EUF
+    """
+    headline = None
+    description = ''
+    topic_type = None
+    for line in message.splitlines():
+        if not headline:
+            headline = line
+        elif not type:
+            topic_type = line
+        else:
+            description = description + linesep + line if description else line
+    if topic_type not in (FIX_NAME, DEV_NAME, EUF_NAME):
+        if topic_type:
+            description = topic_type + linesep + description
+        topic_type = EUF_NAME
+    return (headline, topic_type, description)
 
 
 def parse_merge_headline(headline):
