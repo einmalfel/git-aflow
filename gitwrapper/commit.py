@@ -44,3 +44,12 @@ def get_main_ancestor(treeish):
     code, output = get_stdout_and_exit_code(['git', 'rev-parse',
                                              treeish + '^1'])
     return output if code == 0 else None
+
+
+def merge(treeish, description):
+    return 0 == get_exit_code(['git', 'merge', '--no-ff', '--no-edit', '-m',
+                            description, treeish])
+
+
+def abort_merge():
+    get_stdout(['git', 'merge', '--abort'])
