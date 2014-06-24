@@ -21,7 +21,8 @@ def parse_args(args_list):
 
     main_parser = argparse.ArgumentParser(
         prog='git-aflow',
-        description='Git-aflow helper tool')
+        description='Git-aflow helper tool. Use "git af SUBCOMMAND -h" to \
+learn more about using subcommands listed below')
     main_parser.add_argument(
         '--version', action='version', version='%(prog)s '
         + str(sys.modules['gitaflow'].VERSION))
@@ -135,7 +136,8 @@ may conflict with each other')
     merge_parser.add_argument(
         '-d', '--dependencies',
         action='store_true',
-        help='Merge topics specified as positional arguments. This is default.')
+        help="If topics specified to merge depend on other topics you don't \
+have in current branch those topics would be merged prior to specified ones")
     merge_type = merge_parser.add_mutually_exclusive_group()
     merge_type.add_argument(
         '-D', '--DEV', dest='merge_type',
@@ -153,11 +155,11 @@ may conflict with each other')
     merge_object.add_argument(
         '-a', '--all', dest='merge_object',
         action='store_const', const='all',
-        help='Merge all topics from source')
+        help='Merge all topics from source(s)')
     merge_object.add_argument(
         '-u', '--update', dest='merge_object',
         action='store_const', const='update',
-        help='Merge only topics which version in source is greater then \
+        help='Merge only topics which version in source(s) is greater then \
 version in current branch')
     merge_object.add_argument(
         '-c', '--choose', dest='merge_object',
@@ -167,7 +169,7 @@ version in current branch')
         'topic', nargs='*',
         help='List of topics to merge into current. It will merge topics of \
 given versions if they are present in sources or merge newest versions if no \
-version specified. E.g. git af merge topicA topicB_v2 merges latest version \
+versions specified. E.g. "git af merge topicA topicB_v2" merges latest version \
 of topicA and second version of topicB')
     merge_parser.add_argument(
         '-s', '--source', action='append',
@@ -177,7 +179,8 @@ in release branch, staging if you are in master and develop in other cases. \
 You may specify more then one source (e.g. -s source1 -ssource2)')
     merge_parser.add_argument(
         '-e', '--edit-description',
-        help='You may replace topic description with yours')
+        help='You may replace topic description with yours. This only works if \
+if single topic is specified to merge (with or without dependencies)')
 
     init_parser = main_subparsers.add_parser(
         'init',
