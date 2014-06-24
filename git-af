@@ -2,11 +2,12 @@
 
 
 import sys
+
 import gitaflow.args
 import gitaflow.execute
 
 
 if __name__ == '__main__':
-	args = gitaflow.args.parse_args(sys.argv[1:])
-	if args is not None:
-		gitaflow.execute.execute(args)
+    args = gitaflow.args.parse_args(sys.argv[1:])
+    if args is not None:
+        gitaflow.execute.execute(args)

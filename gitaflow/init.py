@@ -1,6 +1,5 @@
 """Git-aflow repo initialization functionality"""
 
-
 import logging
 import sys
 
