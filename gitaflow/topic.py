@@ -314,6 +314,12 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
  branch into which you are going to merge, e.g. "git af checkout staging"')
         logging.info('No CB, stopping')
         return False
+    if (merge_type or description) and (not topics or len(topics) != 1):
+        print('If you are going to specify topic description and/or type, ' +
+              'you should merge one single topic')
+        logging.info('If you are going to specify topic description and/or ' +
+                     'type, you should merge one single topic')
+        return False
     if not misc.is_working_tree_clean():
         print('Your working tree is dirty. Please, stash or reset your \
 changes before merge')
