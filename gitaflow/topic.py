@@ -311,7 +311,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     cb = branch.get_current()
     if not cb:
         print('Cannot merge while in detached head state. Please check out a\
- branch into which you are going to merge, e.g. "git af merge staging"')
+ branch into which you are going to merge, e.g. "git af checkout staging"')
         logging.info('No CB, stopping')
         return False
     if not misc.is_working_tree_clean():
