@@ -10,7 +10,6 @@ ArgumentParser
 
 import argparse
 import sys
-from os import linesep
 
 
 def parse_args(args_list):
@@ -207,13 +206,9 @@ from the top of master branch')
     elif args.subcommand == 'merge':
         if args.merge_object is None and not args.topic:
             merge_parser.error('Please, specify topics you wish to merge, or \
-one of [-u|-a] options.' + linesep)
-            merge_parser.print_usage()
-            return None
+one of [-u|-a] options.')
         if args.merge_object is not None and args.topic:
             merge_parser.error('Cannot process --all or --update with topic \
 list. You may choose to merge all topics from sources OR update your topics \
-OR specify a list of topics to merge.' + linesep)
-            merge_parser.print_usage()
-            return None
+OR specify a list of topics to merge.')
     return args
