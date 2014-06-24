@@ -396,7 +396,10 @@ contain only master and branches from current iteration')
                         newest = source_topic
                 if newest[0]:
                     if is_topic_newer(newest, own_topics + topics_to_merge):
-                        topics_to_merge += [newest]
+                        add = [newest[0], newest[1], newest[2],
+                               merge_type if merge_type else newest[3],
+                               description if description else newest[4]]
+                        topics_to_merge.append(add)
                     else:
                         logging.info('We already have same or newer version ' +
                                      'of ' + topic + ' in ' + cb)
@@ -420,7 +423,12 @@ contain only master and branches from current iteration')
                     if ((tname, int(tversion)) == source_topic[:2] and
                             is_topic_newer(source_topic,
                                            topics_to_merge + own_topics)):
-                        topics_to_merge += [source_topic]
+                        add = [source_topic[0],
+                               source_topic[1],
+                               source_topic[2],
+                               merge_type if merge_type else source_topic[3],
+                               description if description else source_topic[4]]
+                        topics_to_merge.append(add)
                         break
                 else:
                     logging.info('No topic ' + topic + ' in sources ' +
