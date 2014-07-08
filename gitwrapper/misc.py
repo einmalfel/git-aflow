@@ -43,6 +43,10 @@ def in_git_repo():
     return 0 == get_exit_code(['git', 'rev-parse', '--git-dir'])
 
 
+def get_git_dir():
+    return get_stdout(['git', 'rev-parse', '--git-dir'])
+
+
 def rev_parse(treeish):
     return get_stdout(['git', 'rev-parse', treeish])
 
