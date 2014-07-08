@@ -90,8 +90,8 @@ def get_iteration_by_sha(sha):
     position = sha
     while position:
         if position in iterations:
-            logging.info('found latest iteration ' + iterations[position] +
-                         ' for SHA ' + sha + ' BP: ' + position)
+            logging.debug('found latest iteration ' + iterations[position] +
+                          ' for SHA ' + sha + ' BP: ' + position)
             return iterations[position]
         position = commit.get_parent(position, 1)
     logging.warning('Cannot get iteration for ' + sha)
@@ -103,8 +103,8 @@ atexit.register(lambda: logging.debug('get_iteration_by_SHA cache info:' +
 def get_iteration_by_branch(branch_name):
     iteration = parse_branch_name(branch_name)[0]
     if is_iteration(iteration):
-        logging.info('found iteration ' + iteration + ' for branch ' +
-                     branch_name)
+        logging.debug('found iteration ' + iteration + ' for branch ' +
+                      branch_name)
         return iteration
     if branch.exists(branch_name):
         return get_iteration_by_sha(branch.get_head_sha(branch_name))
