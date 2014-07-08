@@ -6,7 +6,8 @@ import logging
 import re
 
 from gitwrapper import misc, branch, tag, commit
-from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, RELEASE_NAME
+from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
+    RELEASE_NAME
 
 
 def parse_branch_name(branch_name):

@@ -6,7 +6,7 @@ import re
 import itertools
 
 from gitwrapper import misc, branch, commit
-from . import iteration
+from gitaflow import iteration
 from .constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     FIX_NAME, DEV_NAME, EUF_NAME
 
