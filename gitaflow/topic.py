@@ -3,6 +3,7 @@
 import logging
 from os import linesep
 import re
+import itertools
 
 from gitwrapper import misc, branch, commit
 from . import iteration
@@ -728,27 +729,32 @@ def topic_merges_in_history(name):
 def start(name):
     ci = iteration.get_current_iteration()
     if ci is None:
-        print('Could not get current iteration, we are probably not in \
-git-aflow repo')
+        print('Could not get current iteration, we are probably not in ' +
+              'git-aflow repo')
         logging.info('No CI, stopping')
         return False
+
+    topic = Topic(name)
     branch_name = ci + '/' + name
+
     logging.info('Checking name ' + branch_name)
-    if not is_valid_topic_branch(branch_name):
+    if not topic.is_branch_name_valid(branch_name):
         print('Please correct topic name. "..", "~", "^", ":", "?", "*", ' +
               '"[", "@", "\", spaces and ASCII control characters' +
               ' are not allowed. Input something like "fix_issue18" or ' +
               '"do_api_refactoring"')
         logging.info('Wrong topic name. Stopping')
         return False
+
     logging.info('Check working tree')
     if not misc.is_working_tree_clean():
-        print('Your working tree is dirty. Please, stash or reset your \
-changes before starting topic')
+        print('Your working tree is dirty. Please, stash or reset your ' +
+              'changes before starting topic')
         logging.info('Working tree is dirty stopping, stopping')
         return False
-    intersection = frozenset(misc.get_untracked_files()) &\
-        frozenset(misc.list_files_differ('HEAD', ci))
+
+    intersection = (frozenset(misc.get_untracked_files()) &
+                    frozenset(misc.list_files_differ('HEAD', ci)))
     if intersection:
         print('You have some untracked files which you may loose when ' +
               'switching to new topic branch. Please, delete or commit them. ' +
@@ -758,15 +764,15 @@ changes before starting topic')
         return False
 
     logging.info('Check if there is branch for this topic already')
-    branches = topic_branches(name)
+    branches = topic.get_branches()
     if branches:
         print('Cannot start topic, there are already branches: ' +
-              str(branches))
+              ', '.join(branches))
         logging.info('Topic branches with given name exists, stopping')
         return False
 
     logging.info('Ok, now check if there was such topic somewhere in history')
-    shas = topic_merges_in_history(name)
+    shas = topic.get_all_merges()
     if shas:
         print('Cannot start topic, it already exists in history, see SHA: ' +
               ', '.join(shas))
@@ -775,16 +781,15 @@ changes before starting topic')
 
     logging.info('All good, creating branch ' + branch_name)
     if not branch.create(branch_name, ci):
-        logging.critical("Something went wrong, cannot create \
-topic branch")
+        logging.critical('Something went wrong, cannot create topic branch')
         return False
     if misc.checkout(branch_name):
         print('Topic ' + name + ' created. You are in ' + branch_name +
               ' branch')
         return True
     else:
-        logging.critical("Something went wrong, cannot checkout \
-topic branch. Deleting branch and stopping")
+        logging.critical('Something went wrong, cannot checkout ' +
+                         'topic branch. Deleting branch and stopping')
         branch.delete(branch_name)
         return False
 
@@ -803,29 +808,35 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
           topics=None, description=None):
     cb = branch.get_current()
     if not cb:
-        print('Cannot merge while in detached head state. Please check out a\
- branch into which you are going to merge, e.g. "git af checkout staging"')
+        print('Cannot merge while in detached head state. Please check out a ' +
+              'branch into which you are going to merge, e.g. "git af ' +
+              'checkout staging"')
         logging.info('No CB, stopping')
         return False
+
     if (merge_type or description) and (not topics or len(topics) != 1):
         print('If you are going to specify topic description and/or type, ' +
               'you should merge one single topic')
         logging.info('If you are going to specify topic description and/or ' +
                      'type, you should merge one single topic')
         return False
+
     if not misc.is_working_tree_clean():
-        print('Your working tree is dirty. Please, stash or reset your \
-changes before merge')
+        print('Your working tree is dirty. Please, stash or reset your ' +
+              'changes before merge')
+
     ci = iteration.get_current_iteration()
     if ci is None:
-        print('Cannot get current iteration, we are probably not in \
-git-aflow repo')
+        print('Cannot get current iteration, we are probably not in ' +
+              'git-aflow repo')
         logging.info('No CI, stopping')
         return False
+
     if iteration.is_develop(cb):
         print('You cannot merge into develop, use git af topic finish instead')
         logging.info('Merge to develop, stopping')
         return False
+
     if not sources:
         if iteration.is_master(cb):
             sources = [STAGING_NAME]
@@ -833,76 +844,99 @@ git-aflow repo')
             sources = [MASTER_NAME, STAGING_NAME]
         else:
             sources = [DEVELOP_NAME]
+        logging.info('Auto-sources: ' + ', '.join(sources))
 
-    # expand and check sources
-    # TODO: sources may also contain topics w/o TB and raw SHA to merge from
     for idx, source in enumerate(sources):
         if (not source == MASTER_NAME and not source.startswith(ci + '/') and
                 not branch.exists(source)):
             sources[idx] = ci + '/' + source
+            logging.info('Correcting ' + source + ' to ' + sources[idx])
         if (not branch.exists(sources[idx]) or
                 not ci == iteration.get_iteration_by_branch(sources[idx])):
-            print('Cannot find branch ' + sources[idx] + '. Note: sources may \
-contain only master and branches from current iteration')
+            print('Cannot find branch ' + sources[idx] +
+                  '. Note: sources may contain only master and branches from ' +
+                  'current iteration')
             logging.info('Source ' + sources[idx] + " doesn't exist, stopping")
             return False
 
-    own_topics = get_merged_topics(cb, ci)
-    current_topic = parse_topic_branch_name(cb)
-    if current_topic:
-        own_topics.append((current_topic[1], current_topic[2], None, None,
-                           None))
-    topics_to_merge = []
+    own_merges = TopicMerge.get_effective_merges_in(cb)
+    current_revision = TopicRevision.from_branch_name(cb)
+    if ((not current_revision or not current_revision.iteration) and
+            not iteration.is_master(cb) and not iteration.is_staging(cb) and
+            not iteration.is_release(cb)):
+        if commit.get_current_sha() == misc.rev_parse(ci):
+            logging.info('Current branch is unknown, but it is empty so it is' +
+                         ' safe to merge')
+        else:
+            logging.info('We are in unknown branch now: ' + cb +
+                         '. Checking if it is based on some topic')
+            d_merges = TopicMerge.get_all_merges_in(iteration.get_develop())
+            for sha in commit.get_commits_between(ci, cb):
+                for m in d_merges:
+                    if m.rev.SHA == sha:
+                        current_revision = m.rev
+                        logging.warning('Current branch is based on ' +
+                                        current_revision.get_branch_name() +
+                                        '. Will exclude it from merge')
+                        break
+            else:
+                logging.info('This branch is not based on any known topic, ' +
+                             'so proceed as is')
+    else:
+        if not current_revision.iteration:
+            current_revision.iteration = ci
+    if current_revision:
+        # Make virtual merge of current topic
+        current_revision_merge = TopicMerge(current_revision, None, None, None,
+                                            None)
+        own_merges.append(current_revision_merge)
+
+    merges_to_commit = []
 
     if merge_object == 'all':
         for source in sources:
-            for topic in get_merged_topics(source, ci):
-                if is_topic_newer(topic, own_topics + topics_to_merge):
-                    topics_to_merge.append(topic)
-                    logging.debug('Adding to merge ' + topic[0] + '_v' +
-                                  str(topic[1]))
+            for m in TopicMerge.get_effective_merges_in(source):
+                if m.is_newest_in(own_merges + merges_to_commit):
+                    merges_to_commit.append(m)
+                    logging.debug('Adding to merge ' + str(m))
                 else:
-                    logging.debug('Already have this version of ' +
-                                  topic[0] + '_v' + str(topic[1]))
+                    logging.debug('Already have this version of ' + str(m))
     elif merge_object == 'update':
         for source in sources:
-            for topic in get_merged_topics(source, ci):
+            for m in TopicMerge.get_effective_merges_in(source):
                 add = False
-                for already_have in own_topics + topics_to_merge:
-                    if topic[0] == already_have[0]:
-                        if topic[1] > already_have[1]:
+                for already_have in own_merges + merges_to_commit:
+                    if m.rev.topic == already_have.rev.topic:
+                        if m.rev.version > already_have.rev.version:
                             add = True
                         else:
                             logging.debug('Already have this version of ' +
-                                          topic[0] + '. Ours: ' +
-                                          str(already_have[1]) + ' theirs: ' +
-                                          str(topic[1]))
+                                          already_have.rev.topic.name +
+                                          '. Ours: ' + str(already_have) +
+                                          ' theirs: ' + str(m))
                             break
-                    else:
-                        if add:  # if no break and it's newer then ours
-                            topics_to_merge.append(topic)
-                            logging.debug('Adding to merge ' + topic[0] +
-                                          '_v' + str(topic[1]))
+                else:
+                    if add:  # if no break and this one (m) is newer then ours
+                        merges_to_commit.append(m)
+                        logging.debug('Adding to merge ' + str(m))
     elif merge_object is None:
-        source_topics = [t for s in sources for t in get_merged_topics(s, ci)]
-        logging.debug('Source topics: ' + str(source_topics))
+        source_merges = list(itertools.chain.from_iterable(
+            [TopicMerge.get_effective_merges_in(s) for s in sources]))
+        logging.debug('Source merges: ' +
+                      ', '.join(str(m) for m in source_merges))
         for topic in topics:
-            tname, tversion = parse_topic_branch_name(topic, True, True)[1:]
-            if not tversion:
-                newest = (None, -1, None, None, None)
-                for source_topic in source_topics:
-                    if (tname == source_topic[0] and
-                            newest[1] < source_topic[1]):
-                        newest = source_topic
-                if newest[0]:
-                    if is_topic_newer(newest, own_topics + topics_to_merge):
-                        add = [newest[0], newest[1], newest[2],
-                               merge_type if merge_type else newest[3],
-                               description if description else newest[4]]
-                        topics_to_merge.append(add)
+            revision = TopicRevision.from_branch_name(topic)
+            if not revision.iteration:
+                revision.iteration = ci
+            if revision.default_version:
+                last_merge = revision.topic.get_latest_merge(source_merges)
+                if last_merge:
+                    if last_merge.is_newest_in(own_merges + merges_to_commit):
+                        merges_to_commit.append(last_merge)
                     else:
                         logging.info('We already have same or newer version ' +
-                                     'of ' + topic + ' in ' + cb)
+                                     'of ' + last_merge.rev.topic.name +
+                                     'in ' + cb)
                         print('We already have same or newer version ' +
                               'of ' + topic + ' in ' + cb)
                 else:
@@ -912,23 +946,9 @@ contain only master and branches from current iteration')
                           ', '.join(sources))
                     return False
             else:
-                if not is_topic_newer([tname, int(tversion), None, None, None],
-                                      own_topics):
-                    logging.info('We already have same or newer version of ' +
-                                 topic + ' in ' + cb)
-                    print('We already have same or newer version of ' +
-                          topic + ' in ' + cb + '. Skipping..')
-                    continue
-                for source_topic in source_topics:
-                    if ((tname, int(tversion)) == source_topic[:2] and
-                            is_topic_newer(source_topic,
-                                           topics_to_merge + own_topics)):
-                        add = [source_topic[0],
-                               source_topic[1],
-                               source_topic[2],
-                               merge_type if merge_type else source_topic[3],
-                               description if description else source_topic[4]]
-                        topics_to_merge.append(add)
+                for m in source_merges:
+                    if m.rev == revision:
+                        merge_found = m
                         break
                 else:
                     logging.info('No topic ' + topic + ' in sources ' +
@@ -936,75 +956,79 @@ contain only master and branches from current iteration')
                     print('Merge failed. No topic ' + topic + ' in sources ' +
                           ', '.join(sources))
                     return False
+                if not m.is_newest_in(own_merges + merges_to_commit):
+                    logging.info('We already have same or newer version of ' +
+                                 topic + ' in ' + cb)
+                    print('We already have same or newer version of ' +
+                          topic + ' in ' + cb + '. Skipping..')
+                    continue
+                merges_to_commit.append(merge_found)
+        if description:
+            merges_to_commit[0].description = description
+        if merge_type:
+            merges_to_commit[0].type = merge_type
     else:
         logging.critical('Unknown merge object ' + str(merge_object))
 
-    logging.info('Topics to merge: ' +
-                 ', '.join([t[0] + '_v' + str(t[1]) for t in topics_to_merge]) +
-                 '. Checking dependencies now...')
-    if not topics_to_merge:
+    if not merges_to_commit:
         logging.info('Zero topics specified for merge!')
         print('There is nothing to merge.')
         return False
+    logging.info(
+        'Topics to merge: ' +
+        ', '.join([m.rev.get_branch_name() for m in merges_to_commit]) +
+        '. Checking dependencies now...')
 
-    topics_with_deps = []
-    for topic in topics_to_merge:
-        logging.debug('Processing topic ' + topic[0] + '_v' + str(topic[1]))
-        for dependency in get_merged_topics(topic[2], ci, True):
-            logging.debug('Processing dep ' + dependency[0] + '_v' +
-                          str(dependency[1]))
-            for topic_d in topics_with_deps + own_topics:
-                if (topic_d[0] == dependency[0] and
-                        topic_d[1] >= dependency[1]):
-                    break
-            else:
+    merges_with_deps = []
+    for m in merges_to_commit:
+        logging.debug('Dependency search for ' + m.rev.get_branch_name())
+        for dependency in m.rev.get_effective_merges(True):
+            logging.debug('Processing dependency ' +
+                          dependency.rev.get_branch_name())
+            if dependency.is_newest_in(own_merges + merges_with_deps):
                 if dependencies:
-                    topics_with_deps.append(dependency)
+                    merges_with_deps.append(dependency)
                 else:
-                    print('Merge failed. Topic ' + topic[0] + '_v' +
-                          str(topic[1]) + ' depends on ' + dependency[0] +
-                          '_v' + str(dependency[1]) + '. Try merge it first ' +
-                          'or use "git af merge -d" to merge dependencies ' +
-                          'automatically')
-                    logging.info('Merge failed. Topic ' + topic[0] + '_v' +
-                                 str(topic[1]) + ' depends on ' +
-                                 dependency[0] + '_v' + str(dependency[1]))
+                    print('Merge failed. Topic ' +
+                          m.rev.get_branch_name() + ' depends on ' +
+                          dependency.rev.get_branch_name() +
+                          '. Try merge it first or use "git af merge -d" to ' +
+                          'merge dependencies automatically')
+                    logging.info('Merge failed. Topic ' +
+                                 m.rev.get_branch_name() + ' depends on ' +
+                                 dependency.rev.get_branch_name())
                     return False
-        topics_with_deps.append(topic)
+        merges_with_deps.append(m)
 
     logging.info('Topics with dependencies: ' +
-                 ', '.join([t[0] + '_v' + str(t[1]) for t in topics_with_deps])
+                 ', '.join([m.rev.get_branch_name() for m in merges_with_deps])
                  + '. Merging now...')
 
-    for idx, topic in enumerate(topics_with_deps):
-        # TODO: handle reverted merges
-        logging.debug('Merging ' + topic[0] + '_v' + str(topic[1]))
-        if not commit.merge(topic[2], "Merge branch '" + ci + '/' + topic[0] +
-                            '_v' + str(topic[1]) + "' into " + cb +
-                            linesep + topic[3] + linesep + topic[4]):
-            if (iteration.is_develop(cb) or iteration.is_master(cb) or
-                    iteration.is_staging(cb) or iteration.is_release(cb)):
-                logging.critical('Merge of ' + topic[0] + '_v' + str(topic[1]) +
+    for idx, m in enumerate(merges_with_deps):
+        logging.debug('Merging ' + m.rev.get_branch_name())
+        if not m.merge():
+            if (iteration.is_master(cb) or iteration.is_staging(cb) or
+                    iteration.is_release(cb)):
+                logging.critical('Merge of ' + m.rev.get_branch_name() +
                                  ' failed. Something went wrong, did not ' +
                                  'expect conflict there(' + cb + '). Please ' +
                                  'check carefully what you are doing. ' +
                                  'Aborting merge.')
                 commit.abort_merge()
-            logging.info('Merge of ' + topic[0] + '_v' + str(topic[1]) +
-                         ' failed.')
-            print('Merge of ' + topic[0] + '_v' + str(topic[1]) + ' failed. ' +
+            logging.info('Merge of ' + m.rev.get_branch_name() + ' failed')
+            print('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
                   'See conflicted files via "git status", resolve conflicts, ' +
                   'add files to index ("git add") and do ' +
                   '"git commit --no-edit" to finish the merge.')
-            if idx + 1 < len(topics_with_deps):
+            if idx + 1 < len(merges_with_deps):
+                remain = merges_with_deps[idx + 1:]
                 print('Then call "git af merge [topics]" again to merge ' +
                       'remaining topics. Topics remaining to merge: ' +
-                      ', '.join([t[0] + '_v' + str(t[1]) for t in
-                                topics_with_deps[idx + 1:]]))
-            print('Alternatively, you may abort current merge via' +
+                      ', '.join([r.rev.get_branch_name() for r in remain]))
+            print('Alternatively, you may abort failed merge via ' +
                   '"git merge --abort"')
             return False
         else:
-            print(topic[0] + '_v' + str(topic[1]) + ' merged successfully')
+            print(m.rev.get_branch_name() + ' merged successfully')
 
     return True
