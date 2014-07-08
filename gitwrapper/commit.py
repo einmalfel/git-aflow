@@ -76,3 +76,30 @@ def merge(treeish, description):
 
 def abort_merge():
     get_stdout(['git', 'merge', '--abort'])
+
+
+def revert(treeish, parent=None, no_commit=False):
+    result = get_exit_code(['git', 'revert', treeish] +
+                           (['-m' + str(parent)] if parent else []) +
+                           (['-n'] if no_commit else []))
+    if result not in (0, 1):
+        logging.critical('Git revert returns strange error code ' + str(result))
+    return result == 0
+
+
+def abort_revert():
+    return 0 == get_exit_code(['git', 'revert', '--abort'])
+
+
+def commit(message=None, allow_epty=False):
+    result = get_exit_code(['git', 'commit', '--no-edit'] +
+                           (['-m' + message] if message else []) +
+                           (['--allow-empty'] if allow_epty else []))
+    if result == 0:
+        return True
+    else:
+        if result == 128:
+            logging.info('Commit failed probably due to unresolved conflicts')
+        else:
+            logging.critical('Failed to commit, git commit exit code:' + result)
+        return False
