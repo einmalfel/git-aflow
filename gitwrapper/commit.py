@@ -91,10 +91,10 @@ def abort_revert():
     return 0 == get_exit_code(['git', 'revert', '--abort'])
 
 
-def commit(message=None, allow_epty=False):
+def commit(message=None, allow_empty=False):
     result = get_exit_code(['git', 'commit', '--no-edit'] +
                            (['-m' + message] if message else []) +
-                           (['--allow-empty'] if allow_epty else []))
+                           (['--allow-empty'] if allow_empty else []))
     if result == 0:
         return True
     else:
