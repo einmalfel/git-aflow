@@ -4,6 +4,7 @@ import itertools
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
 from gitaflow.topic import TopicRevision, TopicMerge
+from gitaflow.common import say, die
 from gitwrapper import branch, misc, commit
 
 
@@ -11,34 +12,25 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
           topics=None, description=None):
     cb = branch.get_current()
     if not cb:
-        print('Cannot merge while in detached head state. Please check out a ' +
-              'branch into which you are going to merge, e.g. "git af ' +
-              'checkout staging"')
-        logging.info('No CB, stopping')
-        return False
+        die('Cannot merge while in detached head state. Please check out a ' +
+            'branch into which you are going to merge, e.g. "git af ' +
+            'checkout staging"')
 
     if (merge_type or description) and (not topics or len(topics) != 1):
-        print('If you are going to specify topic description and/or type, ' +
-              'you should merge one single topic')
-        logging.info('If you are going to specify topic description and/or ' +
-                     'type, you should merge one single topic')
-        return False
+        die('If you are going to specify topic description and/or type, ' +
+            'you should merge one single topic')
 
     if not misc.is_working_tree_clean():
-        print('Your working tree is dirty. Please, stash or reset your ' +
-              'changes before merge')
+        die('Your working tree is dirty. Please, stash or reset your ' +
+            'changes before merge')
 
     ci = iteration.get_current_iteration()
     if ci is None:
-        print('Cannot get current iteration, we are probably not in ' +
-              'git-aflow repo')
-        logging.info('No CI, stopping')
-        return False
+        die('Cannot get current iteration, we are probably not in ' +
+            'git-aflow repo')
 
     if iteration.is_develop(cb):
-        print('You cannot merge into develop, use git af topic finish instead')
-        logging.info('Merge to develop, stopping')
-        return False
+        die('You cannot merge into develop, use git af topic finish instead')
 
     if not sources:
         if iteration.is_master(cb):
@@ -56,11 +48,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             logging.info('Correcting ' + source + ' to ' + sources[idx])
         if (not branch.exists(sources[idx]) or
                 not ci == iteration.get_iteration_by_branch(sources[idx])):
-            print('Cannot find branch ' + sources[idx] +
-                  '. Note: sources may contain only master and branches from ' +
-                  'current iteration')
-            logging.info('Source ' + sources[idx] + " doesn't exist, stopping")
-            return False
+            die('Cannot find branch ' + sources[idx] + '. Note: sources may ' +
+                'contain only master and branches from current iteration')
 
     own_merges = TopicMerge.get_effective_merges_in(cb)
     current_revision = TopicRevision.from_branch_name(cb)
@@ -137,17 +126,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     if last_merge.is_newest_in(own_merges + merges_to_commit):
                         merges_to_commit.append(last_merge)
                     else:
-                        logging.info('We already have same or newer version ' +
-                                     'of ' + last_merge.rev.topic.name +
-                                     'in ' + cb)
-                        print('We already have same or newer version ' +
-                              'of ' + topic + ' in ' + cb)
+                        say('We already have same or newer version ' +
+                            'of ' + topic + ' in ' + cb)
                 else:
-                    logging.info('No topic ' + topic + ' in sources ' +
-                                 ', '.join(sources) + '. Stopping')
-                    print('Merge failed. No topic ' + topic + ' in sources ' +
-                          ', '.join(sources))
-                    return False
+                    die('Merge failed. No topic ' + topic + ' in sources ' +
+                        ', '.join(sources))
             else:
                 for m in source_merges:
                     if m.rev == revision:
@@ -174,9 +157,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         logging.critical('Unknown merge object ' + str(merge_object))
 
     if not merges_to_commit:
-        logging.info('Zero topics specified for merge!')
-        print('There is nothing to merge.')
-        return False
+        die('There is nothing to merge.')
     logging.info(
         'Topics to merge: ' +
         ', '.join([m.rev.get_branch_name() for m in merges_to_commit]) +
@@ -192,15 +173,10 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 if dependencies:
                     merges_with_deps.append(dependency)
                 else:
-                    print('Merge failed. Topic ' +
-                          m.rev.get_branch_name() + ' depends on ' +
-                          dependency.rev.get_branch_name() +
-                          '. Try merge it first or use "git af merge -d" to ' +
-                          'merge dependencies automatically')
-                    logging.info('Merge failed. Topic ' +
-                                 m.rev.get_branch_name() + ' depends on ' +
-                                 dependency.rev.get_branch_name())
-                    return False
+                    die('Merge failed. Topic ' + m.rev.get_branch_name() +
+                        ' depends on ' + dependency.rev.get_branch_name() +
+                        '. Try merge it first or use "git af merge -d" to ' +
+                        'merge dependencies automatically')
         merges_with_deps.append(m)
 
     logging.info('Topics with dependencies: ' +
@@ -212,26 +188,23 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         if not m.merge():
             if (iteration.is_master(cb) or iteration.is_staging(cb) or
                     iteration.is_release(cb)):
-                logging.critical('Merge of ' + m.rev.get_branch_name() +
-                                 ' failed. Something went wrong, did not ' +
-                                 'expect conflict there(' + cb + '). Please ' +
-                                 'check carefully what you are doing. ' +
-                                 'Aborting merge.')
                 commit.abort_merge()
-            logging.info('Merge of ' + m.rev.get_branch_name() + ' failed')
-            print('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
-                  'See conflicted files via "git status", resolve conflicts, ' +
-                  'add files to index ("git add") and do ' +
-                  '"git commit --no-edit" to finish the merge.')
+                die('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
+                    'Something went wrong, did not expect conflict there(' +
+                    cb + '). Please check carefully what you are doing. ' +
+                    'Merge aborted.')
+            say('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
+                'See conflicted files via "git status", resolve conflicts, ' +
+                'add files to index ("git add") and do ' +
+                '"git commit --no-edit" to finish the merge.')
             if idx + 1 < len(merges_with_deps):
                 remain = merges_with_deps[idx + 1:]
-                print('Then call "git af merge [topics]" again to merge ' +
-                      'remaining topics. Topics remaining to merge: ' +
-                      ', '.join([r.rev.get_branch_name() for r in remain]))
-            print('Alternatively, you may abort failed merge via ' +
-                  '"git merge --abort"')
-            return False
+                say('Then call "git af merge [topics]" again to merge ' +
+                    'remaining topics. Topics remaining to merge: ' +
+                    ', '.join([r.rev.get_branch_name() for r in remain]))
+            die('Alternatively, you may abort failed merge via ' +
+                '"git merge --abort"')
         else:
-            print(m.rev.get_branch_name() + ' merged successfully')
+            say(m.rev.get_branch_name() + ' merged successfully')
 
     return True

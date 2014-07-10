@@ -4,6 +4,7 @@ import atexit
 from functools import lru_cache
 import logging
 import re
+from gitaflow.common import die, say
 
 from gitwrapper import misc, branch, tag, commit
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
@@ -35,25 +36,20 @@ def is_valid_iteration_name(name):
 def start_iteration(iteration_name):
     for tag_ in tag.find_by_target(MASTER_NAME):
         if is_iteration(tag_):
-            print('There is already an iteration ' + tag_ +
-                  ' started from the top of master branch')
-            return False
+            die('There is already an iteration ' + tag_ +
+                ' started from the top of master branch')
     if not is_valid_iteration_name(iteration_name):
-        print('Please, correct your iteration name. "..", "~", "^", ":", "?",' +
-              ' "*", "[", "@", "\", spaces and ASCII control characters' +
-              ' are not allowed. Input something like "iter_1" or "start"')
-        return False
+        die('Please, correct your iteration name. "..", "~", "^", ":", "?",' +
+            ' "*", "[", "@", "\", spaces and ASCII control characters' +
+            ' are not allowed. Input something like "iter_1" or "start"')
     develop_name = get_develop(iteration_name)
     staging_name = get_staging(iteration_name)
     if tag.exists(iteration_name):
-        print('Cannot start iteration, tag ' + iteration_name + ' exists')
-        return False
+        die('Cannot start iteration, tag ' + iteration_name + ' exists')
     if branch.exists(develop_name):
-        print('Cannot start iteration, branch + ' + develop_name + ' exists')
-        return False
+        die('Cannot start iteration, branch + ' + develop_name + ' exists')
     if branch.exists(staging_name):
-        print('Cannot start iteration, branch + ' + staging_name + ' exists')
-        return False
+        die('Cannot start iteration, branch + ' + staging_name + ' exists')
     if not (tag.create(iteration_name, MASTER_NAME) and
             branch.create(develop_name, MASTER_NAME) and
             branch.create(staging_name, MASTER_NAME)):
@@ -62,7 +58,7 @@ def start_iteration(iteration_name):
         branch.delete(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
         return False
-    print('Iteration ' + iteration_name + ' created successfully')
+    say('Iteration ' + iteration_name + ' created successfully')
     get_iteration_by_sha.cache_clear()
     return True
 
