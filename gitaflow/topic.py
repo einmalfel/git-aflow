@@ -171,10 +171,12 @@ class TopicRevision:
                     last_merge.description = description
                 if type_:
                     last_merge.type = type_
-                if not misc.set_merge_msg(last_merge.get_message()):
-                    logging.critical('Failed to set MERGE_MSG')
+                try:
+                    misc.set_merge_msg(last_merge.get_message())
+                except:
                     commit.abort_revert()
-                    return None
+                    logging.critical('Failed to set MERGE_MSG for revert')
+                    raise
                 if not result:
                     return None
                 else:
@@ -199,8 +201,12 @@ class TopicRevision:
                 return new_merge
             else:
                 # don't let git to add "Conflicts:" section
-                misc.set_merge_msg(message)
-                return None
+                try:
+                    misc.set_merge_msg(message)
+                except:
+                    commit.abort_merge()
+                    logging.critical('Failed to set MERGE_MSG for merge')
+                    raise
 
     def is_newest_in(self, array_of_revisions):
         for rev in array_of_revisions:

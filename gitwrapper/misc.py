@@ -3,7 +3,6 @@ tag, branch and commit modules.
 """
 
 import logging
-import os.path
 
 from gitwrapper.aux import get_exit_code, get_stdout
 
@@ -58,9 +57,5 @@ def is_valid_ref_name(name):
 
 
 def set_merge_msg(string):
-    merge_msg_path = get_git_dir() + '/MERGE_MSG'
-    if not os.path.exists(merge_msg_path):
-        return False
-    with open(merge_msg_path, 'w') as merge_msg_file:
+    with open(get_git_dir() + '/MERGE_MSG', 'w') as merge_msg_file:
         merge_msg_file.write(string)
-    return True
