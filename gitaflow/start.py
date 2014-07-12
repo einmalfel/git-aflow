@@ -49,14 +49,17 @@ def start(name):
             ', '.join(shas))
 
     logging.info('All good, creating branch ' + branch_name)
-    if not branch.create(branch_name, ci):
+    try:
+        branch.create(branch_name, ci)
+    except:
         logging.critical('Something went wrong, cannot create topic branch')
-        return False
-    if misc.checkout(branch_name):
-        say('Topic ' + name + ' created. You are in ' + branch_name + ' branch')
-        return True
-    else:
+        raise
+    try:
+        misc.checkout(branch_name)
+    except:
         logging.critical('Something went wrong, cannot checkout ' +
                          'topic branch. Deleting branch and stopping')
         branch.delete(branch_name)
-        return False
+        raise
+    say('Topic ' + name + ' created. You are in ' + branch_name + ' branch')
+    return True

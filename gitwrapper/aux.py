@@ -3,6 +3,58 @@ from os import linesep
 import subprocess
 
 
+class GitUnexpectedError(Exception):
+    """Git subprocess returns unexpected error"""
+
+
+def get_stdout_01(command_and_args):
+    """Returns command output if it runs successfully, None if it returns 1"""
+    try:
+        result = subprocess.check_output(command_and_args).decode()[:-1]
+    except subprocess.CalledProcessError as error:
+        if error.returncode == 1:
+            result = None
+        else:
+            raise GitUnexpectedError(' '.join(error.cmd) + ' returns ' +
+                                     str(error.returncode) + '. Output: ' +
+                                     error.output) from error
+    except FileNotFoundError:
+        logging.critical('Command ' + command_and_args[0] + ' not found!')
+        raise
+    logging.debug('Calling ' + ' '.join(command_and_args)
+                  + '. Result: ' + str(result[1]) + linesep + 'Output:' +
+                  linesep + result[0])
+    return result
+
+
+def check_01(command_and_args):
+    try:
+        subprocess.check_call(command_and_args, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as error:
+        if error.returncode == 1:
+            return False
+        else:
+            raise GitUnexpectedError(' '.join(error.cmd) + ' returns ' +
+                                     str(error.returncode)) from error
+    except FileNotFoundError:
+        logging.critical('Command ' + command_and_args[0] + ' not found!')
+        raise
+    return True
+
+
+def call(command_and_args):
+    try:
+        subprocess.check_call(command_and_args, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as error:
+        raise GitUnexpectedError(' '.join(error.cmd) + ' returns ' +
+                                 str(error.returncode)) from error
+    except FileNotFoundError:
+        logging.critical('Command ' + command_and_args[0] + ' not found!')
+        raise
+
+
 def get_stdout(command_and_args):
     try:
         result = subprocess.check_output(command_and_args).decode()[:-1]

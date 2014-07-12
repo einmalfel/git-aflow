@@ -1,8 +1,16 @@
 """Commit-related functionality wrapper"""
 
 import logging
+import re
 
-from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
+from gitwrapper.aux import get_stdout, get_stdout_and_exit_code,\
+    GitUnexpectedError, call, check_01, get_stdout_01
+
+
+class AlreadyMergedError(Exception):
+    """Merge target already contains merge object. Git returned "Already
+    up-to-date
+    """
 
 
 def get_headline(treeish):
@@ -34,20 +42,16 @@ def get_current_sha():
 
 
 def is_ancestor(ancestor, descendant):
-    result = get_exit_code(['git', 'merge-base', '--is-ancestor',
-                            ancestor, descendant])
-    if result != 0 and result != 1:
-        logging.critical("Error in ancestor check " + result)
-    return result == 0
+    return check_01(['git', 'merge-base', '--is-ancestor', ancestor, descendant])
 
 
 def get_parent(treeish, number=1):
     """Get parent commit SHA. If commit is merge commit, use number to select
-    which parent to return
+    which parent to return. Parent #1 belongs to merge target. If specified
+    parent doesn't exist, returns None
     """
-    output, code = get_stdout_and_exit_code(['git', 'rev-parse',
-                                             treeish + '^' + str(number)])
-    return output if code == 0 else None
+    return get_stdout_01(['git', 'rev-parse', '-q', '--verify',
+                          treeish + '^' + str(number)])
 
 
 def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
@@ -70,36 +74,57 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
 
 
 def merge(treeish, description):
-    return 0 == get_exit_code(['git', 'merge', '--no-ff', '--no-edit', '-m',
-                              description, treeish])
+    """Returns True if merged successfull, False if conflicted.
+    Throws AlreadyMergedError if git says "Already up-to-date."
+    """
+    output, code = get_stdout_and_exit_code(['git', 'merge', '--no-ff',
+                                             '--no-edit', '-m',
+                                             description, treeish])
+    if code == 0:
+        if output == 'Already up-to-date.':
+            raise AlreadyMergedError('Merge object: ' + str(treeish))
+        else:
+            return True
+    else:
+        if code == 1:
+            if not merge.conflict_re:
+                merge.conflict_re = re.compile(
+                    '^CONFLICT .*: Merge conflict in .*$', re.MULTILINE)
+            if merge.conflict_re.search(output):
+                return False
+            raise GitUnexpectedError('Git merge returned ' + str(code) +
+                                     '. Output: ' + output)
+merge.conflict_re = None
 
 
 def abort_merge():
-    get_stdout(['git', 'merge', '--abort'])
+    return get_stdout(['git', 'merge', '--abort'])
 
 
 def revert(treeish, parent=None, no_commit=False):
-    result = get_exit_code(['git', 'revert', treeish] +
-                           (['-m' + str(parent)] if parent else []) +
-                           (['-n'] if no_commit else []))
-    if result not in (0, 1):
-        logging.critical('Git revert returns strange error code ' + str(result))
-    return result == 0
+    return check_01(['git', 'revert', treeish] +
+                   (['-m' + str(parent)] if parent else []) +
+                   (['-n'] if no_commit else []))
 
 
 def abort_revert():
-    return 0 == get_exit_code(['git', 'revert', '--abort'])
+    call(['git', 'revert', '--abort'])
 
 
 def commit(message=None, allow_empty=False):
-    result = get_exit_code(['git', 'commit', '--no-edit'] +
+    """Returns True if committed successfully. Returns False if commit failed
+    because of merge conflicts
+    """
+    output, code = get_stdout_and_exit_code(['git', 'commit', '--no-edit'] +
                            (['-m' + message] if message else []) +
                            (['--allow-empty'] if allow_empty else []))
-    if result == 0:
+    if code == 0:
         return True
     else:
-        if result == 128:
-            logging.info('Commit failed probably due to unresolved conflicts')
+        if "error: 'commit' is not possible because you have unmerged files." \
+                in output:
+            logging.info('Commit failed due to unresolved conflicts')
+            return False
         else:
-            logging.critical('Failed to commit, git commit exit code:' + result)
-        return False
+            raise GitUnexpectedError('Git commit returns ' + code +
+                                     '. Output: ' + output)

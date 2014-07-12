@@ -1,9 +1,8 @@
 """Branch-related functionality wrapper"""
 
-import logging
 import re
 
-from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
+from gitwrapper.aux import get_stdout, call, check_01, get_stdout_01
 
 
 def get_list(patterns=None):
@@ -17,9 +16,7 @@ def get_list(patterns=None):
 
 def get_current():
     """Returns current branch name or None if in detached HEAD state"""
-    output, code = get_stdout_and_exit_code(['git', 'symbolic-ref',
-                                             '--short', '--q', 'HEAD'])
-    return output if code == 0 else None
+    return get_stdout_01(['git', 'symbolic-ref', '--short', '--q', 'HEAD'])
 
 
 def get_head_sha(name):
@@ -28,8 +25,7 @@ def get_head_sha(name):
 
 
 def exists(name):
-    return 0 == get_exit_code(['git', 'show-ref', '--verify', '-q',
-                              'refs/heads/' + name])
+    return check_01(['git', 'show-ref', '--verify', '-q', 'refs/heads/' + name])
 
 
 def get_branches_containing(treeish):
@@ -39,18 +35,10 @@ def get_branches_containing(treeish):
 
 
 def create(name, start_point=None):
-    """ Starts branch from start_point or from HEAD if no start_point
-    specified. Returns True if success, False otherwise
+    """ Starts branch from start_point or from HEAD if no start_point specified.
     """
-    result = (0 == get_exit_code(['git', 'branch', name] +
-                                 ([start_point] if start_point else [])))
-    if not result:
-        logging.warning('Failed to create branch ' + name)
-    return result
+    call(['git', 'branch', name] + ([start_point] if start_point else []))
 
 
 def delete(name):
-    result = (0 == get_exit_code(['git', 'branch', '-d', name]))
-    if not result:
-        logging.warning('Failed to delete branch ' + name)
-    return result
+    call(['git', 'branch', '-d', name])

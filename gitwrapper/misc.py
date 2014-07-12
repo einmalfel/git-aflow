@@ -2,9 +2,8 @@
 tag, branch and commit modules.
 """
 
-import logging
-
-from gitwrapper.aux import get_exit_code, get_stdout
+from gitwrapper.aux import get_stdout, call, \
+    get_stdout_and_exit_code, GitUnexpectedError, check_01
 
 
 def is_working_tree_clean(untracked=False):
@@ -16,10 +15,7 @@ def is_working_tree_clean(untracked=False):
 
 
 def checkout(treeish):
-    result = get_exit_code(['git', 'checkout'] + [treeish]) == 0
-    if not result:
-        logging.warning("failed to checkout " + treeish)
-    return result
+    call(['git', 'checkout'] + [treeish])
 
 
 def get_untracked_files():
@@ -40,7 +36,15 @@ def list_files_differ(treeish1, treeish2):
 
 
 def in_git_repo():
-    return 0 == get_exit_code(['git', 'rev-parse', '--git-dir'])
+    output, code = get_stdout_and_exit_code(['git', 'rev-parse', '--git-dir'])
+    if code == 0:
+        return True
+    elif output.startswith('fatal: Not a git repository (or any of the ' +
+                           'parent directories):'):
+        return False
+    else:
+        raise GitUnexpectedError('Strange git rev-parse --git-dir output :' +
+                                 output + ' Exit-code: ' + str(code))
 
 
 def get_git_dir():
@@ -52,8 +56,7 @@ def rev_parse(treeish):
 
 
 def is_valid_ref_name(name):
-    return 0 == get_exit_code(['git', 'check-ref-format',
-                               'refs/heads/' + name])
+    return check_01(['git', 'check-ref-format', 'refs/heads/' + name])
 
 
 def set_merge_msg(string):

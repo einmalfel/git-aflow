@@ -50,14 +50,16 @@ def start_iteration(iteration_name):
         die('Cannot start iteration, branch + ' + develop_name + ' exists')
     if branch.exists(staging_name):
         die('Cannot start iteration, branch + ' + staging_name + ' exists')
-    if not (tag.create(iteration_name, MASTER_NAME) and
-            branch.create(develop_name, MASTER_NAME) and
-            branch.create(staging_name, MASTER_NAME)):
+    try:
+        tag.create(iteration_name, MASTER_NAME)
+        branch.create(develop_name, MASTER_NAME)
+        branch.create(staging_name, MASTER_NAME)
+    except:
         tag.delete(iteration_name)
         branch.delete(staging_name)
         branch.delete(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
-        return False
+        raise
     say('Iteration ' + iteration_name + ' created successfully')
     get_iteration_by_sha.cache_clear()
     return True
