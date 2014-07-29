@@ -2,25 +2,25 @@
 
 import re
 
-from gitwrapper.aux import get_stdout, call, check_01, get_stdout_01
+from gitwrapper.aux import get_output, call, check_01, get_output_01
 
 
 def get_list(patterns=None):
     """ List all branches if pattern is empty list, branches matching any
     pattern (shell wildcard) otherwise
     """
-    output = get_stdout(['git', 'branch', '--list'] +
+    output = get_output(['git', 'branch', '--list'] +
                         (patterns if patterns else []))
     return re.sub('[ *]', '', output).splitlines()
 
 
 def get_current():
     """Returns current branch name or None if in detached HEAD state"""
-    return get_stdout_01(['git', 'symbolic-ref', '--short', '--q', 'HEAD'])
+    return get_output_01(['git', 'symbolic-ref', '--short', '--q', 'HEAD'])
 
 
 def get_head_sha(name):
-    return get_stdout(['git', 'show-ref', '--verify', '--hash',
+    return get_output(['git', 'show-ref', '--verify', '--hash',
                        'refs/heads/' + name])
 
 
@@ -30,7 +30,7 @@ def exists(name):
 
 def get_branches_containing(treeish):
     return re.sub('[ *]', '',
-                  get_stdout(['git', 'branch', '--contains', treeish
+                  get_output(['git', 'branch', '--contains', treeish
                               ])).splitlines()
 
 

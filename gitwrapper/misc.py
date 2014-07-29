@@ -2,15 +2,15 @@
 tag, branch and commit modules.
 """
 
-from gitwrapper.aux import get_stdout, call, \
-    get_stdout_and_exit_code, GitUnexpectedError, check_01
+from gitwrapper.aux import get_output, call, \
+    get_output_and_exit_code, GitUnexpectedError, check_01
 
 
 def is_working_tree_clean(untracked=False):
     """Returns True if working tree is clean. If untracked == True, counts also
     untracked files
     """
-    return get_stdout(['git', 'status', '--porcelain'] +
+    return get_output(['git', 'status', '--porcelain'] +
                       ([] if untracked else ['-uno'])) == ''
 
 
@@ -19,7 +19,7 @@ def checkout(treeish):
 
 
 def get_untracked_files():
-    status = get_stdout(['git', 'status', '--porcelain', '-uall']).splitlines()
+    status = get_output(['git', 'status', '--porcelain', '-uall']).splitlines()
     result = []
     for line in status:
         if line.startswith('?? '):
@@ -30,13 +30,13 @@ def get_untracked_files():
 def list_files_differ(treeish1, treeish2):
     """Returns list of files which is different between treeish1 and treeish2
     """
-    diff = get_stdout(['git', 'diff', '--numstat', treeish1,
+    diff = get_output(['git', 'diff', '--numstat', treeish1,
                        treeish2]).splitlines()
     return [line.rsplit('\t', 1)[1] for line in diff if line]
 
 
 def in_git_repo():
-    output, code = get_stdout_and_exit_code(['git', 'rev-parse', '--git-dir'])
+    output, code = get_output_and_exit_code(['git', 'rev-parse', '--git-dir'])
     if code == 0:
         return True
     elif output.startswith('fatal: Not a git repository (or any of the ' +
@@ -48,11 +48,11 @@ def in_git_repo():
 
 
 def get_git_dir():
-    return get_stdout(['git', 'rev-parse', '--git-dir'])
+    return get_output(['git', 'rev-parse', '--git-dir'])
 
 
 def rev_parse(treeish):
-    return get_stdout(['git', 'rev-parse', treeish])
+    return get_output(['git', 'rev-parse', treeish])
 
 
 def is_valid_ref_name(name):

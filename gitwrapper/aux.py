@@ -7,10 +7,11 @@ class GitUnexpectedError(Exception):
     """Git subprocess returns unexpected error"""
 
 
-def get_stdout_01(command_and_args):
+def get_output_01(command_and_args):
     """Returns command output if it runs successfully, None if it returns 1"""
     try:
-        result = subprocess.check_output(command_and_args).decode()[:-1]
+        result = subprocess.check_output(command_and_args,
+                                         stderr=subprocess.STDOUT).decode()[:-1]
     except subprocess.CalledProcessError as error:
         if error.returncode == 1:
             result = None
@@ -55,9 +56,10 @@ def call(command_and_args):
         raise
 
 
-def get_stdout(command_and_args):
+def get_output(command_and_args):
     try:
-        result = subprocess.check_output(command_and_args).decode()[:-1]
+        result = subprocess.check_output(command_and_args,
+                                         stderr=subprocess.STDOUT).decode()[:-1]
     except subprocess.CalledProcessError as error:
         logging.critical('Command ' + ' '.join(command_and_args) +
                          ' failed. Exit code: ' + str(error.returncode) +
@@ -87,9 +89,10 @@ def get_exit_code(command_and_args):
     return result
 
 
-def get_stdout_and_exit_code(command_and_args):
+def get_output_and_exit_code(command_and_args):
     try:
-        result = subprocess.check_output(command_and_args).decode()[:-1], 0
+        result = subprocess.check_output(
+            command_and_args, stderr=subprocess.STDOUT).decode()[:-1], 0
     except subprocess.CalledProcessError as error:
         result = (error.output.decode()[:-1], error.returncode)
     except FileNotFoundError:

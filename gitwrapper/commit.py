@@ -3,8 +3,8 @@
 import logging
 import re
 
-from gitwrapper.aux import get_stdout, get_stdout_and_exit_code,\
-    GitUnexpectedError, call, check_01, get_stdout_01
+from gitwrapper.aux import get_output, get_output_and_exit_code,\
+    GitUnexpectedError, call, check_01, get_output_01
 
 
 class AlreadyMergedError(Exception):
@@ -14,11 +14,11 @@ class AlreadyMergedError(Exception):
 
 
 def get_headline(treeish):
-    return get_stdout(['git', 'log', '--format=%s', '-n1', treeish])
+    return get_output(['git', 'log', '--format=%s', '-n1', treeish])
 
 
 def get_full_message(treeish):
-    return get_stdout(['git', 'show', '--format=%B', '-s', treeish])
+    return get_output(['git', 'show', '--format=%B', '-s', treeish])
 
 
 def find(start_commits=None, first_parent=False,
@@ -29,7 +29,7 @@ def find(start_commits=None, first_parent=False,
     given regexps, unless match_all is set to True.
     If first_parent is set to True, exclude merged branches from search.
     Returns list of SHA"""
-    return get_stdout(['git', 'rev-list'] +
+    return get_output(['git', 'rev-list'] +
                       (['--first-parent'] if first_parent else []) +
                       (['--all-match'] if match_all else []) +
                       ([('--grep=' + r) for r in regexps] if regexps else []) +
@@ -38,7 +38,7 @@ def find(start_commits=None, first_parent=False,
 
 
 def get_current_sha():
-    return get_stdout(['git', 'rev-parse', 'HEAD'])
+    return get_output(['git', 'rev-parse', 'HEAD'])
 
 
 def is_ancestor(ancestor, descendant):
@@ -50,7 +50,7 @@ def get_parent(treeish, number=1):
     which parent to return. Parent #1 belongs to merge target. If specified
     parent doesn't exist, returns None
     """
-    return get_stdout_01(['git', 'rev-parse', '-q', '--verify',
+    return get_output_01(['git', 'rev-parse', '-q', '--verify',
                           treeish + '^' + str(number)])
 
 
@@ -65,7 +65,7 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
     Results matching any of regexps will be produced if match_all==False,
     matching all regexps otherwise.
     """
-    return get_stdout(['git', 'rev-list', '--ancestry-path', '--topo-order',
+    return get_output(['git', 'rev-list', '--ancestry-path', '--topo-order',
                       '--first-parent', treeish1 + '..' + treeish2] +
                       (['--reverse'] if reverse else []) +
                       (['--all-match'] if match_all else []) +
@@ -77,7 +77,7 @@ def merge(treeish, description):
     """Returns True if merged successfull, False if conflicted.
     Throws AlreadyMergedError if git says "Already up-to-date."
     """
-    output, code = get_stdout_and_exit_code(['git', 'merge', '--no-ff',
+    output, code = get_output_and_exit_code(['git', 'merge', '--no-ff',
                                              '--no-edit', '-m',
                                              description, treeish])
     if code == 0:
@@ -98,7 +98,7 @@ merge.conflict_re = None
 
 
 def abort_merge():
-    return get_stdout(['git', 'merge', '--abort'])
+    return get_output(['git', 'merge', '--abort'])
 
 
 def revert(treeish, parent=None, no_commit=False):
@@ -115,7 +115,7 @@ def commit(message=None, allow_empty=False):
     """Returns True if committed successfully. Returns False if commit failed
     because of merge conflicts
     """
-    output, code = get_stdout_and_exit_code(['git', 'commit', '--no-edit'] +
+    output, code = get_output_and_exit_code(['git', 'commit', '--no-edit'] +
                            (['-m' + message] if message else []) +
                            (['--allow-empty'] if allow_empty else []))
     if code == 0:
