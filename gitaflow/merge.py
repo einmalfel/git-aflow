@@ -134,16 +134,15 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             else:
                 for m in source_merges:
                     if m.rev == revision:
-                        merge_found = m
+                        if m.is_newest_in(own_merges + merges_to_commit):
+                            merges_to_commit.append(m)
+                        else:
+                            say('We already have this version of ' +
+                                topic + ' in ' + cb + '. Skipping..')
                         break
                 else:
                     die('Merge failed. No topic ' + topic + ' in sources ' +
                         ', '.join(sources))
-                if not m.is_newest_in(own_merges + merges_to_commit):
-                    say('We already have same or newer version of ' +
-                        topic + ' in ' + cb + '. Skipping..')
-                    continue
-                merges_to_commit.append(merge_found)
         if description:
             merges_to_commit[0].description = description
         if merge_type:
