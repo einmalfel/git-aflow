@@ -166,7 +166,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             if dependency.is_newest_in(own_merges + merges_with_deps):
                 if dependencies:
                     merges_with_deps.append(dependency)
-                else:
+                elif m.rev.topic != dependency.rev.topic:
+                    # merging some version of topic we don't depend on its elder
+                    # versions
                     die('Merge failed. Topic ' + m.rev.get_branch_name() +
                         ' depends on ' + dependency.rev.get_branch_name() +
                         '. Try merge it first or use "git af merge -d" to ' +
