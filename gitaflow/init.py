@@ -1,8 +1,8 @@
 """Git-aflow repo initialization functionality"""
 
 import sys
-from gitaflow.common import say
 
+from gitaflow.common import say
 from gitaflow.iteration import start_iteration, get_iteration_list
 
 

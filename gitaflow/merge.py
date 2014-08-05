@@ -103,9 +103,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                             add = True
                         else:
                             logging.info('Already have this version of ' +
-                                          already_have.rev.topic.name +
-                                          '. Ours: ' + str(already_have) +
-                                          ' theirs: ' + str(m))
+                                         already_have.rev.topic.name +
+                                         '. Ours: ' + str(already_have) +
+                                         ' theirs: ' + str(m))
                             break
                 else:
                     if add:  # if no break and this one (m) is newer then ours
@@ -115,7 +115,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         source_merges = list(itertools.chain.from_iterable(
             [TopicMerge.get_effective_merges_in(s) for s in sources]))
         logging.info('Source merges: ' +
-                      ', '.join(str(m) for m in source_merges))
+                     ', '.join(str(m) for m in source_merges))
         for topic in topics:
             revision = TopicRevision.from_branch_name(topic)
             if not revision.iteration:
@@ -163,7 +163,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         logging.info('Dependency search for ' + m.rev.get_branch_name())
         for dependency in m.rev.get_effective_merges(True):
             logging.info('Processing dependency ' +
-                          dependency.rev.get_branch_name())
+                         dependency.rev.get_branch_name())
             if dependency.is_newest_in(own_merges + merges_with_deps):
                 if dependencies:
                     merges_with_deps.append(dependency)

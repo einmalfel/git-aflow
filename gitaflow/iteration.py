@@ -4,8 +4,8 @@ import atexit
 from functools import lru_cache
 import logging
 import re
-from gitaflow.common import die, say
 
+from gitaflow.common import die, say
 from gitwrapper import misc, branch, tag, commit
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
