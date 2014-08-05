@@ -137,16 +137,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         merge_found = m
                         break
                 else:
-                    logging.info('No topic ' + topic + ' in sources ' +
-                                 ', '.join(sources) + '. Stopping')
-                    print('Merge failed. No topic ' + topic + ' in sources ' +
-                          ', '.join(sources))
-                    return False
+                    die('Merge failed. No topic ' + topic + ' in sources ' +
+                        ', '.join(sources))
                 if not m.is_newest_in(own_merges + merges_to_commit):
-                    logging.info('We already have same or newer version of ' +
-                                 topic + ' in ' + cb)
-                    print('We already have same or newer version of ' +
-                          topic + ' in ' + cb + '. Skipping..')
+                    say('We already have same or newer version of ' +
+                        topic + ' in ' + cb + '. Skipping..')
                     continue
                 merges_to_commit.append(merge_found)
         if description:
