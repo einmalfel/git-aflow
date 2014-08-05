@@ -57,8 +57,6 @@ def start(name):
     try:
         misc.checkout(branch_name)
     except:
-        logging.critical('Something went wrong, cannot checkout ' +
-                         'topic branch. Deleting branch and stopping')
         branch.delete(branch_name)
         raise
     say('Topic ' + name + ' created. You are in ' + branch_name + ' branch')

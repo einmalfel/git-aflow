@@ -184,8 +184,6 @@ class TopicRevision:
                         last_merge.SHA = commit.get_current_sha()
                         return last_merge
                     else:
-                        logging.critical('Failed to commit pseudomerge' +
-                                         str(last_merge))
                         return None
             else:
                 logging.critical('Trying to merge already merged ' + str(self))

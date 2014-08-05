@@ -90,9 +90,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             for m in TopicMerge.get_effective_merges_in(source):
                 if m.is_newest_in(own_merges + merges_to_commit):
                     merges_to_commit.append(m)
-                    logging.debug('Adding to merge ' + str(m))
+                    logging.info('Adding to merge ' + str(m))
                 else:
-                    logging.debug('Already have this version of ' + str(m))
+                    logging.info('Already have this version of ' + str(m))
     elif merge_object == 'update':
         for source in sources:
             for m in TopicMerge.get_effective_merges_in(source):
@@ -102,7 +102,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         if m.rev.version > already_have.rev.version:
                             add = True
                         else:
-                            logging.debug('Already have this version of ' +
+                            logging.info('Already have this version of ' +
                                           already_have.rev.topic.name +
                                           '. Ours: ' + str(already_have) +
                                           ' theirs: ' + str(m))
@@ -110,11 +110,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 else:
                     if add:  # if no break and this one (m) is newer then ours
                         merges_to_commit.append(m)
-                        logging.debug('Adding to merge ' + str(m))
+                        logging.info('Adding to merge ' + str(m))
     elif merge_object is None:
         source_merges = list(itertools.chain.from_iterable(
             [TopicMerge.get_effective_merges_in(s) for s in sources]))
-        logging.debug('Source merges: ' +
+        logging.info('Source merges: ' +
                       ', '.join(str(m) for m in source_merges))
         for topic in topics:
             revision = TopicRevision.from_branch_name(topic)
@@ -165,9 +165,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     merges_with_deps = []
     for m in merges_to_commit:
-        logging.debug('Dependency search for ' + m.rev.get_branch_name())
+        logging.info('Dependency search for ' + m.rev.get_branch_name())
         for dependency in m.rev.get_effective_merges(True):
-            logging.debug('Processing dependency ' +
+            logging.info('Processing dependency ' +
                           dependency.rev.get_branch_name())
             if dependency.is_newest_in(own_merges + merges_with_deps):
                 if dependencies:
@@ -184,7 +184,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                  + '. Merging now...')
 
     for idx, m in enumerate(merges_with_deps):
-        logging.debug('Merging ' + m.rev.get_branch_name())
+        logging.info('Merging ' + m.rev.get_branch_name())
         if not m.merge():
             if (iteration.is_master(cb) or iteration.is_staging(cb) or
                     iteration.is_release(cb)):

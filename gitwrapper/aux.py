@@ -1,5 +1,4 @@
 import logging
-from os import linesep
 import subprocess
 
 
@@ -55,6 +54,7 @@ def get_exit_code(command_and_args):
 
 
 def get_output_and_exit_code(command_and_args):
+    logging.debug('Calling ' + ' '.join(command_and_args))
     try:
         result = subprocess.check_output(
             command_and_args, stderr=subprocess.STDOUT).decode()[:-1], 0
@@ -63,7 +63,5 @@ def get_output_and_exit_code(command_and_args):
     except FileNotFoundError:
         logging.critical('Command ' + command_and_args[0] + ' not found!')
         raise
-    logging.debug('Calling ' + ' '.join(command_and_args)
-                  + '. Result: ' + str(result[1]) + linesep + 'Output:' +
-                  linesep + result[0])
+    logging.debug('Result: ' + str(result[1]) + ' Output:' + result[0])
     return result
