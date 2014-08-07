@@ -20,5 +20,6 @@ def init_aflow(iteration_name):
     else:
         print("Git-aflow initialization failed")
 
+
 def in_aflow_repo():
     return [] != get_iteration_list()
