@@ -69,25 +69,25 @@ def get_current_iteration():
     TODO: Assuming user will not run git commands while git-af running, this
     func probably needs cache.
     """
-    branch = branch.get_current()
-    if branch:
-        if '/' in branch:
-            iteration = branch.split('/', 1)[0]
+    current_branch = branch.get_current()
+    if current_branch:
+        if '/' in current_branch:
+            iteration = current_branch.split('/', 1)[0]
             if is_iteration(iteration):
                 logging.info('found iteration ' + iteration + ' for branch ' +
-                              branch)
+                              current_branch)
                 return iteration
-    iterations = {tag.get_SHA(tag): tag
-             for tag in get_iteration_list()}
+    iterations = {tag.get_SHA(iter_tag): iter_tag
+             for iter_tag in get_iteration_list()}
     position = commit.get_current_SHA()
     while position:
         if position in iterations:
             logging.info('found latest iteration ' + iterations[position] +
-                         ' for branch ' + branch)
+                         ' for branch ' + position)
             return iterations[position]
         position = commit.get_main_ancestor(position)
     logging.critical('cannot get iteration for ' +
-                     (branch if branch else 'detached HEAD'))
+                     (current_branch if current_branch else 'detached HEAD'))
 
 
 def get_develop(iteration=None):
