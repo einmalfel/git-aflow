@@ -7,7 +7,6 @@ Git rev-parse isn't suitable too, cause 'git rev-parse --tags=tag_name' will
 search for refs/tags/tag_name/*
 """
 
-
 import logging
 
 from gitwrapper.aux import get_exit_code, get_stdout
@@ -15,17 +14,17 @@ from gitwrapper.aux import get_exit_code, get_stdout
 
 def get_list(pattern=''):
     return get_stdout(['git', 'tag', '--list'] +
-                             ([] if pattern == '' else [pattern])).splitlines()
+                      ([] if pattern == '' else [pattern])).splitlines()
 
 
-def get_SHA(name):
+def get_sha(name):
     return get_stdout(['git', 'show-ref', '--verify', '--hash',
                        'refs/tags/' + name])
 
 
 def exists(name):
     return 0 == get_exit_code(['git', 'show-ref', '--verify', '-q',
-                       'refs/tags/' + name])
+                              'refs/tags/' + name])
 
 
 def create(name, target=None):
