@@ -4,8 +4,9 @@ import logging
 import os
 import sys
 
-import gitaflow.init
 import gitwrapper.wrapper
+
+from . import init, topic
 
 
 def setup_logging(verbosity, file_name):
@@ -49,7 +50,7 @@ def execute(args_namespace):
         sys.exit(1)
 
     if args_namespace.subcommand == 'init':
-        gitaflow.init.init_aflow(args_namespace.name)
+        init.init_aflow(args_namespace.name)
     elif args_namespace.subcommand == 'topic':
         if args_namespace.subsubcommand == 'start':
             topic.start(args_namespace.name)

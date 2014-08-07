@@ -20,7 +20,7 @@ def parse_args(args_list):
 
     main_parser = argparse.ArgumentParser(
         prog='git-aflow',
-        description='Git-aflow helper scripts'
+        description='Git-aflow helper tool'
         )
     main_parser.add_argument(
         '--version', action='version', version='%(prog)s '

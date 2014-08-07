@@ -8,8 +8,9 @@ search for refs/tags/tag_name/*
 """
 
 
-import re
 import logging
+import re
+
 from gitwrapper.aux import get_exit_code, get_stdout, get_stdout_and_exit_code
 
 
@@ -71,6 +72,9 @@ def rev_parse(treeish):
 
 
 def get_branch_list(patterns=[]):
+    """ List all branches if pattern is empty list, branches matching any
+    pattern otherwise
+    """
     return re.sub('[ *]', '', get_stdout(['git', 'branch', '--list'] +
                                          patterns)).splitlines()
 
