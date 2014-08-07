@@ -27,7 +27,7 @@ def get_untracked_files():
     result = []
     for line in status:
         if line.startswith('?? '):
-            result += [line.split(' ', 1)[1]]
+            result.append(line.split(' ', 1)[1])
     return result
 
 
