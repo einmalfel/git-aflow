@@ -54,3 +54,10 @@ def execute(args_namespace):
     elif args_namespace.subcommand == 'topic':
         if args_namespace.subsubcommand == 'start':
             topic.start(args_namespace.name)
+    elif args_namespace.subcommand == 'merge':
+        topic.merge(args_namespace.source,
+                    args_namespace.merge_type,
+                    args_namespace.dependencies,
+                    args_namespace.merge_object,
+                    args_namespace.topic,
+                    args_namespace.edit_description)
