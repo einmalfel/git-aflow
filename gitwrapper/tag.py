@@ -7,43 +7,33 @@ Git rev-parse isn't suitable too, cause 'git rev-parse --tags=tag_name' will
 search for refs/tags/tag_name/*
 """
 
-import logging
-
-from gitwrapper.aux import get_exit_code, get_stdout
+from gitwrapper.aux import get_output, check_01, call
 
 
 def get_list(pattern=''):
-    return get_stdout(['git', 'tag', '--list'] +
+    return get_output(['git', 'tag', '--list'] +
                       ([] if pattern == '' else [pattern])).splitlines()
 
 
 def get_sha(name):
-    return get_stdout(['git', 'show-ref', '--verify', '--hash',
+    return get_output(['git', 'show-ref', '--verify', '--hash',
                        'refs/tags/' + name])
 
 
 def exists(name):
-    return 0 == get_exit_code(['git', 'show-ref', '--verify', '-q',
-                              'refs/tags/' + name])
+    return check_01(['git', 'show-ref', '--verify', '-q', 'refs/tags/' + name])
 
 
 def create(name, target=None):
     """ Puts tag on HEAD or on target if specified.
     Returns True if success, False otherwise
     """
-    result = (0 == get_exit_code(['git', 'tag', name] +
-                                 ([target] if target else [])))
-    if not result:
-        logging.warning('Failed to create tag ' + name)
-    return result
+    call(['git', 'tag', name] + ([target] if target else []))
 
 
 def delete(name):
-    result = (0 == get_exit_code(['git', 'tag', '-d', name]))
-    if not result:
-        logging.warning('Failed to delete tag ' + name)
-    return result
+    call(['git', 'tag', '-d', name])
 
 
 def find_by_target(treeish):
-    return get_stdout(['git', 'tag', '--points-at', treeish]).splitlines()
+    return get_output(['git', 'tag', '--points-at', treeish]).splitlines()

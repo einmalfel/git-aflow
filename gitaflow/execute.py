@@ -1,11 +1,11 @@
 """Process args for git af"""
 
 import logging
-import os
 import sys
 
 from gitwrapper import misc
-from . import init, topic
+from gitaflow import init, merge, start
+from gitaflow.common import die
 
 
 def setup_logging(verbosity, file_name):
@@ -38,22 +38,17 @@ def execute(args_namespace):
     # TODO ? suggest commands to install git
     try:
         if not misc.in_git_repo():
-            logging.info('trying to launch aflow outside of git repo: ' +
-                         os.getcwd())
-            print('No git repo found. Please, chdir to repo')
-            sys.exit(1)
+            die('No git repo found. Please, chdir to repo')
     except FileNotFoundError:
-        logging.info('trying to launch git-aflow without git installed')
-        print("Git not found. You need to install it to use git-aflow")
-        sys.exit(1)
+        die('Git not found. You need to install it to use git-aflow')
 
     if args_namespace.subcommand == 'init':
         init.init_aflow(args_namespace.name)
     elif args_namespace.subcommand == 'topic':
         if args_namespace.subsubcommand == 'start':
-            topic.start(args_namespace.name)
+            start.start(args_namespace.name)
     elif args_namespace.subcommand == 'merge':
-        topic.merge(args_namespace.source,
+        merge.merge(args_namespace.source,
                     args_namespace.merge_type,
                     args_namespace.dependencies,
                     args_namespace.merge_object,
