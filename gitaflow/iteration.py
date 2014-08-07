@@ -111,6 +111,14 @@ def get_iteration_by_branch(branch_name):
     return None
 
 
+def get_iteration_by_treeish(treeish):
+    if branch.exists(treeish):
+        iter_ = parse_branch_name(treeish)[0]
+    else:
+        iter_ = None
+    return iter_ if iter_ else get_iteration_by_sha(misc.rev_parse(treeish))
+
+
 def get_current_iteration():
     """Calculates current iteration.
     We cannot store iteration in something like "current_iteration" tag, cause
