@@ -70,10 +70,9 @@ def rev_parse(treeish):
     return get_stdout(['git', 'rev-parse', treeish])
 
 
-def get_branch_list(pattern=''):
-    return re.sub('[ *]', '',
-                  get_stdout(['git', 'branch', '--list'] +
-                             ([] if pattern == '' else [pattern]))).split('\n')
+def get_branch_list(patterns=[]):
+    return re.sub('[ *]', '', get_stdout(['git', 'branch', '--list'] +
+                                         patterns)).splitlines()
 
 
 def get_current_branch():
@@ -85,7 +84,7 @@ def get_current_branch():
 
 def get_tag_list(pattern=''):
     return get_stdout(['git', 'tag', '--list'] +
-                             ([] if pattern == '' else [pattern])).split('\n')
+                             ([] if pattern == '' else [pattern])).splitlines()
 
 
 def get_tag_SHA(name):
@@ -130,9 +129,9 @@ def get_main_ancestor(treeish):
 
 
 def get_branches_containing(treeish):
-    return get_stdout([
-        'git', 'branch', '--contains', treeish
-         ]).split()
+    return re.sub('[ *]', '',
+                  get_stdout(['git', 'branch', '--contains', treeish
+                              ])).splitlines()
 
 
 def create_branch(name, start_point=None):
@@ -172,7 +171,7 @@ def delete_branch(name):
 
 
 def get_tags_by_target(treeish):
-    return get_stdout(['git', 'tag', '--points-at', treeish]).split('\n')
+    return get_stdout(['git', 'tag', '--points-at', treeish]).splitlines()
 
 
 def is_valid_ref_name(name):

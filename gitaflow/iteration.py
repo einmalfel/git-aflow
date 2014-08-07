@@ -71,7 +71,7 @@ def get_current_iteration():
     branch = gitwrapper.wrapper.get_current_branch()
     if branch:
         if '/' in branch:
-            iteration = branch.lsplit('/')
+            iteration = branch.split('/', 1)[0]
             if is_iteration(iteration):
                 logging.info('found iteration ' + iteration + ' for branch ' +
                               branch)
