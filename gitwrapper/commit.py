@@ -41,12 +41,12 @@ def is_ancestor(ancestor, descendant):
     return result == 0
 
 
-def get_main_ancestor(treeish):
-    """For merge commits it returns parent commit belonging to branch into
-    which another branch was merged. If threeish has no parents, return None
+def get_parent(treeish, number=1):
+    """Get parent commit SHA. If commit is merge commit, use number to select
+    which parent to return
     """
-    code, output = get_stdout_and_exit_code(['git', 'rev-parse',
-                                             treeish + '^1'])
+    output, code = get_stdout_and_exit_code(['git', 'rev-parse',
+                                             treeish + '^' + str(number)])
     return output if code == 0 else None
 
 

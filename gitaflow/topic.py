@@ -311,8 +311,14 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     cb = branch.get_current()
     if not cb:
         print('Cannot merge while in detached head state. Please check out a\
- branch into which you are going to merge, e.g. "git af merge staging"')
+ branch into which you are going to merge, e.g. "git af checkout staging"')
         logging.info('No CB, stopping')
+        return False
+    if (merge_type or description) and (not topics or len(topics) != 1):
+        print('If you are going to specify topic description and/or type, ' +
+              'you should merge one single topic')
+        logging.info('If you are going to specify topic description and/or ' +
+                     'type, you should merge one single topic')
         return False
     if not misc.is_working_tree_clean():
         print('Your working tree is dirty. Please, stash or reset your \
@@ -396,7 +402,10 @@ contain only master and branches from current iteration')
                         newest = source_topic
                 if newest[0]:
                     if is_topic_newer(newest, own_topics + topics_to_merge):
-                        topics_to_merge += [newest]
+                        add = [newest[0], newest[1], newest[2],
+                               merge_type if merge_type else newest[3],
+                               description if description else newest[4]]
+                        topics_to_merge.append(add)
                     else:
                         logging.info('We already have same or newer version ' +
                                      'of ' + topic + ' in ' + cb)
@@ -420,7 +429,12 @@ contain only master and branches from current iteration')
                     if ((tname, int(tversion)) == source_topic[:2] and
                             is_topic_newer(source_topic,
                                            topics_to_merge + own_topics)):
-                        topics_to_merge += [source_topic]
+                        add = [source_topic[0],
+                               source_topic[1],
+                               source_topic[2],
+                               merge_type if merge_type else source_topic[3],
+                               description if description else source_topic[4]]
+                        topics_to_merge.append(add)
                         break
                 else:
                     logging.info('No topic ' + topic + ' in sources ' +
