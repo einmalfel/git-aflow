@@ -10,6 +10,9 @@
 *.project
 *.pydevproject
 
+#Idea project files
+*.idea/
+
 #Text editor backup files
 *~
 
