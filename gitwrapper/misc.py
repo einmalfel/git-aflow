@@ -2,7 +2,6 @@
 tag, branch and commit modules.
 """
 
-
 import logging
 
 from gitwrapper.aux import get_exit_code, get_stdout
