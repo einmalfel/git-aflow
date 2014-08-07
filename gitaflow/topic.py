@@ -175,8 +175,14 @@ def is_valid_topic_branch(branch_name, topic_name=None):
     """If no topic name passed, checks if topic branch name is valid (iteration
     exists and branch name has correct format)
     Otherwise, also checks if it is valid branch name for given topic
+    TODO: check if there are releases with same name
     """
     if not misc.is_valid_ref_name(branch_name):
+        return False
+    if iteration.is_develop(branch_name) or\
+            iteration.is_master(branch_name) or\
+            iteration.is_release(branch_name) or\
+            iteration.is_staging(branch_name):
         return False
     result = parse_topic_branch_name(branch_name)
     logging.debug('Branch name parsed ' + str(result))
@@ -210,7 +216,7 @@ def topic_merges_in_history(name):
     heads += [iteration.get_staging(i) for i in iters]
     logging.info('Searching ' + name + ' in branches ' + str(heads))
     SHAs = commit.find(heads, True,
-                ["^Merge branch '[^/]*/" + name + ".*' into .*$"])
+                ["^Merge branch '[^/]+/" + name + "'.*$"])
     logging.debug('Found: ' + str(SHAs))
     result = []
     for SHA in SHAs:
@@ -220,7 +226,8 @@ def topic_merges_in_history(name):
             if merged_to == MASTER_NAME:
                 result += [SHA]
             else:
-                mt_iteration, mt_branch = merged_to.split('/', 1)
+                mt_iteration, mt_branch =\
+                        iteration.parse_branch_name(merged_to)
                 if iteration.is_iteration(mt_iteration) and\
                     (mt_branch == DEVELOP_NAME or mt_branch == STAGING_NAME):
                     result += [SHA]
@@ -230,6 +237,11 @@ def topic_merges_in_history(name):
 
 def start(name):
     ci = iteration.get_current_iteration()
+    if ci is None:
+        print('Could not get current iteration, we are probably not in \
+git-aflow repo')
+        logging.info('No CI, stopping')
+        return False
     branch_name = ci + '/' + name
     logging.info('Checking name ' + branch_name)
     if not is_valid_topic_branch(branch_name):
@@ -249,7 +261,8 @@ changes before starting topic')
     if intersection:
         print('You have some untracked files which you may loose when \
 switching to new topic branch. Please, delete or commit them. \
-Here they are: ' + ', '.join(intersection))
+Here they are: ' + ', '.join(intersection) + '.' + linesep +
+'Use "git clean" to remove all untracked files')
         logging.info('User may lose untracked file, stopping')
         return False
 
