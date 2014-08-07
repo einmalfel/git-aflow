@@ -3,6 +3,7 @@ tag, branch and commit modules.
 """
 
 import logging
+import os.path
 
 from gitwrapper.aux import get_exit_code, get_stdout
 
@@ -43,6 +44,10 @@ def in_git_repo():
     return 0 == get_exit_code(['git', 'rev-parse', '--git-dir'])
 
 
+def get_git_dir():
+    return get_stdout(['git', 'rev-parse', '--git-dir'])
+
+
 def rev_parse(treeish):
     return get_stdout(['git', 'rev-parse', treeish])
 
@@ -50,3 +55,12 @@ def rev_parse(treeish):
 def is_valid_ref_name(name):
     return 0 == get_exit_code(['git', 'check-ref-format',
                                'refs/heads/' + name])
+
+
+def set_merge_msg(string):
+    merge_msg_path = get_git_dir() + '/MERGE_MSG'
+    if not os.path.exists(merge_msg_path):
+        return False
+    with open(merge_msg_path, 'w') as merge_msg_file:
+        merge_msg_file.write(string)
+    return True
