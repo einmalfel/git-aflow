@@ -2,15 +2,23 @@
 
 import logging
 import sys
+import traceback
 
 from gitwrapper import misc
 from gitaflow import init, merge, start
 from gitaflow.common import die
 
 
+def log_unhandled_exception(type_, value, traceback_):
+    description = ''.join(traceback.format_exception(type_, value, traceback_))
+    logging.critical(description)
+    print(description)
+
+
 def setup_logging(verbosity, file_name):
     """setup_logging(verbosity, file_name)
     sets up log level, file name and string format
+    If log file specified replace exception hook to print exception info to log
     """
     if verbosity < 0:
         loglevel = logging.CRITICAL
@@ -25,6 +33,9 @@ def setup_logging(verbosity, file_name):
         filename=file_name,
         format='%(levelname)s %(module)s:%(lineno)d %(asctime)s %(message)s',
         level=loglevel)
+
+    if file_name:
+        sys.excepthook = log_unhandled_exception
 
 
 def execute(args_namespace):
