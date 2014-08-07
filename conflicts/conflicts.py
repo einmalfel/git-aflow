@@ -65,7 +65,10 @@ def init():
     regex = re.compile('^@@ -\S+ +\S+ @@.*$')
 
 
-def conflict(heads_list):
+def get_first_conflict(heads_list):
+    """ Returns tuple describing first found conflict: (HEAD1, HEAD2, filename)
+    If no conflicts, returns None
+    """
     global regex
     bases = {}
     groups = []
