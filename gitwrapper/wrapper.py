@@ -122,6 +122,10 @@ def delete_branch(name):
     return result
 
 
+def get_tags_by_target(treeish):
+    return get_stdout(['git', 'tag', '--points-at', treeish]).split('\n')
+
+
 def is_valid_ref_name(name):
     return 0 == get_exit_code(['git', 'check-ref-format',
                                'refs/heads/' + name])
