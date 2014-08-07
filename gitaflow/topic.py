@@ -117,7 +117,7 @@ def get_merged_topics(treeish, iter_name=None, recursive=False):
                 tname, tversion = parse_topic_branch_name(merged_branch)[1:3]
                 # TODO handle revert revert case
                 tsha = commit.get_parent(sha, 2)
-                result += [(tname, tversion, tsha, topic_type, description)]
+                result.append((tname, tversion, tsha, topic_type, description))
                 logging.debug('Searching for topics in ' + treeish + ' Add ' +
                               tname + ' version: ' + str(tversion) + ' SHA: ' +
                               tsha + ' description: ' + description +
@@ -212,8 +212,8 @@ def topic_merges_in_history(name):
     """
     iters = iteration.get_iteration_list()
     heads = ['master']
-    heads += [iteration.get_develop(i) for i in iters]
-    heads += [iteration.get_staging(i) for i in iters]
+    heads.extend(iteration.get_develop(i) for i in iters)
+    heads.extend(iteration.get_staging(i) for i in iters)
     logging.info('Searching ' + name + ' in branches ' + str(heads))
     shas = commit.find(heads, True, ["^Merge branch '[^/]+/" + name + "'.*$"])
     logging.debug('Found: ' + str(shas))
@@ -222,12 +222,12 @@ def topic_merges_in_history(name):
         ms_branch, merged_to = parse_merge_headline(commit.get_headline(sha))
         if is_valid_topic_branch(ms_branch, name):
             if merged_to == MASTER_NAME:
-                result += [sha]
+                result.append(sha)
             else:
                 mt_iteration, mt_branch = iteration.parse_branch_name(merged_to)
                 if ((mt_branch == DEVELOP_NAME or mt_branch == STAGING_NAME) and
                         iteration.is_iteration(mt_iteration)):
-                    result += [sha]
+                    result.append(sha)
     logging.debug('After checks: ' + str(result))
     return result
 
@@ -357,14 +357,15 @@ contain only master and branches from current iteration')
     own_topics = get_merged_topics(cb, ci)
     current_topic = parse_topic_branch_name(cb)
     if current_topic:
-        own_topics += [(current_topic[1], current_topic[2], None, None, None)]
+        own_topics.append((current_topic[1], current_topic[2], None, None,
+                           None))
     topics_to_merge = []
 
     if merge_object == 'all':
         for source in sources:
             for topic in get_merged_topics(source, ci):
                 if is_topic_newer(topic, own_topics + topics_to_merge):
-                    topics_to_merge += [topic]
+                    topics_to_merge.append(topic)
                     logging.debug('Adding to merge ' + topic[0] + '_v' +
                                   str(topic[1]))
                 else:
@@ -386,7 +387,7 @@ contain only master and branches from current iteration')
                             break
                     else:
                         if add:  # if no break and it's newer then ours
-                            topics_to_merge += [topic]
+                            topics_to_merge.append(topic)
                             logging.debug('Adding to merge ' + topic[0] +
                                           '_v' + str(topic[1]))
     elif merge_object is None:
