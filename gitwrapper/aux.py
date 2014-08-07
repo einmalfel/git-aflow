@@ -1,15 +1,21 @@
 import logging
+from os import linesep
 import subprocess
 
 
 def get_stdout(command_and_args):
     try:
         result = subprocess.check_output(command_and_args).decode()[:-1]
+    except subprocess.CalledProcessError as error:
+        logging.critical('Command ' + ' '.join(command_and_args) +
+                         ' failed. Exit code: ' + str(error.returncode) +
+                         '. Output: ' + error.output.decode()[:-1])
+        raise
     except FileNotFoundError:
         logging.critical('Command ' + command_and_args[0] + ' not found!')
         raise
     logging.debug('Calling ' + ' '.join(command_and_args)
-                  + '. Result:\n' + result)
+                  + '. Result:' + linesep + result)
     return result
 
 
@@ -38,5 +44,6 @@ def get_stdout_and_exit_code(command_and_args):
         logging.critical('Command ' + command_and_args[0] + ' not found!')
         raise
     logging.debug('Calling ' + ' '.join(command_and_args)
-                  + '. Result: ' + str(result[1]) + "\nOutput:\n" + result[0])
+                  + '. Result: ' + str(result[1]) + linesep + 'Output:' +
+                  linesep + result[0])
     return result
