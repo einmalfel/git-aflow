@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-import gitwrapper.wrapper
+from gitwrapper import misc
 
 from . import init, topic
 
@@ -39,7 +39,7 @@ def execute(args_namespace):
     # - git present
     # TODO ? suggest commands to install git
     try:
-        if not gitwrapper.wrapper.in_git_repo():
+        if not misc.in_git_repo():
             logging.info('trying to launch aflow outside of git repo: ' +
                          os.getcwd())
             print('No git repo found. Please, chdir to repo')
