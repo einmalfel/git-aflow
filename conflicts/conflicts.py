@@ -18,9 +18,6 @@ import subprocess
 import sys
 
 
-init()
-
-
 def env_is_set(name):
     return 1 if name in os.environ and os.environ[name] == '1' else 0
 
@@ -60,16 +57,11 @@ def git_diff(from_treeish, to_treeish):
                                   to_treeish, '--'])
 
 
-def init():
-    global regex
-    regex = re.compile('^@@ -\S+ +\S+ @@.*$')
-
-
 def get_first_conflict(heads_list):
     """ Returns tuple describing first found conflict: (HEAD1, HEAD2, filename)
     If no conflicts, returns None
     """
-    global regex
+
     bases = {}
     groups = []
 
@@ -115,7 +107,9 @@ def get_first_conflict(heads_list):
                     filename = line.split('/')[-1]
                     diffs[head][filename] = []
                     dprint("processing file " + filename)
-                if regex.match(line):
+                if not get_first_conflict.regex:
+                    get_first_conflict.regex = re.compile('^@@ -\S+ +\S+ @@.*$')
+                if get_first_conflict.regex.match(line):
                     vprint('processing hunk ' + line)
                     minus, plus = [part[1:] for part in line.split(' ')[1:3]]
                     lines_removed = int(minus.split(',')[-1])\
@@ -149,3 +143,4 @@ def get_first_conflict(heads_list):
                             if not (comp_last < first or comp_first > last):
                                 return (head, head_to_comp, filename)
     return None
+get_first_conflict.regex = None
