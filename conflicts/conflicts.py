@@ -70,6 +70,7 @@ def get_first_conflict(heads_list):
         for head in diffs_to_add:
             logging.info('reading diff for branch ' + head)
             diffs[head] = {}
+            filename = None
             for line in get_diff(group[0], head).split('\n'):
                 if 'diff --git a/' in line:
                     filename = line.split('/')[-1]
@@ -90,7 +91,11 @@ def get_first_conflict(heads_list):
                         lines_changed = 1
                     first_line = int(hunk_scope.split(',')[0])
                     last_line = first_line + lines_changed
-                    diffs[head][filename] += [(first_line, last_line)]
+                    if filename:
+                        diffs[head][filename] += [(first_line, last_line)]
+                    else:
+                        logging.error('Strange diff produced by git: '
+                                      'got hunk scope before filename')
                     logging.debug('hunk scope is: ' + str(first_line) + '-' +
                                   str(last_line))
 
