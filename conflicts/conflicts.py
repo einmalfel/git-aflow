@@ -11,10 +11,8 @@
 
 """
 
-
 import os
 import re
-import sys
 import logging
 
 from gitwrapper.misc import get_merge_base, get_diff
@@ -56,7 +54,7 @@ def get_first_conflict(heads_list):
         if not added_to_some_group:
             groups.append([bases[mix]] + unmix_name(mix))
 
-    groups.sort(key=lambda group: group[0])
+    groups.sort(key=lambda group_arg: group_arg[0])
 
     logging.info('Groups:' + os.linesep + str(groups))
 
@@ -82,8 +80,8 @@ def get_first_conflict(heads_list):
                 if get_first_conflict.regex.match(line):
                     logging.debug('processing hunk ' + line)
                     minus, plus = [part[1:] for part in line.split(' ')[1:3]]
-                    lines_removed = int(minus.split(',')[-1])\
-                            if ',' in minus else 0 if minus == '0' else 1
+                    lines_removed = (int(minus.split(',')[-1]) if ',' in minus
+                                     else 0 if minus == '0' else 1)
                     if lines_removed:
                         hunk_scope = minus
                         lines_changed = int(lines_removed)
@@ -112,6 +110,6 @@ def get_first_conflict(heads_list):
                     for comp_first, comp_last in diffs[head_to_comp][filename]:
                         for first, last in diffs[head][filename]:
                             if not (comp_last < first or comp_first > last):
-                                return (head, head_to_comp, filename)
+                                return head, head_to_comp, filename
     return None
 get_first_conflict.regex = None
