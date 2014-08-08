@@ -16,22 +16,8 @@ import os
 import re
 import subprocess
 import sys
+import logging
 
-
-def env_is_set(name):
-    return 1 if name in os.environ and os.environ[name] == '1' else 0
-
-
-def dprint(string):
-    if dprint.enable:
-        print(string)
-dprint.enable = env_is_set("DEBUG")
-
-
-def vprint(string):
-    if vprint.enable:
-        print(string)
-vprint.enable = env_is_set("VERBOSE")
 
 
 def mix_name(branch1, branch2):
@@ -44,7 +30,6 @@ def unmix_name(name):
 
 def launch_and_get_stdout(command_and_args):
     result = subprocess.check_output(command_and_args).decode()[:-1]
-    vprint('calling ' + ' '.join(command_and_args) + '. Result:\n' + result)
     return result
 
 
@@ -87,30 +72,29 @@ def get_first_conflict(heads_list):
 
     groups.sort(key=lambda group: group[0])
 
-    dprint("groups:")
-    dprint(groups)
+    logging.info('Groups:' + os.linesep + str(groups))
 
     prev_group = [0]
     for group in groups:
-        dprint('processing group. Base: ' + group[0] +
-              ' Branches: ' + ', '.join(group[1:]))
+        logging.info('processing group. Base: ' + group[0] + ' Branches: ' +
+                     ', '.join(group[1:]))
         if not prev_group[0] == group[0]:
             diffs = {}
         prev_group = group
         diffs_to_add = set(group[1:]) - set(diffs.keys())
 
         for head in diffs_to_add:
-            dprint("reading diff for branch " + head)
+            logging.info('reading diff for branch ' + head)
             diffs[head] = {}
             for line in git_diff(group[0], head).split('\n'):
                 if 'diff --git a/' in line:
                     filename = line.split('/')[-1]
                     diffs[head][filename] = []
-                    dprint("processing file " + filename)
+                    logging.info('processing file ' + filename)
                 if not get_first_conflict.regex:
                     get_first_conflict.regex = re.compile('^@@ -\S+ +\S+ @@.*$')
                 if get_first_conflict.regex.match(line):
-                    vprint('processing hunk ' + line)
+                    logging.debug('processing hunk ' + line)
                     minus, plus = [part[1:] for part in line.split(' ')[1:3]]
                     lines_removed = int(minus.split(',')[-1])\
                             if ',' in minus else 0 if minus == '0' else 1
@@ -123,21 +107,22 @@ def get_first_conflict(heads_list):
                     first_line = int(hunk_scope.split(',')[0])
                     last_line = first_line + lines_changed
                     diffs[head][filename] += [(first_line, last_line)]
-                    vprint('hunk scope is: ' + str(first_line) + '-' +
-                           str(last_line))
+                    logging.debug('hunk scope is: ' + str(first_line) + '-' +
+                                  str(last_line))
 
         comp_with = group[1:]
         for head in group[1:]:
             comp_with.remove(head)
-            dprint("comparing " + head + " with " + ', '.join(comp_with))
+            logging.info('comparing ' + head + ' with ' + ', '.join(comp_with))
             for filename in diffs[head].keys():
                 for head_to_comp in comp_with:
                     if filename not in diffs[head_to_comp].keys():
                         continue
-                    vprint("comparing changes to " + filename + " branch1: " +
-                           head + " (" + str(diffs[head][filename]) +
-                           ") branch2: " + head_to_comp +
-                           " (" + str(diffs[head_to_comp][filename]) + ")")
+                    logging.debug("comparing changes to " + filename +
+                                  " branch1: " + head + " (" +
+                                  str(diffs[head][filename]) +
+                                  ") branch2: " + head_to_comp + " (" +
+                                  str(diffs[head_to_comp][filename]) + ")")
                     for comp_first, comp_last in diffs[head_to_comp][filename]:
                         for first, last in diffs[head][filename]:
                             if not (comp_last < first or comp_first > last):
