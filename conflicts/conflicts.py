@@ -14,10 +14,10 @@
 
 import os
 import re
-import subprocess
 import sys
 import logging
 
+from gitwrapper.misc import get_merge_base, get_diff
 
 
 def mix_name(branch1, branch2):
@@ -26,20 +26,6 @@ def mix_name(branch1, branch2):
 
 def unmix_name(name):
     return [name[:name.index('|')], name[name.index('|') + 1:]]
-
-
-def launch_and_get_stdout(command_and_args):
-    result = subprocess.check_output(command_and_args).decode()[:-1]
-    return result
-
-
-def git_base(heads):
-    return launch_and_get_stdout(["git", "merge-base", "--octopus"] + heads)
-
-
-def git_diff(from_treeish, to_treeish):
-    return launch_and_get_stdout(["git", "diff", from_treeish,
-                                  to_treeish, '--'])
 
 
 def get_first_conflict(heads_list):
@@ -52,7 +38,7 @@ def get_first_conflict(heads_list):
 
     for head1 in heads_list:
         for head2 in heads_list[heads_list.index(head1) + 1:]:
-            bases[mix_name(head1, head2)] = git_base([head1, head2])
+            bases[mix_name(head1, head2)] = get_merge_base([head1, head2])
 
     for mix in list(bases.keys()):
         added_to_some_group = 0
@@ -86,7 +72,7 @@ def get_first_conflict(heads_list):
         for head in diffs_to_add:
             logging.info('reading diff for branch ' + head)
             diffs[head] = {}
-            for line in git_diff(group[0], head).split('\n'):
+            for line in get_diff(group[0], head).split('\n'):
                 if 'diff --git a/' in line:
                     filename = line.split('/')[-1]
                     diffs[head][filename] = []
