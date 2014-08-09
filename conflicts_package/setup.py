@@ -12,6 +12,7 @@ setup(name='conflicts',
       author="Vasily Makarov",
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
+      install_requires=["gitwrapper"],
       provides=["conflicts"],
       long_description=open("README.txt", "r").read(),
       )
