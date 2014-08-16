@@ -16,3 +16,5 @@
 #Text editor backup files
 *~
 
+#Egg metadata files
+*.egg-info/
