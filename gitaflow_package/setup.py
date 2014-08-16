@@ -20,6 +20,6 @@ alternative to git-flow',
       maintainer="Vasily Makarov",
       maintainer_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
-      long_description=open("README.txt", "r").read(),
+      long_description=open("README.txt").read(),
       install_requires=["conflicts", "gitwrapper"],
       )
