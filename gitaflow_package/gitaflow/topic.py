@@ -44,10 +44,10 @@ class Topic:
         result = []
         for sha in shas:
             m = TopicMerge.from_treeish(sha)
-            if (self.is_branch_name_valid(m.rev.get_branch_name()) and
-                    m and (iteration.is_master(m.merge_target) or
-                           iteration.is_develop(m.merge_target) or
-                           iteration.is_staging(m.merge_target))):
+            if (m and (m.rev.topic == self) and (
+                    iteration.is_master(m.merge_target) or
+                    iteration.is_develop(m.merge_target) or
+                    iteration.is_staging(m.merge_target))):
                 result.append(m)
         logging.debug('After checks: ' + str(result))
         return result
