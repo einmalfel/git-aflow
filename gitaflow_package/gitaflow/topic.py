@@ -236,10 +236,6 @@ class TopicRevision:
     def get_branch_name(self):
         return self.iteration + '/' + self.topic.name + '_v' + str(self.version)
 
-    @staticmethod
-    def get_all_revisions_in(treeish):
-        return [m.rev for m in TopicMerge.get_effective_merges_in(treeish)]
-
 
 class TopicMerge:
     """ This class represents merge of revision of topic into some branch
