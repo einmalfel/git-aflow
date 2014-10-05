@@ -225,6 +225,12 @@ class TopicRevision:
         if not result:
             return None
         iteration_, name, version = result.groups()
+
+        # TB names may contain slash
+        if iteration_ and not iteration.is_iteration(iteration_):
+            name = iteration_ + '/' + name
+            iteration_ = None
+
         return TopicRevision(Topic(name), None, version, iteration_)
 
     def get_branch_name(self):
