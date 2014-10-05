@@ -225,8 +225,6 @@ class TopicRevision:
         if not result:
             return None
         iteration_, name, version = result.groups()
-        if not name:
-            return None
         return TopicRevision(Topic(name), None, version, iteration_)
 
     def get_branch_name(self):
