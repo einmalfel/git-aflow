@@ -29,12 +29,12 @@ def find(start_commits=None, first_parent=False,
     given regexps, unless match_all is set to True.
     If first_parent is set to True, exclude merged branches from search.
     Returns list of SHA"""
-    return get_output(['git', 'rev-list'] +
-                      (['--first-parent'] if first_parent else []) +
-                      (['--all-match'] if match_all else []) +
-                      ([('--grep=' + r) for r in regexps] if regexps else []) +
-                      (start_commits if start_commits else ['--all'])
-                      ).splitlines()
+    return get_output(
+        ['git', 'rev-list'] +
+        (['--first-parent'] if first_parent else []) +
+        (['--all-match'] if match_all else []) +
+        (['-E'] + [('--grep=' + r) for r in regexps] if regexps else []) +
+        (start_commits if start_commits else ['--all'])).splitlines()
 
 
 def get_current_sha():

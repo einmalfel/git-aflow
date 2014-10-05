@@ -38,8 +38,8 @@ class Topic:
         heads.extend(iteration.get_develop(i) for i in iters)
         heads.extend(iteration.get_staging(i) for i in iters)
         logging.info('Searching ' + self.name + ' in branches ' + str(heads))
-        shas = commit.find(heads, True, ["^Merge branch '[^/]+/" +
-                                         self.name + "'.*$"])
+        shas = commit.find(heads, True, ["^Merge branch '([^/]+/)?" +
+                                         self.name + "(_v[0-9]+)?'.*$"])
         logging.debug('Found: ' + ', '.join(shas))
         result = []
         for sha in shas:
