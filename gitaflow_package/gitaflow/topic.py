@@ -52,26 +52,21 @@ class Topic:
         logging.debug('After checks: ' + str(result))
         return result
 
-    def is_branch_name_valid(self, branch_name):
-        if not misc.is_valid_ref_name(branch_name):
-            return False
-        if (iteration.is_develop(branch_name) or
+    @staticmethod
+    def is_valid_tb_name(branch_name):
+        if (not misc.is_valid_ref_name(branch_name) or
+                iteration.is_develop(branch_name) or
                 iteration.is_master(branch_name) or
                 iteration.is_release(branch_name) or
                 iteration.is_staging(branch_name)):
             return False
-        result = TopicRevision.from_branch_name(branch_name)
-        if not result:
-            return False
-        if not iteration.is_iteration(result.iteration):
-            return False
-        if not result.topic.name == self.name:
-            return False
-        return True
+        else:
+            return True
 
     def get_branches(self):
         relevant_branches = branch.get_list(['*' + self.name + '*'])
-        return [b for b in relevant_branches if self.is_branch_name_valid(b)]
+        return [b for b in relevant_branches
+                if TopicRevision.from_branch_name(b).topic == self]
 
     def get_latest_merge(self, list_of_merges):
         last = None
