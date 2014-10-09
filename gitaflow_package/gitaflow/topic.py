@@ -117,12 +117,11 @@ class TopicRevision:
         return s
 
     def __eq__(self, other):
-        # TopicRevision may be created w/o SHA, so do not compare SHA if not set
+        # TopicRevision may be created w/o SHA, so do not compare SHAs
         return (isinstance(other, self.__class__) and
                 self.iteration == other.iteration and
                 self.topic == other.topic and
-                self.version == other.version and
-                (self.SHA == other.SHA if self.SHA and other.SHA else True))
+                self.version == other.version)
 
     def __ne__(self, other):
         return not self.__eq__(other)
