@@ -127,7 +127,7 @@ class TopicRevision:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def get_effective_merges(self, recursive=False):
+    def get_own_effective_merges(self, recursive=False):
         if self.SHA:
             return TopicMerge.get_effective_merges_in(self.SHA, recursive)
         else:
@@ -373,7 +373,7 @@ class TopicMerge:
         if recursive:
             recursive_result = []
             for merge in result:
-                merges2 = merge.rev.get_effective_merges(True)
+                merges2 = merge.rev.get_own_effective_merges(True)
                 merges2.append(merge)
                 for merge2 in merges2:
                     if merge2.is_newest_in(recursive_result):

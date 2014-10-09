@@ -160,7 +160,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     merges_with_deps = []
     for m in merges_to_commit:
         logging.info('Dependency search for ' + m.rev.get_branch_name())
-        for dependency in m.rev.get_effective_merges(True):
+        for dependency in m.rev.get_own_effective_merges(True):
             logging.info('Processing dependency ' +
                          dependency.rev.get_branch_name())
             if dependency.is_newest_in(own_merges + merges_with_deps):
