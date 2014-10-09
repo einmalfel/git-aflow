@@ -29,6 +29,9 @@ class Topic:
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.name)
+
     def get_all_merges(self):
         """ Searches for merges of this branch into all develops, stagings and
         master branches
