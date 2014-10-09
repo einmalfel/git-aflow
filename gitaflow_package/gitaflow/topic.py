@@ -335,6 +335,20 @@ class TopicMerge:
                 result.append(merge)
         return result
 
+    @staticmethod
+    def get_reverted_merges_in(treeish, original_only=False):
+        iter_name = iteration.get_iteration_by_treeish(treeish)
+        result = []
+        commits = commit.get_commits_between(iter_name, treeish, False,
+                                             ['^Revert "Merge branch .*"$'])
+        for sha in commits:
+            revert = TopicRevert.from_treeish(sha)
+            if revert:
+                merge = revert.get_reverted_merge()
+                if not (merge.is_fake() and original_only):
+                    result.append(merge)
+        return result
+
     @classmethod
     def get_effective_merges_in(cls, treeish, recursive=False):
         """ Returns all not-reverted merges in BP..treeish
