@@ -77,6 +77,21 @@ class Topic:
     def __hash__(self):
         return hash(self.name)
 
+    def get_all_merges_in(self, treeish):
+        """ Searches for merges of this topic between RP and specified treeish
+        """
+        iter_name = iteration.get_iteration_by_treeish(treeish)
+        logging.debug('Searching ' + self.name + ' in ' + str(treeish))
+        shas = commit.get_commits_between(
+            iter_name, treeish, True,
+            ["^Merge branch '([^/]+/)?" + self.name + "(_v[0-9]+)?'.*$"])
+        result = []
+        for sha in shas:
+            m = TopicMerge.from_treeish(sha)
+            if m and (m.rev.topic == self):
+                result.append(m)
+        return result
+
     def get_all_merges(self):
         """ Searches for merges of this branch into all develops, stagings and
         master branches
