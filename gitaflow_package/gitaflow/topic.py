@@ -3,10 +3,55 @@
 import logging
 from os import linesep
 import re
+import itertools
 
+from gitaflow.common import say
 from gitwrapper import misc, branch, commit
 from gitaflow import iteration
 from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
+
+
+def consistency_check_ok(list_of_treeish):
+    """Checks revisions merged in all given treeish:
+    - same revisions have same head SHAs
+    - newer revisions based on elder ones
+    """
+    # sort non-fake merges by topic
+    merges = {}
+    for treeish in list_of_treeish:
+        for m in TopicMerge.get_all_merges_in(treeish):
+            if not m.is_fake():
+                m.origin = treeish
+                if m.rev.topic not in merges.keys():
+                    merges[m.rev.topic] = [m]
+                else:
+                    merges[m.rev.topic].append(m)
+
+    # do checks
+    result = True
+    for topic in merges.keys():
+        for m1, m2 in itertools.combinations(merges[topic], 2):
+            if m1.rev.version == m2.rev.version:
+                if not m1.rev.SHA == m2.rev.SHA:
+                    say(m1.rev.get_branch_name() + ' was merged into ' +
+                        m1.origin + '(merge SHA: ' + m1.SHA + ') and into ' +
+                        m2.origin + '(merge SHA: ' + m2.SHA + ') with '
+                        'different head SHA (' + m1.rev.SHA + ' and ' +
+                        m2.rev.SHA + ').')
+                    result = False
+            else:
+                if m1.rev.version > m2.rev.version:
+                    m1, m2 = m2, m1
+                # assuming m2 is the newer revision as we got here
+                if not commit.is_based_on(m1.rev.SHA, m2.rev.SHA):
+                    say(m2.rev.get_branch_name() + ' merged into ' + m2.origin +
+                        '(merge SHA: ' + m2.SHA + ') is newer version of ' +
+                        m1.rev.get_branch_name() + ' merged into ' + m1.origin +
+                        '(merge SHA: ' + m1.SHA + '), but newer one is not ' +
+                        'based on elder.')
+                    result = False
+
+    return result
 
 
 class Topic:

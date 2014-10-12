@@ -3,7 +3,7 @@ import itertools
 
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
-from gitaflow.topic import TopicRevision, TopicMerge
+from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok
 from gitaflow.common import say, die
 from gitwrapper import branch, misc, commit
 
@@ -50,6 +50,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 not ci == iteration.get_iteration_by_branch(sources[idx])):
             die('Cannot find branch ' + sources[idx] + '. Note: sources may ' +
                 'contain only master and branches from current iteration')
+
+    if not consistency_check_ok(sources + [cb]):
+        die('Please, fix aforementioned problems and rerun merge.')
 
     own_merges = TopicMerge.get_effective_merges_in(cb)
     current_revision = TopicRevision.from_branch_name(cb)
