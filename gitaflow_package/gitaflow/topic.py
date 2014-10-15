@@ -101,7 +101,7 @@ class Topic:
         return result
 
     def get_all_merges(self):
-        """ Searches for merges of this branch into all develops, stagings and
+        """ Searches for merges of this topic into all develops, stagings and
         master branches
         """
         iters = iteration.get_iteration_list()
@@ -436,7 +436,7 @@ class TopicMerge:
 
     @classmethod
     def get_all_merges_in(cls, treeish):
-        """ Returns all not-reverted merges in BP..treeish"""
+        """ Returns all (including reverted) in BP..treeish"""
         iter_name = iteration.get_iteration_by_treeish(treeish)
         result = []
         for sha in commit.get_commits_between(iter_name, treeish, True,
