@@ -384,11 +384,11 @@ class TopicMerge:
     def from_headline(cls, headline):
         if cls.headline_regexp is None:
             cls.headline_regexp = re.compile(
-                "^Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?$")
+                "^Merge branch '((?:[^/]*/)?.*)'(?: into ([^/]*/.*))?$")
         # if branch is merged into master headline doesn't contain "into.." part
         re_result = cls.headline_regexp.search(headline)
         if not re_result:
-            re_result = re.search("^Merge branch '([^/]*/.*)' into (.*)?$",
+            re_result = re.search("^Merge branch '((?:[^/]*/)?.*)' into (.*)?$",
                                   headline)
             if not re_result:
                 logging.warning('Failed to parse merge headline: ' + headline)
