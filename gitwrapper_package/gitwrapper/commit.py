@@ -81,12 +81,12 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
     Results matching any of regexps will be produced if match_all==False,
     matching all regexps otherwise.
     """
-    return get_output(['git', 'rev-list', '--ancestry-path', '--topo-order',
-                      '--first-parent', treeish1 + '..' + treeish2] +
-                      (['--reverse'] if reverse else []) +
-                      (['--all-match'] if match_all else []) +
-                      (['--grep=' + r for r in regexps] if regexps else [])
-                      ).splitlines()
+    return get_output(
+        ['git', 'rev-list', '--ancestry-path', '--topo-order'] +
+        ['--first-parent', treeish1 + '..' + treeish2] +
+        (['--reverse'] if reverse else []) +
+        (['-E'] + ['--grep=' + r for r in regexps] if regexps else []) +
+        (['--all-match'] if match_all else [])).splitlines()
 
 
 def merge(treeish, description):
