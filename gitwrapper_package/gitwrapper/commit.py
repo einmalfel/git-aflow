@@ -5,6 +5,7 @@ import re
 
 from gitwrapper.aux import get_output, get_output_and_exit_code,\
     GitUnexpectedError, call, check_01, get_output_01
+from gitwrapper import misc
 
 
 class AlreadyMergedError(Exception):
@@ -43,6 +44,21 @@ def get_current_sha():
 
 def is_ancestor(ancestor, descendant):
     return check_01(['git', 'merge-base', '--is-ancestor', ancestor, descendant])
+
+
+def is_based_on(ancestor, descendant):
+    """This checks whether ancestor is reachable from descendant via
+    first-parent tree traversal.
+    """
+    rev_list = get_output(['git', 'rev-list', '--first-parent',
+                           ancestor + '..' + descendant]).splitlines()
+    if not rev_list:
+        return False
+    else:
+        # git rev-list --first-parent will print some commits even if ancestor
+        # is not reachable via traverse by first parent, so check if ancestor
+        # is indeed first parent of last commit rev-list returned
+        return misc.rev_parse(ancestor) == get_parent(rev_list[-1])
 
 
 def get_parent(treeish, number=1):
