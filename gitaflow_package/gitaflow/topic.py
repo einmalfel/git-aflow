@@ -436,8 +436,7 @@ class TopicMerge:
         iter_name = iteration.get_iteration_by_treeish(treeish)
         result = []
         for sha in commit.get_commits_between(iter_name, treeish, True,
-                                              ['^Revert "Merge branch .*"$',
-                                               "^Merge branch .*$"]):
+                                              ["^Merge branch .*$"]):
             merge = cls.from_treeish(sha)
             if merge:
                 result.append(merge)
