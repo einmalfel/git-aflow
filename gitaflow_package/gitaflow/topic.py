@@ -210,6 +210,18 @@ class TopicRevision:
             logging.critical('Searching for merges it topic w/o Topic.SHA')
             return None
 
+    def is_in_merges(self, sequence_of_merges):
+        for merge in sequence_of_merges:
+            if merge.rev == self:
+                return True
+        return False
+
+    def is_in_reverts(self, sequence_of_reverts):
+        for revert in sequence_of_reverts:
+            if revert.rev == self:
+                return True
+        return False
+
     def merge(self, description=None, type_=None):
         """ Checks whether this revision was already merged and reverted in
         this branch. Makes "revert revert" for this case
