@@ -15,7 +15,7 @@ class AlreadyMergedError(Exception):
 
 
 def get_headline(treeish):
-    return get_output(['git', 'log', '--format=%s', '-n1', treeish])
+    return get_output(['git', 'log', '--format=%s', '-n1', treeish, '--'])
 
 
 def get_full_message(treeish):
@@ -35,7 +35,7 @@ def find(start_commits=None, first_parent=False,
         (['--first-parent'] if first_parent else []) +
         (['--all-match'] if match_all else []) +
         (['-E'] + [('--grep=' + r) for r in regexps] if regexps else []) +
-        (start_commits if start_commits else ['--all'])).splitlines()
+        (start_commits if start_commits else ['--all']) + ['--']).splitlines()
 
 
 def get_current_sha():
@@ -51,7 +51,7 @@ def is_based_on(ancestor, descendant):
     first-parent tree traversal.
     """
     rev_list = get_output(['git', 'rev-list', '--first-parent',
-                           ancestor + '..' + descendant]).splitlines()
+                           ancestor + '..' + descendant, '--']).splitlines()
     if not rev_list:
         return False
     else:
@@ -83,10 +83,10 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
     """
     return get_output(
         ['git', 'rev-list', '--ancestry-path', '--topo-order'] +
-        ['--first-parent', treeish1 + '..' + treeish2] +
-        (['--reverse'] if reverse else []) +
+        ['--first-parent'] + (['--reverse'] if reverse else []) +
         (['-E'] + ['--grep=' + r for r in regexps] if regexps else []) +
-        (['--all-match'] if match_all else [])).splitlines()
+        (['--all-match'] if match_all else []) +
+        [treeish1 + '..' + treeish2] + ['--']).splitlines()
 
 
 def merge(treeish, description):
