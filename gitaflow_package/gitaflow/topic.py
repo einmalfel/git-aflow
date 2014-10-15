@@ -15,6 +15,10 @@ class MergeNonConflictError(Exception):
     """ Merge failed unexpectedly."""
 
 
+class IncompleteMergeObjectError(Exception):
+    """ Merge object is not complete enough to execute called method."""
+
+
 def consistency_check_ok(list_of_treeish):
     """Checks revisions merged in all given treeish:
     - same revisions have same head SHAs
@@ -516,13 +520,14 @@ class TopicMerge:
 
     def is_fake(self):
         if not self.SHA:
-            logging.critical('Checking for fake merge in TopicMerge that has ' +
-                             'no SHA')
+            raise IncompleteMergeObjectError('Checking for fake merge in '
+                                             'TopicMerge that has no SHA')
         return self.rev.SHA is None
 
     def get_original(self):
         if not self.SHA:
-            logging.critical('Trying to found original merge of merge w\o SHA')
+            raise IncompleteMergeObjectError(
+                'Trying to found original merge of merge w\o SHA')
             return None
         ci = None
         if self.rev.iteration:
@@ -533,7 +538,8 @@ class TopicMerge:
                 if not ci:
                     ci = iteration.get_iteration_by_sha(self.SHA)
         if not ci:
-            logging.critical('Unable to find iteration of merge ' + str(self))
+            raise IncompleteMergeObjectError(
+                'Unable to find iteration of merge ' + str(self))
 
 
 class TopicRevert:
