@@ -115,16 +115,33 @@ class Topic:
         logging.debug('After checks: ' + str(result))
         return result
 
-    @staticmethod
-    def is_valid_tb_name(branch_name):
+    branch_name_regexp = None
+
+    @classmethod
+    def is_valid_tb_name(cls, branch_name):
+        if cls.branch_name_regexp is None:
+            cls.branch_name_regexp = re.compile(
+                '^(?:[^/]+/)?.+?(?:_v(\d+))?$')
+        result = cls.branch_name_regexp.search(branch_name)
+        if result:
+            groups = result.groups()[0]
+            if groups:
+                try:
+                    version = int(groups[0])
+                except ValueError:
+                    return False
+                else:
+                    if version < 1:
+                        return False
+        else:
+            return False
         if (not misc.is_valid_ref_name(branch_name) or
                 iteration.is_develop(branch_name) or
                 iteration.is_master(branch_name) or
                 iteration.is_release(branch_name) or
                 iteration.is_staging(branch_name)):
             return False
-        else:
-            return True
+        return True
 
     def get_branches(self):
         relevant_branches = branch.get_list(['*' + self.name + '*'])
