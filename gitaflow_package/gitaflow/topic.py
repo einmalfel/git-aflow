@@ -612,8 +612,15 @@ class TopicRevert:
         if self.reverted_SHA:
             return TopicMerge.from_treeish(self.reverted_SHA)
         else:
-            logging.critical('Trying to get reverted merge w/o reverted SHA')
-            return None
+            if not self.SHA:
+                logging.critical('Trying to get reverted merge w/o SHA')
+                return None
+
+        # Suboptimal solution.
+        # TODO: implement and use here TopicRevision.get_all_merges_in()
+        for m in reversed(self.rev.topic.get_all_merges_in(self.SHA)):
+            if m.rev == self.rev:
+                return m
 
     headline_regexp = None
 
