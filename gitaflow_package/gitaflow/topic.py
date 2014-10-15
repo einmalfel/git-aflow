@@ -529,6 +529,9 @@ class TopicMerge:
             raise IncompleteMergeObjectError(
                 'Trying to found original merge of merge w\o SHA')
             return None
+        if self.rev.SHA:
+            return self
+
         ci = None
         if self.rev.iteration:
             ci = self.rev.iteration
@@ -540,6 +543,15 @@ class TopicMerge:
         if not ci:
             raise IncompleteMergeObjectError(
                 'Unable to find iteration of merge ' + str(self))
+
+        for sha in commit.get_commits_between(
+                ci, self.SHA, True, ["^Merge branch '([^/]+/)?" +
+                                     self.rev.topic.name + "(_v[0-9]+)?'.*$"]):
+            merge = self.__class__.from_treeish(sha)
+            if merge and merge.rev == self.rev and merge.rev.SHA:
+                return merge
+
+        return None
 
 
 class TopicRevert:
