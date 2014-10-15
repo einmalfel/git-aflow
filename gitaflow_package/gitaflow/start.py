@@ -17,7 +17,7 @@ def start(name):
     branch_name = ci + '/' + name
 
     logging.info('Checking name ' + branch_name)
-    if not topic.is_branch_name_valid(branch_name):
+    if not Topic.is_valid_tb_name(branch_name):
         die('Please correct topic name. "..", "~", "^", ":", "?", "*", ' +
             '"[", "@", "\", spaces and ASCII control characters' +
             ' are not allowed. Input something like "fix_issue18" or ' +
