@@ -3,7 +3,8 @@ import itertools
 
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
-from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok
+from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok, \
+    MergeNonConflictError
 from gitaflow.common import say, die
 from gitwrapper import branch, misc, commit
 
@@ -182,9 +183,17 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                  ', '.join([m.rev.get_branch_name() for m in merges_with_deps])
                  + '. Merging now...')
 
+    fallback_sha = commit.get_current_sha()
     for idx, m in enumerate(merges_with_deps):
         logging.info('Merging ' + m.rev.get_branch_name())
-        if not m.merge():
+        try:
+            merge_result = m.merge()
+        except MergeNonConflictError:
+            logging.critical('Unexpectd merge error, falling back to ' +
+                             fallback_sha)
+            branch.reset(fallback_sha)
+            raise
+        if not merge_result:
             if (iteration.is_master(cb) or iteration.is_staging(cb) or
                     iteration.is_release(cb)):
                 commit.abort_merge()
