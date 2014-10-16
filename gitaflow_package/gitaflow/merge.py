@@ -176,12 +176,30 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         'merge dependencies automatically')
         merges_with_deps.append(m)
 
-    logging.info('Topics with dependencies: ' +
-                 ', '.join([m.rev.get_branch_name() for m in merges_with_deps])
-                 + '. Merging now...')
+    # add elder versions of topics being merged
+    merges_with_versions = []
+    for m in merges_with_deps:
+        for v in range(1, m.rev.version):
+            rev = TopicRevision(m.rev.topic, None, v, ci)
+            if not rev.is_in_merges(merges_with_versions):
+                for sm in source_merges:
+                    if sm.rev == rev:
+                        merges_with_versions.append(sm)
+                        break
+                else:
+                    die('Merge failed. We should merge ' +
+                        m.rev.get_branch_name() + ' along with ' +
+                        rev.get_branch_name() + ', but ' +
+                        rev.get_branch_name() + ' is absent in sources.')
+        merges_with_versions.append(m)
+
+    logging.info(
+        'Revisions to merge with dependencies and elder versions: ' +
+        ', '.join([m.rev.get_branch_name() for m in merges_with_versions]) +
+        '. Merging now...')
 
     fallback_sha = commit.get_current_sha()
-    for idx, m in enumerate(merges_with_deps):
+    for idx, m in enumerate(merges_with_versions):
         logging.info('Merging ' + m.rev.get_branch_name())
         try:
             merge_result = m.merge()
@@ -202,8 +220,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 'See conflicted files via "git status", resolve conflicts, ' +
                 'add files to index ("git add") and do ' +
                 '"git commit --no-edit" to finish the merge.')
-            if idx + 1 < len(merges_with_deps):
-                remain = merges_with_deps[idx + 1:]
+            if idx + 1 < len(merges_with_versions):
+                remain = merges_with_versions[idx + 1:]
                 say('Then call "git af merge [topics]" again to merge ' +
                     'remaining topics. Topics remaining to merge: ' +
                     ', '.join([r.rev.get_branch_name() for r in remain]))
