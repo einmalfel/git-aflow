@@ -34,11 +34,12 @@ def finish(description, type_, name):
     # search this revision in cd merges. This is necessary to allow user to
     # refinish reverted topic with "git af checkout X && git af topic finish"
     tb_head = commit.get_current_sha()
+    all_m_cd = TopicMerge.get_all_merges_in(cd)
     if not name:
         if cb:
             name = cb
         else:
-            for m in reversed(TopicMerge.get_all_merges_in(cd)):
+            for m in reversed(all_m_cd):
                 if m.rev.SHA == tb_head:
                     name = m.rev.get_branch_name()
                     say('Assuming topic you are finishing is ' + name + '.')
@@ -51,16 +52,13 @@ def finish(description, type_, name):
                     'are going to merge a commit, not branch')
     cr = TopicRevision.from_branch_name(name)
     cr.SHA = tb_head
-    all_m = cr.topic.get_all_merges()
-    last_m = cr.topic.get_latest_merge(all_m)
-    all_m_cd = cr.topic.get_all_merges_in(cd)
-    last_m_cd = cr.topic.get_latest_merge(all_m_cd)
     if cr.iteration:
         if not cr.iteration == ci:
             die('It is not possible to finish in current iteration topic from '
                 'other one. Finish failed.')
     else:
         cr.iteration = ci
+    last_m = cr.topic.get_latest_merge(cr.topic.get_all_merges())
     if last_m:
         if last_m.rev.version < cr.version - 1:
             die('Wrong topic version specified. Latest revision has version ' +
@@ -72,7 +70,7 @@ def finish(description, type_, name):
     # If no version specified and this topic was ever merged in ci, try to
     # select appropriate version.
     if cr.default_version:
-        if last_m_cd:
+        if all_m_cd:
             for m in all_m_cd:
                 if m.rev.topic == cr.topic and m.rev.SHA == cr.SHA:
                     cr.version = m.rev.version
@@ -81,6 +79,7 @@ def finish(description, type_, name):
                         ' of already merged revision with same head SHA.')
                     break
             else:
+                last_m_cd = cr.topic.get_latest_merge(all_m_cd)
                 if last_m_cd and commit.is_based_on(last_m_cd.rev.SHA, cr.SHA):
                     cr.version = last_m_cd.rev.version + 1
                     cr.default_version = False
