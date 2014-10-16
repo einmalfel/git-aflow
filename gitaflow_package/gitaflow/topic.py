@@ -528,7 +528,6 @@ class TopicMerge:
         if not self.SHA:
             raise IncompleteMergeObjectError(
                 'Trying to found original merge of merge w\o SHA')
-            return None
         if self.rev.SHA:
             return self
 
