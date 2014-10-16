@@ -62,7 +62,7 @@ def finish(description, type_, name):
     if last_m:
         if last_m.rev.version < cr.version - 1:
             die('Wrong topic version specified. Latest revision has version ' +
-                '== ' + str(last_m.version) + '. Increment version by 1')
+                '== ' + str(last_m.rev.version) + '. Increment version by 1')
     elif not cr.version == 1:
         say('Correcting topic version from ' + str(cr.version) + ' to 1')
         cr.version = 1
