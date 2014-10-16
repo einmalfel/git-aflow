@@ -88,36 +88,33 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         own_merges.append(current_revision_merge)
 
     merges_to_commit = []
-
+    source_merges = list(itertools.chain.from_iterable(
+        [TopicMerge.get_effective_merges_in(s) for s in sources]))
     if merge_object == 'all':
-        for source in sources:
-            for m in TopicMerge.get_effective_merges_in(source):
-                if m.is_newest_in(own_merges + merges_to_commit):
+        for m in source_merges:
+            if m.is_newest_in(own_merges + merges_to_commit):
+                merges_to_commit.append(m)
+                logging.info('Adding to merge ' + str(m))
+            else:
+                logging.info('Already have this version of ' + str(m))
+    elif merge_object == 'update':
+        for m in source_merges:
+            add = False
+            for already_have in own_merges + merges_to_commit:
+                if m.rev.topic == already_have.rev.topic:
+                    if m.rev.version > already_have.rev.version:
+                        add = True
+                    else:
+                        logging.info('Already have this version of ' +
+                                     already_have.rev.topic.name +
+                                     '. Ours: ' + str(already_have) +
+                                     ' theirs: ' + str(m))
+                        break
+            else:
+                if add:  # if no break and this one (m) is newer then ours
                     merges_to_commit.append(m)
                     logging.info('Adding to merge ' + str(m))
-                else:
-                    logging.info('Already have this version of ' + str(m))
-    elif merge_object == 'update':
-        for source in sources:
-            for m in TopicMerge.get_effective_merges_in(source):
-                add = False
-                for already_have in own_merges + merges_to_commit:
-                    if m.rev.topic == already_have.rev.topic:
-                        if m.rev.version > already_have.rev.version:
-                            add = True
-                        else:
-                            logging.info('Already have this version of ' +
-                                         already_have.rev.topic.name +
-                                         '. Ours: ' + str(already_have) +
-                                         ' theirs: ' + str(m))
-                            break
-                else:
-                    if add:  # if no break and this one (m) is newer then ours
-                        merges_to_commit.append(m)
-                        logging.info('Adding to merge ' + str(m))
     elif merge_object is None:
-        source_merges = list(itertools.chain.from_iterable(
-            [TopicMerge.get_effective_merges_in(s) for s in sources]))
         logging.info('Source merges: ' +
                      ', '.join(str(m) for m in source_merges))
         for topic in topics:
