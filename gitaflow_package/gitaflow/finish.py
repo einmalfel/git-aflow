@@ -86,6 +86,13 @@ def finish(description, type_, name):
                     cr.default_version = False
                     say('Using topic version ' + str(cr.version) +
                         ' as default.')
+    elif all_m_cd:
+        for m in all_m_cd:
+            if m.rev.topic == cr.topic and m.rev.version + 1 >= cr.version:
+                break
+        else:
+            die('You should finish version ' + str(cr.version - 1) +
+                ' before finishing ' + cr.get_branch_name())
     if not Topic.is_valid_tb_name(cr.get_branch_name()):
         die('Please correct topic name. "..", "~", "^", ":", "?", "*", ' +
             '"[", "@", "\", spaces and ASCII control characters' +
