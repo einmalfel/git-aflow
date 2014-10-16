@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 
-
-from conflicts import do_not_conflict
-from conflicts import dprint
+import logging
 from sys import argv
+
+from conflicts.conflicts import get_first_conflict
 
 
 if __name__ == "__main__":
-    dprint("launched as: " + ' '.join(argv))
-    result = do_not_conflict(argv[1:])
+    logging.info("launched as: " + ' '.join(argv))
+    result = get_first_conflict(argv[1:])
     if result is None:
         print("no conflicts detected")
         exit(0)
