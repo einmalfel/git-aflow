@@ -198,7 +198,7 @@ class TopicRevision:
             else:
                 s += '_v' + str(self.version)
         if self.SHA:
-            s += '[' + self.SHA + ']'
+            s += '[' + self.SHA[0:7] + ']'
         return s
 
     def __eq__(self, other):
@@ -360,7 +360,7 @@ class TopicMerge:
     def __str__(self):
         s = '{Merge'
         if self.SHA:
-            s += '[' + self.SHA + ']'
+            s += '[' + self.SHA[0:7] + ']'
         s += ' of ' + str(self.rev)
         if self.merge_target:
             s += ' into ' + self.merge_target
@@ -571,7 +571,7 @@ class TopicRevert:
         if self.reverted_SHA:
             s += '. Reverted SHA: ' + self.reverted_SHA
         if self.SHA:
-            s += '[' + self.SHA + ']'
+            s += '[' + self.SHA[0:7] + ']'
         s += '}'
         return s
 
