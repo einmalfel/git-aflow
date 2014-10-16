@@ -62,3 +62,11 @@ def is_valid_ref_name(name):
 def set_merge_msg(string):
     with open(get_git_dir() + '/MERGE_MSG', 'w') as merge_msg_file:
         merge_msg_file.write(string)
+
+
+def get_merge_base(shas):
+    return get_output(["git", "merge-base", "--octopus"] + shas)
+
+
+def get_diff(from_treeish, to_treeish):
+    return get_output(["git", "diff", from_treeish, to_treeish, '--'])
