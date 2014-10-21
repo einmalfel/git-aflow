@@ -5,7 +5,7 @@ import sys
 import traceback
 
 from gitwrapper import misc
-from gitaflow import init, merge, start
+from gitaflow import init, merge, start, checkout
 from gitaflow.common import die
 
 
@@ -65,3 +65,5 @@ def execute(args_namespace):
                     args_namespace.merge_object,
                     args_namespace.topic,
                     args_namespace.edit_description)
+    elif args_namespace.subcommand == 'checkout':
+        checkout.checkout(args_namespace.name)
