@@ -128,6 +128,22 @@ may conflict with each other')
         action='store_const', const=None,
         help='List all finished topics in repo')
 
+    rebase_parser = main_subparsers.add_parser(
+        'rebase',
+        help='Start new iteration.',
+        description='This command starts new iteration by creating BP, '
+                    'develop and staging on the top of master branch. By '
+                    'default, it also tries to rebase some of '
+                    'not-merged-in-master topics into created iteration.')
+    rebase_parser.add_argument(
+        'name',
+        help='Name of new iteration.')
+    rebase_parser.add_argument(
+        '-n', '--no-porting',
+        action='store_false',
+        dest='port',
+        help='Do not rebase any topics, just start new iteration.')
+
     merge_parser = main_subparsers.add_parser(
         'merge',
         help='Merge topics into current branch',
