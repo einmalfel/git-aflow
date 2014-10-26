@@ -137,7 +137,8 @@ may conflict with each other')
                     'not-merged-in-master topics into created iteration.')
     rebase_parser.add_argument(
         'name',
-        help='Name of new iteration.')
+        help='Name of new iteration. Name should describe what your are going '
+             'to do after BP rather then what you have done before it')
     rebase_parser.add_argument(
         '-n', '--no-porting',
         action='store_false',
