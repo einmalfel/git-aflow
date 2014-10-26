@@ -4,14 +4,14 @@
 from distutils.core import setup
 
 
-setup(name='conflicts',
+setup(name='gitwrapper',
       version='0.1',
-      description='Git merge-conflicts checker',
-      py_modules=['conflicts'],
-      scripts=['do_not_conflict'],
+      description='Wrapper for git command line tool. For now functionality is '
+                  'limited to git commands needed for git-aflow project.',
+      packages=['gitwrapper'],
       author="Vasily Makarov",
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
-      provides=["conflicts"],
       long_description=open("README.txt", "r").read(),
+      provides=["gitwrapper"],
       )
