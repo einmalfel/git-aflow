@@ -26,11 +26,15 @@ def continue_(name=None):
         else:
             iters = iteration.get_iteration_list()
             p_iters = misc.sort([i for i in iters if commit.is_ancestor(i, ci)])
-            for i in p_iters:
+            if not p_iters:
+                die('No topic ' + str(nr.topic) + ' in the only iteration ' +
+                    ci + '.')
+            # there is nothing before first iteration
+            for i in p_iters[:-1]:
                 last_m = nr.topic.get_latest_merge(
                     TopicMerge.get_effective_merges_in(i + '^'))
                 if last_m:
-                    logging.info('Found effective merge in master in ' + i +
+                    logging.info('Found effective merge in master before ' + i +
                                  ': ' + str(last_m))
                     last_r_cd = TopicRevision(nr.topic, ci,
                                               last_m.rev.version + 1, ci)
