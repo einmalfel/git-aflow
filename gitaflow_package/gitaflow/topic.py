@@ -156,10 +156,10 @@ class Topic:
         return [b for b in relevant_branches
                 if TopicRevision.from_branch_name(b).topic == self]
 
-    def get_latest_merge(self, list_of_merges):
+    def get_latest_merge(self, list_of_merges, no_fake=False):
         last = None
         for m in list_of_merges:
-            if (m.rev.topic.name == self.name and
+            if (m.rev.topic.name == self.name and (not no_fake or m.rev.SHA) and
                     (not last or last.rev.version < m.rev.version)):
                 last = m
         return last
