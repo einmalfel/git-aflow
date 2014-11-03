@@ -5,7 +5,7 @@ import sys
 import traceback
 
 from gitwrapper import misc
-from gitaflow import init, merge, start, continue_
+from gitaflow import init, merge, start, continue_, finish
 from gitaflow.common import die
 
 
@@ -60,6 +60,10 @@ def execute(args_namespace):
             start.start(args_namespace.name)
         elif args_namespace.subsubcommand == 'continue':
             continue_.continue_(args_namespace.name)
+        elif args_namespace.subsubcommand == 'finish':
+            finish.finish(args_namespace.description,
+                          args_namespace.topic_finish_type,
+                          args_namespace.name)
     elif args_namespace.subcommand == 'merge':
         merge.merge(args_namespace.source,
                     args_namespace.merge_type,
