@@ -53,7 +53,6 @@ def checkout(name):
         rev.iteration = ci
     logging.info('Searching for branch of revision ' + str(rev))
     branches = rev.topic.get_branches()
-    print(branches)
     last = 0, None  # version and name of last branch of this topic in ci
     for b in branches:
         b_rev = TopicRevision.from_branch_name(b)
