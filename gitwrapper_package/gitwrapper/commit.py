@@ -43,8 +43,13 @@ def get_current_sha():
 
 def is_ancestor(ancestor, descendant):
     """Works with Git1.8+"""
-    return check_01(['git', 'merge-base', '--is-ancestor', ancestor,
-                     descendant])
+    # I'd say a commit is rather not ancestor of itself, although git does
+    # think so
+    if misc.rev_parse(ancestor) == misc.rev_parse(descendant):
+        return False
+    else:
+        return check_01(['git', 'merge-base', '--is-ancestor', ancestor,
+                         descendant])
 
 
 def is_based_on(ancestor, descendant):
