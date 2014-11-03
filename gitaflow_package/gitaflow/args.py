@@ -91,6 +91,20 @@ verbosity level by one')
         nargs='?',
         help='Topic will be checked for conflicts against and merged into \
 stage. Defaults to current branch')
+    topic_continue_parser = topic_subparsers.add_parser(
+        'continue',
+        help='Create a branch for new version of topic',
+        description='Use this to update topic by making a new version of it. '
+                    'Commit changes to branch created by this command, '
+                    'then call "git af topic finish" to merge new '
+                    'version of topic into develop')
+    topic_continue_parser.add_argument(
+        'name',
+        nargs='?',
+        help='Name of topic to be continued. If none given, aflow will check '
+             'if your HEAD points to last commit of some topic. Aflow will '
+             'use iteration prefix to switch iteration before proceeding and '
+             'will ignore version suffix.')
 
     release_parser = main_subparsers.add_parser(
         'release',
