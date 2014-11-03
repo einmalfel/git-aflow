@@ -24,7 +24,21 @@ def continue_(name=None):
         if last_m:
             last_r_cd = last_m.rev
         else:
-            die('Failed to find merges of ' + str(nr.topic) + ' in ' + ci)
+            iters = iteration.get_iteration_list()
+            p_iters = misc.sort([i for i in iters if commit.is_ancestor(i, ci)])
+            for i in p_iters:
+                last_m = nr.topic.get_latest_merge(
+                    TopicMerge.get_effective_merges_in(i + '^'))
+                if last_m:
+                    logging.info('Found effective merge in master in ' + i +
+                                 ': ' + str(last_m))
+                    last_r_cd = TopicRevision(nr.topic, ci,
+                                              last_m.rev.version + 1, ci)
+                    break
+            else:
+                die('Failed to find merges of ' + str(nr.topic) +
+                    ' in iterations: ' + ', '.join([ci] + p_iters) + '.')
+
     else:
         ci = iteration.get_current_iteration()
         if not ci:
