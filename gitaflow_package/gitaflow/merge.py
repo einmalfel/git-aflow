@@ -88,36 +88,33 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         own_merges.append(current_revision_merge)
 
     merges_to_commit = []
-
+    source_merges = list(itertools.chain.from_iterable(
+        [TopicMerge.get_effective_merges_in(s) for s in sources]))
     if merge_object == 'all':
-        for source in sources:
-            for m in TopicMerge.get_effective_merges_in(source):
-                if m.is_newest_in(own_merges + merges_to_commit):
+        for m in source_merges:
+            if m.is_newest_in(own_merges + merges_to_commit):
+                merges_to_commit.append(m)
+                logging.info('Adding to merge ' + str(m))
+            else:
+                logging.info('Already have this version of ' + str(m))
+    elif merge_object == 'update':
+        for m in source_merges:
+            add = False
+            for already_have in own_merges + merges_to_commit:
+                if m.rev.topic == already_have.rev.topic:
+                    if m.rev.version > already_have.rev.version:
+                        add = True
+                    else:
+                        logging.info('Already have this version of ' +
+                                     already_have.rev.topic.name +
+                                     '. Ours: ' + str(already_have) +
+                                     ' theirs: ' + str(m))
+                        break
+            else:
+                if add:  # if no break and this one (m) is newer then ours
                     merges_to_commit.append(m)
                     logging.info('Adding to merge ' + str(m))
-                else:
-                    logging.info('Already have this version of ' + str(m))
-    elif merge_object == 'update':
-        for source in sources:
-            for m in TopicMerge.get_effective_merges_in(source):
-                add = False
-                for already_have in own_merges + merges_to_commit:
-                    if m.rev.topic == already_have.rev.topic:
-                        if m.rev.version > already_have.rev.version:
-                            add = True
-                        else:
-                            logging.info('Already have this version of ' +
-                                         already_have.rev.topic.name +
-                                         '. Ours: ' + str(already_have) +
-                                         ' theirs: ' + str(m))
-                            break
-                else:
-                    if add:  # if no break and this one (m) is newer then ours
-                        merges_to_commit.append(m)
-                        logging.info('Adding to merge ' + str(m))
     elif merge_object is None:
-        source_merges = list(itertools.chain.from_iterable(
-            [TopicMerge.get_effective_merges_in(s) for s in sources]))
         logging.info('Source merges: ' +
                      ', '.join(str(m) for m in source_merges))
         for topic in topics:
@@ -179,12 +176,30 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         'merge dependencies automatically')
         merges_with_deps.append(m)
 
-    logging.info('Topics with dependencies: ' +
-                 ', '.join([m.rev.get_branch_name() for m in merges_with_deps])
-                 + '. Merging now...')
+    # add elder versions of topics being merged
+    merges_with_versions = []
+    for m in merges_with_deps:
+        for v in range(1, m.rev.version):
+            rev = TopicRevision(m.rev.topic, None, v, ci)
+            if not rev.is_in_merges(merges_with_versions + own_merges):
+                for sm in source_merges:
+                    if sm.rev == rev:
+                        merges_with_versions.append(sm)
+                        break
+                else:
+                    die('Merge failed. We should merge ' +
+                        m.rev.get_branch_name() + ' along with ' +
+                        rev.get_branch_name() + ', but ' +
+                        rev.get_branch_name() + ' is absent in sources.')
+        merges_with_versions.append(m)
+
+    logging.info(
+        'Revisions to merge with dependencies and elder versions: ' +
+        ', '.join([m.rev.get_branch_name() for m in merges_with_versions]) +
+        '. Merging now...')
 
     fallback_sha = commit.get_current_sha()
-    for idx, m in enumerate(merges_with_deps):
+    for idx, m in enumerate(merges_with_versions):
         logging.info('Merging ' + m.rev.get_branch_name())
         try:
             merge_result = m.merge()
@@ -205,8 +220,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 'See conflicted files via "git status", resolve conflicts, ' +
                 'add files to index ("git add") and do ' +
                 '"git commit --no-edit" to finish the merge.')
-            if idx + 1 < len(merges_with_deps):
-                remain = merges_with_deps[idx + 1:]
+            if idx + 1 < len(merges_with_versions):
+                remain = merges_with_versions[idx + 1:]
                 say('Then call "git af merge [topics]" again to merge ' +
                     'remaining topics. Topics remaining to merge: ' +
                     ', '.join([r.rev.get_branch_name() for r in remain]))
