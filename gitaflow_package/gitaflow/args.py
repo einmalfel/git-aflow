@@ -217,6 +217,20 @@ You may specify more then one source (e.g. -s source1 -ssource2)')
         help='You may replace topic description with yours. This only works if \
 if single topic is specified to merge (with or without dependencies)')
 
+    checkout_parser = main_subparsers.add_parser(
+        'checkout',
+        help='Checkout given topic branch or revision head',
+        description='If there is a branch for given revision, checks it out. '
+                    'Otherwise, checks out head commit of specified revision'
+                    '(detached HEAD mode). '
+                    'This command will assume that you are switching '
+                    'between topics and branches inside current iteration, '
+                    'unless topic is specified along with "iteration/" prefix. '
+                    'Master branch always belongs to last iteration.')
+    checkout_parser.add_argument(
+        'name',
+        help='Name of branch/topic/revision to checkout.')
+
     init_parser = main_subparsers.add_parser(
         'init',
         help='Initialize git-aflow for existing git repo',
