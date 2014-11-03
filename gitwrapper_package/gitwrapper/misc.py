@@ -32,7 +32,7 @@ def list_files_differ(treeish1, treeish2):
     """Returns list of files which is different between treeish1 and treeish2
     """
     diff = get_output(['git', 'diff', '--numstat', treeish1,
-                       treeish2]).splitlines()
+                       treeish2, '--']).splitlines()
     return [line.rsplit('\t', 1)[1] for line in diff if line]
 
 
