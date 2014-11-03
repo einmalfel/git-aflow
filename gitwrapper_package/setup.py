@@ -12,6 +12,6 @@ setup(name='gitwrapper',
       author="Vasily Makarov",
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
-      long_description=open("README.txt", "r").read(),
+      long_description=open("README.txt").read(),
       provides=["gitwrapper"],
       )
