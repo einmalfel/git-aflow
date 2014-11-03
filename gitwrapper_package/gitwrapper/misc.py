@@ -104,5 +104,10 @@ def get_merge_base(shas):
     return get_output(["git", "merge-base", "--octopus"] + shas)
 
 
-def get_diff(from_treeish, to_treeish):
-    return get_output(["git", "diff", from_treeish, to_treeish, '--'])
+def get_diff(from_treeish, to_treeish, files=None):
+    """Returns changes of files between from_treeish and to_treeish. If files is
+    None, return changes for all files.
+    """
+    # need '--' at the end because to_treeish may be interpreted as filename
+    return get_output(["git", "diff", from_treeish, to_treeish, '--'] +
+                      (files if files else []))
