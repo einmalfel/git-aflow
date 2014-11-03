@@ -41,7 +41,7 @@ def create(name, start_point=None):
 
 
 def delete(name):
-    call(['git', 'branch', '-d', name])
+    call(['git', 'branch', '-D', name])
 
 
 def reset(treeish, mode='hard'):
