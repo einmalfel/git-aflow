@@ -181,7 +181,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     for m in merges_with_deps:
         for v in range(1, m.rev.version):
             rev = TopicRevision(m.rev.topic, None, v, ci)
-            if not rev.is_in_merges(merges_with_versions):
+            if not rev.is_in_merges(merges_with_versions + own_merges):
                 for sm in source_merges:
                     if sm.rev == rev:
                         merges_with_versions.append(sm)
