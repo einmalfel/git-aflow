@@ -3,10 +3,63 @@
 import logging
 from os import linesep
 import re
+import itertools
 
+from gitaflow.common import say
 from gitwrapper import misc, branch, commit
 from gitaflow import iteration
 from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
+
+
+class MergeNonConflictError(Exception):
+    """ Merge failed unexpectedly."""
+
+
+class IncompleteMergeObjectError(Exception):
+    """ Merge object is not complete enough to execute called method."""
+
+
+def consistency_check_ok(list_of_treeish):
+    """Checks revisions merged in all given treeish:
+    - same revisions have same head SHAs
+    - newer revisions based on elder ones
+    """
+    # sort non-fake merges by topic
+    merges = {}
+    for treeish in list_of_treeish:
+        for m in TopicMerge.get_all_merges_in(treeish):
+            if not m.is_fake():
+                m.origin = treeish
+                if m.rev.topic not in merges.keys():
+                    merges[m.rev.topic] = [m]
+                else:
+                    merges[m.rev.topic].append(m)
+
+    # do checks
+    result = True
+    for topic in merges.keys():
+        for m1, m2 in itertools.combinations(merges[topic], 2):
+            if m1.rev.version == m2.rev.version:
+                if not m1.rev.SHA == m2.rev.SHA:
+                    say(m1.rev.get_branch_name() + ' was merged into ' +
+                        m1.origin + '(merge SHA: ' + m1.SHA + ') and into ' +
+                        m2.origin + '(merge SHA: ' + m2.SHA + ') with '
+                        'different head SHA (' + m1.rev.SHA + ' and ' +
+                        m2.rev.SHA + ').')
+                    result = False
+            else:
+                if m1.rev.version > m2.rev.version:
+                    m1, m2 = m2, m1
+                # assuming m2 is the newer revision as we got here
+                if not commit.is_based_on(m1.rev.SHA, m2.rev.SHA):
+                    say(m2.rev.get_branch_name() + ' merged into ' + m2.origin +
+                        '(merge SHA: ' + m2.SHA + ') is newer version of ' +
+                        m1.rev.get_branch_name() + ' merged into ' + m1.origin +
+                        '(merge SHA: ' + m1.SHA + '), but newer one is not ' +
+                        'based on elder.')
+                    result = False
+
+    return result
 
 
 class Topic:
@@ -29,8 +82,26 @@ class Topic:
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.name)
+
+    def get_all_merges_in(self, treeish):
+        """ Searches for merges of this topic between RP and specified treeish
+        """
+        iter_name = iteration.get_iteration_by_treeish(treeish)
+        logging.debug('Searching ' + self.name + ' in ' + str(treeish))
+        shas = commit.get_commits_between(
+            iter_name, treeish, True,
+            ["^Merge branch '([^/]+/)?" + self.name + "(_v[0-9]+)?'.*$"])
+        result = []
+        for sha in shas:
+            m = TopicMerge.from_treeish(sha)
+            if m and (m.rev.topic == self):
+                result.append(m)
+        return result
+
     def get_all_merges(self):
-        """ Searches for merges of this branch into all develops, stagings and
+        """ Searches for merges of this topic into all develops, stagings and
         master branches
         """
         iters = iteration.get_iteration_list()
@@ -38,40 +109,52 @@ class Topic:
         heads.extend(iteration.get_develop(i) for i in iters)
         heads.extend(iteration.get_staging(i) for i in iters)
         logging.info('Searching ' + self.name + ' in branches ' + str(heads))
-        shas = commit.find(heads, True, ["^Merge branch '[^/]+/" +
-                                         self.name + "'.*$"])
+        shas = commit.find(heads, True, ["^Merge branch '([^/]+/)?" +
+                                         self.name + "(_v[0-9]+)?'.*$"])
         logging.debug('Found: ' + ', '.join(shas))
         result = []
         for sha in shas:
             m = TopicMerge.from_treeish(sha)
-            if (self.is_branch_name_valid(m.rev.get_branch_name()) and
-                    m and (iteration.is_master(m.merge_target) or
-                           iteration.is_develop(m.merge_target) or
-                           iteration.is_staging(m.merge_target))):
+            if (m and (m.rev.topic == self) and (
+                    iteration.is_master(m.merge_target) or
+                    iteration.is_develop(m.merge_target) or
+                    iteration.is_staging(m.merge_target))):
                 result.append(m)
         logging.debug('After checks: ' + str(result))
         return result
 
-    def is_branch_name_valid(self, branch_name):
-        if not misc.is_valid_ref_name(branch_name):
+    branch_name_regexp = None
+
+    @classmethod
+    def is_valid_tb_name(cls, branch_name):
+        if cls.branch_name_regexp is None:
+            cls.branch_name_regexp = re.compile(
+                '^(?:[^/]+/)?.+?(?:_v(\d+))?$')
+        result = cls.branch_name_regexp.search(branch_name)
+        if result:
+            groups = result.groups()[0]
+            if groups:
+                try:
+                    version = int(groups[0])
+                except ValueError:
+                    return False
+                else:
+                    if version < 1:
+                        return False
+        else:
             return False
-        if (iteration.is_develop(branch_name) or
+        if (not misc.is_valid_ref_name(branch_name) or
+                iteration.is_develop(branch_name) or
                 iteration.is_master(branch_name) or
                 iteration.is_release(branch_name) or
                 iteration.is_staging(branch_name)):
-            return False
-        result = TopicRevision.from_branch_name(branch_name)
-        if not result:
-            return False
-        if not iteration.is_iteration(result.iteration):
-            return False
-        if not result.topic.name == self.name:
             return False
         return True
 
     def get_branches(self):
         relevant_branches = branch.get_list(['*' + self.name + '*'])
-        return [b for b in relevant_branches if self.is_branch_name_valid(b)]
+        return [b for b in relevant_branches
+                if TopicRevision.from_branch_name(b).topic == self]
 
     def get_latest_merge(self, list_of_merges):
         last = None
@@ -119,81 +202,107 @@ class TopicRevision:
         return s
 
     def __eq__(self, other):
-        # TopicRevision may be created w/o SHA, so do not compare SHA if not set
+        # TopicRevision may be created w/o SHA, so do not compare SHAs
         return (isinstance(other, self.__class__) and
                 self.iteration == other.iteration and
                 self.topic == other.topic and
-                self.version == other.version and
-                (self.SHA == other.SHA if self.SHA and other.SHA else True))
+                self.version == other.version)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def get_effective_merges(self, recursive=False):
+    def get_own_effective_merges(self, recursive=False):
         if self.SHA:
             return TopicMerge.get_effective_merges_in(self.SHA, recursive)
         else:
             logging.critical('Searching for merges it topic w/o Topic.SHA')
             return None
 
+    def is_in_merges(self, sequence_of_merges):
+        for merge in sequence_of_merges:
+            if merge.rev == self:
+                return True
+        return False
+
+    def is_in_reverts(self, sequence_of_reverts):
+        for revert in sequence_of_reverts:
+            if revert.rev == self:
+                return True
+        return False
+
     def merge(self, description=None, type_=None):
         """ Checks whether this revision was already merged and reverted in
         this branch. Makes "revert revert" for this case
         Does not check if this revision is already merged
-        Returns None if conflict happened, TopicMerge otherwise
+        Returns None if conflict happened, TopicMerge otherwise.
+        Raises MergeNonConflictError for other errors
         """
         iter_ = iteration.get_current_iteration()
         commits = commit.get_commits_between(iter_, commit.get_current_sha(),
-                                             True,
+                                             False,
                                              ['^Revert "Merge branch .*"$',
                                               "^Merge branch .*$"])
-        revert_search = None
-        last_merge = None
-        last_revert = None
-        for sha in commits:
-            if not commit.get_headline(sha).startswith('Revert "Merge'):
-                merge = TopicMerge.from_treeish(sha)
-                if merge:
-                    if merge.rev == self:
-                        revert_search = True
-                        last_merge = merge
-            elif revert_search:
-                revert = TopicRevert.from_treeish(sha)
-                if revert and revert.rev == self:
-                    last_revert = revert
 
-        if last_merge:
-            if last_revert:
-                logging.debug('Reverting ' + str(last_revert))
-                result = commit.revert(last_revert.SHA, None, True)
-                last_merge.merge_target = branch.get_current()
-                if description:
-                    last_merge.description = description
-                if type_:
-                    last_merge.type = type_
-                try:
-                    misc.set_merge_msg(last_merge.get_message())
-                except:
-                    commit.abort_revert()
-                    logging.critical('Failed to set MERGE_MSG for revert')
-                    raise
-                if not result:
-                    return None
-                else:
-                    if commit.commit(None, True):
-                        last_merge.SHA = commit.get_current_sha()
-                        return last_merge
-                    else:
-                        return None
+        # Before merging new revision we should merge revisions that:
+        #  - are revisions of self.topic
+        #  - where reverted from cb
+        #  - are newer then last effectively merged revision
+        #  - are not newer then revision that is being merged now
+        reverts = []  # one revert object for each revision of self.topic that
+                      # was ever reverted
+        last_effect_m = None
+        for sha in commits:
+            if commit.get_headline(sha).startswith('Revert'):
+                revert = TopicRevert.from_treeish(sha)
+                if (revert and revert.rev.topic == self.topic and
+                        not revert.rev.is_in_reverts(reverts)):
+                    reverts.append(revert)
             else:
-                logging.critical('Trying to merge already merged ' + str(self))
+                m = TopicMerge.from_treeish(sha)
+                if (m and not last_effect_m and m.rev.topic == self.topic and
+                        not m.rev.is_in_reverts(reverts)):
+                    last_effect_m = m
+
+        effect_version = last_effect_m.rev.version if last_effect_m else 0
+        reverts_filtered = [revert for revert in reverts if
+                            effect_version < revert.rev.version <= self.version]
+        reverts_filtered.sort(key=lambda x: x.rev.version)
+
+        reverted_merge = None
+        for revert in reverts_filtered:
+            reverted_merge = revert.get_reverted_merge()
+            logging.info('Re-reverting ' + str(reverted_merge))
+            if not commit.revert(revert.SHA, None, True):
+                return None
+            reverted_merge.merge_target = branch.get_current()
+            if reverted_merge.rev == self:
+                if description:
+                    reverted_merge.description = description
+                if type_:
+                    reverted_merge.type = type_
+            try:
+                misc.set_merge_msg(reverted_merge.get_message())
+            except misc.MergeMsgError as msg_error:
+                commit.abort_revert()
+                raise MergeNonConflictError from msg_error
+            if commit.commit(None, True):
+                reverted_merge.SHA = commit.get_current_sha()
+            else:
+                commit.abort_revert()
+                raise MergeNonConflictError('Failed to commit while ' +
+                                            'reverting ' + str(revert))
+
+        # If revision we are going to merge was not re-reverted on previous
+        # stage we should make true merge:
+        if reverted_merge and reverted_merge.rev == self:
+            return reverted_merge
         else:
             if not self.SHA:
-                logging.critical('Cannot merge w/o revision SHA')
-                return None
+                raise MergeNonConflictError('Cannot merge w/o revision SHA')
             new_merge = TopicMerge(self, None, description, type_,
                                    branch.get_current())
             message = new_merge.get_message()
+            logging.info('Merging ' + str(self))
             if commit.merge(self.SHA, message):
                 new_merge.SHA = commit.get_current_sha()
                 return new_merge
@@ -201,10 +310,10 @@ class TopicRevision:
                 # don't let git to add "Conflicts:" section
                 try:
                     misc.set_merge_msg(message)
-                except:
+                except misc.MergeMsgError as msg_error:
                     commit.abort_merge()
-                    logging.critical('Failed to set MERGE_MSG for merge')
-                    raise
+                    raise MergeNonConflictError from msg_error
+                return None
 
     def is_newest_in(self, array_of_revisions):
         for rev in array_of_revisions:
@@ -225,16 +334,16 @@ class TopicRevision:
         if not result:
             return None
         iteration_, name, version = result.groups()
-        if not name:
-            return None
+
+        # TB names may contain slash
+        if iteration_ and not iteration.is_iteration(iteration_):
+            name = iteration_ + '/' + name
+            iteration_ = None
+
         return TopicRevision(Topic(name), None, version, iteration_)
 
     def get_branch_name(self):
         return self.iteration + '/' + self.topic.name + '_v' + str(self.version)
-
-    @staticmethod
-    def get_all_revisions_in(treeish):
-        return [m.rev for m in TopicMerge.get_effective_merges_in(treeish)]
 
 
 class TopicMerge:
@@ -275,11 +384,11 @@ class TopicMerge:
     def from_headline(cls, headline):
         if cls.headline_regexp is None:
             cls.headline_regexp = re.compile(
-                "^Merge branch '([^/]*/.*)'(?: into ([^/]*/.*))?$")
+                "^Merge branch '((?:[^/]*/)?.*)'(?: into ([^/]*/.*))?$")
         # if branch is merged into master headline doesn't contain "into.." part
         re_result = cls.headline_regexp.search(headline)
         if not re_result:
-            re_result = re.search("^Merge branch '([^/]*/.*)' into (.*)?$",
+            re_result = re.search("^Merge branch '((?:[^/]*/)?.*)' into (.*)?$",
                                   headline)
             if not re_result:
                 logging.warning('Failed to parse merge headline: ' + headline)
@@ -327,15 +436,28 @@ class TopicMerge:
 
     @classmethod
     def get_all_merges_in(cls, treeish):
-        """ Returns all not-reverted merges in BP..treeish"""
+        """ Returns all (including reverted) in BP..treeish"""
         iter_name = iteration.get_iteration_by_treeish(treeish)
         result = []
         for sha in commit.get_commits_between(iter_name, treeish, True,
-                                              ['^Revert "Merge branch .*"$',
-                                               "^Merge branch .*$"]):
-            merge = TopicMerge.from_treeish(sha)
+                                              ["^Merge branch .*$"]):
+            merge = cls.from_treeish(sha)
             if merge:
                 result.append(merge)
+        return result
+
+    @staticmethod
+    def get_reverted_merges_in(treeish, original_only=False):
+        iter_name = iteration.get_iteration_by_treeish(treeish)
+        result = []
+        commits = commit.get_commits_between(iter_name, treeish, False,
+                                             ['^Revert "Merge branch .*"$'])
+        for sha in commits:
+            revert = TopicRevert.from_treeish(sha)
+            if revert:
+                merge = revert.get_reverted_merge()
+                if not (merge.is_fake() and original_only):
+                    result.append(merge)
         return result
 
     @classmethod
@@ -375,7 +497,7 @@ class TopicMerge:
         if recursive:
             recursive_result = []
             for merge in result:
-                merges2 = merge.rev.get_effective_merges(True)
+                merges2 = merge.rev.get_own_effective_merges(True)
                 merges2.append(merge)
                 for merge2 in merges2:
                     if merge2.is_newest_in(recursive_result):
@@ -398,14 +520,18 @@ class TopicMerge:
 
     def is_fake(self):
         if not self.SHA:
-            logging.critical('Checking for fake merge in TopicMerge that has ' +
-                             'no SHA')
+            raise IncompleteMergeObjectError('Checking for fake merge in '
+                                             'TopicMerge that has no SHA')
         return self.rev.SHA is None
 
     def get_original(self):
         if not self.SHA:
-            logging.critical('Trying to found original merge of merge w\o SHA')
+            raise IncompleteMergeObjectError(
+                'Trying to found original merge of merge w\o SHA')
             return None
+        if self.rev.SHA:
+            return self
+
         ci = None
         if self.rev.iteration:
             ci = self.rev.iteration
@@ -415,7 +541,17 @@ class TopicMerge:
                 if not ci:
                     ci = iteration.get_iteration_by_sha(self.SHA)
         if not ci:
-            logging.critical('Unable to find iteration of merge ' + str(self))
+            raise IncompleteMergeObjectError(
+                'Unable to find iteration of merge ' + str(self))
+
+        for sha in commit.get_commits_between(
+                ci, self.SHA, True, ["^Merge branch '([^/]+/)?" +
+                                     self.rev.topic.name + "(_v[0-9]+)?'.*$"]):
+            merge = self.__class__.from_treeish(sha)
+            if merge and merge.rev == self.rev and merge.rev.SHA:
+                return merge
+
+        return None
 
 
 class TopicRevert:
@@ -476,8 +612,15 @@ class TopicRevert:
         if self.reverted_SHA:
             return TopicMerge.from_treeish(self.reverted_SHA)
         else:
-            logging.critical('Trying to get reverted merge w/o reverted SHA')
-            return None
+            if not self.SHA:
+                logging.critical('Trying to get reverted merge w/o SHA')
+                return None
+
+        # Suboptimal solution.
+        # TODO: implement and use here TopicRevision.get_all_merges_in()
+        for m in reversed(self.rev.topic.get_all_merges_in(self.SHA)):
+            if m.rev == self.rev:
+                return m
 
     headline_regexp = None
 

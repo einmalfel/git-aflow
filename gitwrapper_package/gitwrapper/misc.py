@@ -59,9 +59,21 @@ def is_valid_ref_name(name):
     return check_01(['git', 'check-ref-format', 'refs/heads/' + name])
 
 
+class MergeMsgError(Exception):
+    """ Failed to set merge msg for some reason."""
+
+
 def set_merge_msg(string):
-    with open(get_git_dir() + '/MERGE_MSG', 'w') as merge_msg_file:
-        merge_msg_file.write(string)
+    try:
+        with open(get_git_dir() + '/MERGE_MSG', 'w') as merge_msg_file:
+            written = merge_msg_file.write(string)
+    except OSError as error:
+        raise MergeMsgError from error
+    else:
+        if not written == len(string):
+            raise MergeMsgError('Failed to write merge msg. ' +
+                                str(written) + ' characters written of ' +
+                                str(len(string)) + ' (' + string + ').')
 
 
 def get_merge_base(shas):
