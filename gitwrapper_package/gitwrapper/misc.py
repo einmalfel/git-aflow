@@ -1,6 +1,7 @@
 """This module wraps various pieces of git functionality not suitable for
 tag, branch and commit modules.
 """
+import collections
 
 from gitwrapper.aux import get_output, call, \
     get_output_and_exit_code, GitUnexpectedError, check_01
@@ -53,6 +54,29 @@ def get_git_dir():
 
 def rev_parse(treeish):
     return get_output(['git', 'rev-parse', treeish])
+
+
+def sort(list_of_treeish, by_date=False, reverse=False, return_sha=False):
+    """ Sort list of treeish in topological order (descendants first).
+    If by_date - sorts by date, newer first.
+    If return_SHA == True, returns a list of SHA of commits pointed by inputted
+    treeish list, otherwise returns sorted list of treeish in form they where
+    given. First option is faster and deduplicates result.
+    """
+    shas = get_output(['git', 'rev-list', '--no-walk'] +
+                      ['--date-order' if by_date else '--topo-order'] +
+                      (['--reverse'] if reverse else []) +
+                      list_of_treeish + ['--']).splitlines()
+    if return_sha:
+        return shas
+    else:
+        sha_treeish = collections.defaultdict(list)
+        for treeish in list_of_treeish:
+            sha_treeish[rev_parse(treeish)].append(treeish)
+        result = []
+        for sha in shas:
+            result.extend(sha_treeish[sha])
+        return result
 
 
 def is_valid_ref_name(name):

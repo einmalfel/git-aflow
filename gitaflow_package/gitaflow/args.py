@@ -57,12 +57,31 @@ verbosity level by one')
     topic_start_parser.add_argument('name', help='Name for new topic branch')
     topic_finish_parser = topic_subparsers.add_parser(
         'finish',
-        help='Finish topic and put it into develop',
-        description='Finish topic and put it into develop')
+        help='Finish topic and merge it into develop',
+        description='Finish topic: checks if it conflicts with other topics, ' +
+                    'merges it into develop branch and deletes topic branch')
     topic_finish_parser.add_argument(
-        'name',
+        '-n', '--name',
+        help='Set name of topic. Defaults to topic branch name. Use it if you '
+             'want to change topic name given on topic start')
+    topic_finish_parser.add_argument(
+        'description',
         nargs='?',
-        help='Topic name to finish. Defaults to current branch')
+        help='Some text describing purpose of this topic branch and what was '
+             'done in it.')
+    topic_finish_type = topic_finish_parser.add_mutually_exclusive_group()
+    topic_finish_type.add_argument(
+        '-D', '--DEV', dest='topic_finish_type',
+        action='store_const', const='DEV',
+        help='Set topic type to DEV (e.g. refactoring)')
+    topic_finish_type.add_argument(
+        '-E', '--EUF', dest='topic_finish_type',
+        action='store_const', const='EUF',
+        help='Set topic type to EUF (end user feature)')
+    topic_finish_type.add_argument(
+        '-F', '--FIX', dest='topic_finish_type',
+        action='store_const', const='FIX',
+        help='Set topic type to FIX (bug fix)')
     topic_stage_parser = topic_subparsers.add_parser(
         'stage',
         help='Finish topic and put it into develop',
