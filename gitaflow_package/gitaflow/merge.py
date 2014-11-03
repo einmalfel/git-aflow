@@ -3,7 +3,8 @@ import itertools
 
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
-from gitaflow.topic import TopicRevision, TopicMerge
+from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok, \
+    MergeNonConflictError
 from gitaflow.common import say, die
 from gitwrapper import branch, misc, commit
 
@@ -50,6 +51,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 not ci == iteration.get_iteration_by_branch(sources[idx])):
             die('Cannot find branch ' + sources[idx] + '. Note: sources may ' +
                 'contain only master and branches from current iteration')
+
+    if not consistency_check_ok(sources + [cb]):
+        die('Please, fix aforementioned problems and rerun merge.')
 
     own_merges = TopicMerge.get_effective_merges_in(cb)
     current_revision = TopicRevision.from_branch_name(cb)
@@ -160,7 +164,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     merges_with_deps = []
     for m in merges_to_commit:
         logging.info('Dependency search for ' + m.rev.get_branch_name())
-        for dependency in m.rev.get_effective_merges(True):
+        for dependency in m.rev.get_own_effective_merges(True):
             logging.info('Processing dependency ' +
                          dependency.rev.get_branch_name())
             if dependency.is_newest_in(own_merges + merges_with_deps):
@@ -179,9 +183,17 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                  ', '.join([m.rev.get_branch_name() for m in merges_with_deps])
                  + '. Merging now...')
 
+    fallback_sha = commit.get_current_sha()
     for idx, m in enumerate(merges_with_deps):
         logging.info('Merging ' + m.rev.get_branch_name())
-        if not m.merge():
+        try:
+            merge_result = m.merge()
+        except MergeNonConflictError:
+            logging.critical('Unexpectd merge error, falling back to ' +
+                             fallback_sha)
+            branch.reset(fallback_sha)
+            raise
+        if not merge_result:
             if (iteration.is_master(cb) or iteration.is_staging(cb) or
                     iteration.is_release(cb)):
                 commit.abort_merge()
