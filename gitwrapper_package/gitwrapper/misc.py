@@ -113,5 +113,13 @@ def get_diff(from_treeish, to_treeish, files=None):
                       (files if files else []))
 
 
+def add(path):
+    call(['git', 'add', path])
+
+
+def rm(path):
+    call(['git', 'rm', '-f', path])
+
+
 def init(bare=False):
     call(['git', 'init'] + (['--bare'] if bare else []))
