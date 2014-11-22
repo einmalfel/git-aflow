@@ -111,3 +111,7 @@ def get_diff(from_treeish, to_treeish, files=None):
     # need '--' at the end because to_treeish may be interpreted as filename
     return get_output(["git", "diff", from_treeish, to_treeish, '--'] +
                       (files if files else []))
+
+
+def init(bare=False):
+    call(['git', 'init'] + (['--bare'] if bare else []))
