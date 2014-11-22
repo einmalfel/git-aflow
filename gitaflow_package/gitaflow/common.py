@@ -2,13 +2,17 @@
 
 import logging
 
+from gitaflow.debug import TestDebugState
+
 
 def say(message):
     logging.info('Say to user: ' + message)
-    print(message)
+    TestDebugState.output(message)
 
 
 def die(message, exit_code=1):
-    logging.info('Before exit say: ' + message)
-    print(message)
-    exit(exit_code)
+    if message:
+        logging.info('Before exit say: ' + message)
+        TestDebugState.output(message)
+    TestDebugState.exit(exit_code)
+
