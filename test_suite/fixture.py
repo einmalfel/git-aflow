@@ -3,7 +3,7 @@ import re
 import string
 import abc
 
-from gitwrapper import misc, commit, branch
+from gitwrapper import misc, commit, branch, tag
 from test_utils import check_aflow
 
 
@@ -13,6 +13,21 @@ class Fixture:
             self.branches = dict()
             self.name = name
             self.BP = bp
+
+        @classmethod
+        def from_tag_name(cls, name, prev, next_tag):
+            """Everything not merged into develop, staging or master branch
+            will be ignored
+            """
+            bp = prev.branches['master'][-1] if prev else None
+            new = cls(name, bp)
+            for b in 'master', 'staging', 'develop':
+                if b == 'master':
+                    b_treeish = next_tag if next_tag else 'master'
+                else:
+                    b_treeish = name + '/' + b
+                new.branches[b] = Fixture.Branch.from_sha(b, b_treeish, new)
+            return new
 
         @classmethod
         def from_str_list(cls, string_list, prev):
@@ -31,6 +46,13 @@ class Fixture:
                 new_i.branches[name] = Fixture.Branch.from_line(name, ln, new_i)
             return new_i
 
+        def topic_create_set_version(self, name, version, sha):
+            if name not in self.branches:
+                self.branches[name] = Fixture.Branch.from_sha(name, sha, self)
+            for c in self.branches[name].commits:
+                if c.SHA == sha:
+                    c.set_revision = name + '_v' + version
+
         def actualize(self):
             if isinstance(self.BP, Fixture.InitCommit):
                 self.BP.actualize()
@@ -46,6 +68,21 @@ class Fixture:
             self.actualized = False
             self.iteration = iteration_
             self.name = name
+
+        @classmethod
+        def from_sha(cls, name, treeish, iteration_):
+            new = cls(name, iteration_)
+            while not iteration_.BP or not treeish == iteration_.BP.SHA:
+                cmt = Fixture.Commit.from_treeish(treeish)
+                if isinstance(cmt, Fixture.InitCommit):
+                    iteration_.BP = cmt
+                    break
+                if name == 'develop':
+                    iteration_.topic_create_set_version(
+                        cmt.topic, cmt.version, commit.get_parent(treeish, 2))
+                new.commits.insert(0, cmt)
+                treeish = commit.get_parent(treeish)
+            return new
 
         @classmethod
         def from_line(cls, name, string_, iteration_):
@@ -77,8 +114,39 @@ class Fixture:
             self.actualized = True
 
     class Commit(abc.ABC):
+        __merge_e = re.compile(
+            "^Merge branch '\w*/(\w*)_v(\d)'(?: into 1/(\w*))?.*$")
+        __commit_e = re.compile("^(?:change (\w*))? ?(?:del (\w*))?$")
+        __revert_e = re.compile("^Revert \"Merge branch '\w*/(\w*)_v(\d)'.*\"$")
+
         def __init__(self):
             self.SHA = None
+
+        @classmethod
+        def from_treeish(cls, treeish):
+            headline = commit.get_headline(treeish)
+            re_result = cls.__merge_e.search(headline)
+            if re_result:
+                topic_name, version, target = re_result.groups()
+                if target == 'develop':
+                    result = Fixture.DevelopMergeCommit(topic_name, version)
+                else:
+                    result = Fixture.MergeCommit(topic_name, version)
+            else:
+                re_result = cls.__commit_e.search(headline)
+                if re_result:
+                    change, delete = (
+                        None if g == 'None' else g for g in re_result.groups())
+                    result = Fixture.RegularCommit(change, delete, None)
+                else:
+                    re_result = cls.__revert_e.search(headline)
+                    if re_result:
+                        topic_name, version = re_result.groups()
+                        result = Fixture.RevertCommit(topic_name, version)
+                    else:
+                        result = Fixture.InitCommit()
+            result.SHA = misc.rev_parse(treeish)
+            return result
 
         @staticmethod
         def from_letters(first, second, branch_name):
@@ -200,7 +268,16 @@ class Fixture:
 
     @classmethod
     def from_repo(cls):
-        raise NotImplementedError
+        iterations = []
+        tags = misc.sort(tag.get_list())
+        prev = None
+        next_tag = tags.pop()
+        while next_tag:
+            current_tag = next_tag
+            next_tag = tags.pop() if tags else None
+            prev = Fixture.Iteration.from_tag_name(current_tag, prev, next_tag)
+            iterations.append(prev)
+        return cls(iterations)
 
     def actualize(self):
         misc.init()
