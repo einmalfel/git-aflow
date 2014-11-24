@@ -1,3 +1,4 @@
+import os
 import random
 import re
 import string
@@ -22,6 +23,11 @@ class Fixture:
 
         def __ne__(self, other):
             return not self.__eq__(other)
+
+        def __str__(self):
+            order = 'master', 'staging', 'develop'
+            ordered_names = order + tuple(self.branches.keys() - set(order))
+            return os.linesep.join(str(self.branches[b]) for b in ordered_names)
 
         @classmethod
         def from_tag_name(cls, name, prev, next_tag):
@@ -86,6 +92,17 @@ class Fixture:
         def __ne__(self, other):
             return not self.__eq__(other)
 
+        def __str__(self):
+            if self.name == 'master':
+                short_name = self.iteration.name
+            elif self.name == 'staging':
+                short_name = 's'
+            elif self.name == 'develop':
+                short_name = 'd'
+            else:
+                short_name = self.name
+            return short_name + ':-' + '-'.join(str(c) for c in self.commits)
+
         @classmethod
         def from_sha(cls, name, treeish, iteration_):
             new = cls(name, iteration_)
@@ -145,6 +162,10 @@ class Fixture:
 
         def __ne__(self, other):
             return not self.__eq__(other)
+
+        @abc.abstractmethod
+        def __str__(self):
+            pass
 
         @classmethod
         def from_treeish(cls, treeish):
@@ -209,6 +230,9 @@ class Fixture:
         def __eq__(self, other):
             return type(other) == type(self)
 
+        def __str__(self):
+            return 'Initial commit'
+
         def _commit(self):
             commit.commit('Initialize', allow_empty=True)
 
@@ -218,6 +242,18 @@ class Fixture:
             self.change = change_file
             self.delete = delete_file
             self.set_revision = set_revision
+
+        def __str__(self):
+            str_representation = ''
+            if self.set_revision:
+                str_representation += self.set_revision[-1]
+            if self.delete:
+                str_representation += self.delete.upper()
+            if self.change:
+                str_representation += self.change
+            while len(str_representation) < 2:
+                str_representation += '-'
+            return str_representation
 
         def __eq__(self, other):
             return (type(other) == type(self) and
@@ -244,6 +280,9 @@ class Fixture:
             self.topic = topic
             self.version = version
 
+        def __str__(self):
+            return self.topic + self.version
+
         def __eq__(self, other):
             return (type(other) == type(self) and
                     other.topic == self.topic and
@@ -266,6 +305,9 @@ class Fixture:
             self.topic = topic
             self.version = version
 
+        def __str__(self):
+            return self.topic + self.version
+
         def __eq__(self, other):
             return (type(other) == type(self) and
                     other.topic == self.topic and
@@ -283,6 +325,9 @@ class Fixture:
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        return os.linesep.join(str(i) for i in self.iteration_list)
 
     @classmethod
     def from_scheme(cls, scheme):
