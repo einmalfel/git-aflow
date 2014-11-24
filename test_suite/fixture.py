@@ -14,6 +14,15 @@ class Fixture:
             self.name = name
             self.BP = bp
 
+        def __eq__(self, other):
+            return (type(other) == type(self) and
+                    other.BP == self.BP and
+                    other.name == self.name and
+                    other.branches == self.branches)
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
         @classmethod
         def from_tag_name(cls, name, prev, next_tag):
             """Everything not merged into develop, staging or master branch
@@ -69,6 +78,14 @@ class Fixture:
             self.iteration = iteration_
             self.name = name
 
+        def __eq__(self, other):
+            return (type(other) == type(self) and
+                    other.name == self.name and
+                    other.commits == self.commits)
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
         @classmethod
         def from_sha(cls, name, treeish, iteration_):
             new = cls(name, iteration_)
@@ -121,6 +138,13 @@ class Fixture:
 
         def __init__(self):
             self.SHA = None
+
+        @abc.abstractmethod
+        def __eq__(self, other):
+            pass
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
 
         @classmethod
         def from_treeish(cls, treeish):
@@ -182,6 +206,9 @@ class Fixture:
                 self.SHA = commit.get_current_sha()
 
     class InitCommit(Commit):
+        def __eq__(self, other):
+            return type(other) == type(self)
+
         def _commit(self):
             commit.commit('Initialize', allow_empty=True)
 
@@ -191,6 +218,12 @@ class Fixture:
             self.change = change_file
             self.delete = delete_file
             self.set_revision = set_revision
+
+        def __eq__(self, other):
+            return (type(other) == type(self) and
+                    other.change == self.change and
+                    other.delete == self.delete and
+                    other.set_revision == self.set_revision)
 
         def _commit(self):
             if self.change:
@@ -211,6 +244,11 @@ class Fixture:
             self.topic = topic
             self.version = version
 
+        def __eq__(self, other):
+            return (type(other) == type(self) and
+                    other.topic == self.topic and
+                    other.version == self.version)
+
         def _commit(self):
             check_aflow('merge', self.topic + '_v' + self.version)
 
@@ -228,14 +266,23 @@ class Fixture:
             self.topic = topic
             self.version = version
 
+        def __eq__(self, other):
+            return (type(other) == type(self) and
+                    other.topic == self.topic and
+                    other.version == self.version)
+
         def _commit(self):
             check_aflow('revert', self.topic + '_v' + self.version)
 
-    def __eq__(self, other):
-        raise NotImplementedError
-
     def __init__(self, iteration_list):
         self.iteration_list = iteration_list
+
+    def __eq__(self, other):
+        return (type(other) == type(self) and
+                self.iteration_list == other.iteration_list)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @classmethod
     def from_scheme(cls, scheme):
