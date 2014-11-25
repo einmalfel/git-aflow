@@ -71,9 +71,10 @@ class Fixture:
         def actualize(self):
             if isinstance(self.BP, Fixture.InitCommit):
                 self.BP.actualize()
-                check_aflow('init', self.name)
-            else:
-                check_aflow('rebase', '-n', self.name)
+            misc.checkout('master')
+            tag.create(self.name)
+            branch.create(self.name + '/develop')
+            branch.create(self.name + '/staging')
             for b in 'develop', 'staging', 'master':
                 self.branches[b].actualize()
 
@@ -132,15 +133,17 @@ class Fixture:
         def actualize(self, up_to=None):
             if self.actualized:
                 return
-            if not self.name == 'master':
+            if self.name == 'master':
+                branch_name = 'master'
+            else:
                 branch_name = self.iteration.name + '/' + self.name
                 if not branch.exists(branch_name):
                     branch.create(branch_name, self.iteration.BP.SHA)
-            check_aflow('checkout', self.name)
+            misc.checkout(branch_name)
             for c in self.commits:
                 if isinstance(c, Fixture.DevelopMergeCommit):
                     self.iteration.branches[c.topic].actualize(c.version)
-                    check_aflow('checkout', self.name)
+                    misc.checkout(branch_name)
                 c.actualize()
                 if (isinstance(c, Fixture.RegularCommit) and up_to and
                         c.set_revision[-1] == up_to):
@@ -296,7 +299,7 @@ class Fixture:
             super().__init__(topic, version)
 
         def _commit(self):
-            check_aflow('checkout', self.topic + '_v' + self.version)
+            misc.checkout(self.topic + '_v' + self.version)
             check_aflow('topic', 'finish')
 
     class RevertCommit(Commit):
