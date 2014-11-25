@@ -3,6 +3,7 @@
 import re
 
 from gitwrapper.aux import get_output, call, check_01, get_output_01
+from gitwrapper import cache
 
 
 def get_list(patterns=None):
@@ -38,11 +39,14 @@ def create(name, start_point=None):
     """ Starts branch from start_point or from HEAD if no start_point specified.
     """
     call(['git', 'branch', name] + ([start_point] if start_point else []))
+    cache.invalidate('branches')
 
 
 def delete(name):
     call(['git', 'branch', '-D', name])
+    cache.invalidate('branches')
 
 
 def reset(treeish, mode='hard'):
     call(['git', 'reset', '--' + mode, treeish])
+    cache.invalidate('branches', 'index')

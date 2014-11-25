@@ -6,6 +6,7 @@ branches so), cause it will show tag_name exists if there is x/tag_name.
 Git rev-parse isn't suitable too, cause 'git rev-parse --tags=tag_name' will
 search for refs/tags/tag_name/*
 """
+from gitwrapper import cache
 
 from gitwrapper.aux import get_output, check_01, call
 
@@ -29,10 +30,12 @@ def create(name, target=None):
     Returns True if success, False otherwise
     """
     call(['git', 'tag', name] + ([target] if target else []))
+    cache.invalidate('tags')
 
 
 def delete(name):
     call(['git', 'tag', '-d', name])
+    cache.invalidate('tags')
 
 
 def find_by_target(treeish):

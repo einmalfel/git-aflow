@@ -5,6 +5,7 @@ import collections
 
 from gitwrapper.aux import get_output, call, \
     get_output_and_exit_code, GitUnexpectedError, check_01
+from gitwrapper import cache
 
 
 def is_working_tree_clean(untracked=False):
@@ -17,6 +18,7 @@ def is_working_tree_clean(untracked=False):
 
 def checkout(treeish):
     call(['git', 'checkout'] + [treeish])
+    cache.invalidate('branches', 'index')
 
 
 def get_untracked_files():
@@ -115,11 +117,14 @@ def get_diff(from_treeish, to_treeish, files=None):
 
 def add(path):
     call(['git', 'add', path])
+    cache.invalidate('index')
 
 
 def rm(path):
     call(['git', 'rm', '-f', path])
+    cache.invalidate('index')
 
 
 def init(bare=False):
     call(['git', 'init'] + (['--bare'] if bare else []))
+    cache.invalidate()

@@ -5,7 +5,7 @@ import re
 
 from gitwrapper.aux import get_output, get_output_and_exit_code,\
     GitUnexpectedError, call, check_01, get_output_01
-from gitwrapper import misc
+from gitwrapper import misc, cache
 
 
 class AlreadyMergedError(Exception):
@@ -106,6 +106,7 @@ def merge(treeish, description):
         if output == 'Already up-to-date.':
             raise AlreadyMergedError('Merge object: ' + str(treeish))
         else:
+            cache.invalidate('branches', 'commits', 'index')
             return True
     else:
         if code == 1:
@@ -113,6 +114,7 @@ def merge(treeish, description):
                 merge.conflict_re = re.compile(
                     '^CONFLICT .*: Merge conflict in .*$', re.MULTILINE)
             if merge.conflict_re.search(output):
+                cache.invalidate('index')
                 return False
             raise GitUnexpectedError('Git merge returned ' + str(code) +
                                      '. Output: ' + output)
@@ -120,17 +122,23 @@ merge.conflict_re = None
 
 
 def abort_merge():
+    cache.invalidate('index')
     return get_output(['git', 'merge', '--abort'])
 
 
 def revert(treeish, parent=None, no_commit=False):
-    return check_01(['git', 'revert', treeish] +
-                   (['-m' + str(parent)] if parent else []) +
-                   (['-n'] if no_commit else []))
+    result = check_01(['git', 'revert', treeish] +
+                      (['-m' + str(parent)] if parent else []) +
+                      (['-n'] if no_commit else []))
+    if result:
+        cache.invalidate('branches', 'commits', 'index')
+    else:
+        cache.invalidate('index')
 
 
 def abort_revert():
     call(['git', 'revert', '--abort'])
+    cache.invalidate('index')
 
 
 def commit(message=None, allow_empty=False):
@@ -142,6 +150,7 @@ def commit(message=None, allow_empty=False):
         (['-m' + message] if message else []) +
         (['--allow-empty'] if allow_empty else []))
     if code == 0:
+        cache.invalidate('branches', 'commits', 'index')
         return True
     else:
         if ("error: 'commit' is not possible because you have unmerged files."
