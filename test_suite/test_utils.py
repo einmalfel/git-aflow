@@ -1,3 +1,6 @@
+import profile
+import unittest
+
 from gitaflow import execute, iteration
 from gitaflow.debug import TestDebugState
 from gitwrapper import aux
@@ -31,3 +34,10 @@ def call_aflow(*args):
             return stop.output, stop.exit_code
     else:
         return aux.get_output_and_exit_code(['git', 'af'] + list(args))
+
+
+def run_tests():
+    if TestDebugState.get_test_profile_mode():
+        profile.run('unittest.main()', sort='cumtime')
+    else:
+        unittest.main()
