@@ -1,7 +1,7 @@
 import profile
 import unittest
 
-from gitaflow import execute, iteration
+from gitaflow import execute
 from gitaflow.debug import TestDebugState
 from gitwrapper import aux
 
@@ -10,7 +10,6 @@ TestDebugState.notify_test_mode(True)
 
 
 def clear_caches():
-    iteration.get_iteration_by_sha.cache_clear()
     TestDebugState.reset()
 
 
