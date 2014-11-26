@@ -4,10 +4,9 @@ import logging
 import re
 
 from gitaflow.common import die, say
-from gitwrapper import misc, branch, tag, commit
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
-
+from gitwrapper.cached import tag, branch, misc, commit
 
 def parse_branch_name(branch_name):
     """Returns (iteration, name) tuple or (None, None) if cannot parse.

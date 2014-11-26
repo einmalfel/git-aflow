@@ -4,7 +4,7 @@ import re
 import string
 import abc
 
-from gitwrapper import misc, commit, branch, tag
+from gitwrapper.cached import misc, commit, branch, tag
 from test_utils import check_aflow
 
 
