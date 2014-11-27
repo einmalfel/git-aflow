@@ -8,6 +8,7 @@ import functools
 import collections
 import os
 import atexit
+import itertools
 
 
 __lru_funcs_by_group = collections.defaultdict(list)
@@ -38,20 +39,31 @@ def invalidate(*groups):
             lru_func.cache_clear()
 
 
-def print_cache_info():
+def get_cache_info():
+    """Returns dict of cache info dicts.
+    get_cache_info is the only piece of code that knows about
+    functools._CacheInfo structure
+    """
+    result = dict()
+    for func in set(itertools.chain(*__lru_funcs_by_group.values())):
+        info = func.cache_info()
+        result[func] = {'size': info.maxsize, 'used': info.currsize,
+                        'hits': info.hits, 'misses': info.misses}
+    return result
+
+
+def print_cache_info(info=None):
     groups_by_func = collections.defaultdict(list)
     for group in __lru_funcs_by_group:
         for func in __lru_funcs_by_group.get(group, []):
             groups_by_func[func].append(group)
+    if info is None:
+        info = get_cache_info()
     for f in groups_by_func:
-        info = f.cache_info()
-        if info.currsize or info.hits or info.misses:
-            print(
-                f.__name__, '(' + ', '.join(map(str, groups_by_func[f])) + ')',
-                'size:', info.maxsize,
-                'used:', info.currsize,
-                'hits:', info.hits,
-                'misses:', info.misses)
+        if info[f]['used'] or info[f]['misses'] or info[f]['hits']:
+            print(f.__name__.ljust(20),
+                  ', '.join(map(str, groups_by_func[f])).ljust(25),
+                  ', '.join(i + ':' + str(info[f][i]) for i in info[f]))
 
 
 output_info = os.environ.get('GIT_WRAPPER_CACHE_INFO') == '1'
