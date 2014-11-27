@@ -3,14 +3,10 @@ import unittest
 
 from gitaflow import execute
 from gitaflow.debug import TestDebugState
-from gitwrapper import aux
+from gitwrapper import aux, grouped_cache
 
 
 TestDebugState.notify_test_mode(True)
-
-
-def clear_caches():
-    TestDebugState.reset()
 
 
 class AflowUnexpectedResult(Exception):
@@ -25,7 +21,8 @@ def check_aflow(*args):
 
 def call_aflow(*args):
     if TestDebugState.get_test_debug_mode():
-        clear_caches()
+        grouped_cache.invalidate()
+        TestDebugState.reset()
         try:
             execute.execute(args)
             raise TestDebugState.AflowStopped(129, '')
