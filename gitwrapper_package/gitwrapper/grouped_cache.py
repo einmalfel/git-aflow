@@ -10,7 +10,7 @@ import os
 import atexit
 
 
-lru_funcs_by_group = collections.defaultdict(list)
+__lru_funcs_by_group = collections.defaultdict(list)
 # groups:
 # - branches (includes HEAD)
 # - tags
@@ -23,25 +23,25 @@ def cache(*groups, maxsize=128, typed=False):
         lru = functools.lru_cache(maxsize, typed)(func)
         if groups:
             for group in groups:
-                lru_funcs_by_group[group].append(lru)
+                __lru_funcs_by_group[group].append(lru)
         else:
             # use lru_funcs_by_group[None] as a default group
-            lru_funcs_by_group[None].append(lru)
+            __lru_funcs_by_group[None].append(lru)
         return lru
     return decorator
 
 
 def invalidate(*groups):
     """Calling invalidate() will clear all caches"""
-    for group in groups if groups else lru_funcs_by_group.keys():
-        for lru_func in lru_funcs_by_group.get(group, []):
+    for group in groups if groups else __lru_funcs_by_group.keys():
+        for lru_func in __lru_funcs_by_group.get(group, []):
             lru_func.cache_clear()
 
 
 def print_cache_info():
     groups_by_func = collections.defaultdict(list)
-    for group in lru_funcs_by_group:
-        for func in lru_funcs_by_group.get(group, []):
+    for group in __lru_funcs_by_group:
+        for func in __lru_funcs_by_group.get(group, []):
             groups_by_func[func].append(group)
     for f in groups_by_func:
         info = f.cache_info()
