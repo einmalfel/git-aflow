@@ -36,3 +36,24 @@ def invalidate(*groups):
     for group in groups if groups else lru_funcs_by_group.keys():
         for lru_func in lru_funcs_by_group.get(group, []):
             lru_func.cache_clear()
+
+
+def print_cache_info():
+    groups_by_func = collections.defaultdict(list)
+    for group in lru_funcs_by_group:
+        for func in lru_funcs_by_group.get(group, []):
+            groups_by_func[func].append(group)
+    for f in groups_by_func:
+        info = f.cache_info()
+        if info.currsize or info.hits or info.misses:
+            print(
+                f.__name__, '(' + ', '.join(map(str, groups_by_func[f])) + ')',
+                'size:', info.maxsize,
+                'used:', info.currsize,
+                'hits:', info.hits,
+                'misses:', info.misses)
+
+
+output_info = os.environ.get('GIT_WRAPPER_CACHE_INFO') == '1'
+if output_info:
+    atexit.register(print_cache_info)
