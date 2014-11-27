@@ -6,6 +6,8 @@ The caching is safe for immutable objects only.
 
 import functools
 import collections
+import os
+import atexit
 
 
 lru_funcs_by_group = collections.defaultdict(list)
@@ -16,7 +18,7 @@ lru_funcs_by_group = collections.defaultdict(list)
 # - index (includes working tree state)
 
 
-def grouped_cache(*groups, maxsize=128, typed=False):
+def cache(*groups, maxsize=128, typed=False):
     def decorator(func):
         lru = functools.lru_cache(maxsize, typed)(func)
         if groups:
@@ -26,11 +28,11 @@ def grouped_cache(*groups, maxsize=128, typed=False):
             # use lru_funcs_by_group[None] as a default group
             lru_funcs_by_group[None].append(lru)
         return lru
-
     return decorator
 
 
 def invalidate(*groups):
+    """Calling invalidate() will clear all caches"""
     for group in groups if groups else lru_funcs_by_group.keys():
         for lru_func in lru_funcs_by_group.get(group, []):
             lru_func.cache_clear()
