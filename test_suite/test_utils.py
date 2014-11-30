@@ -60,7 +60,9 @@ def call_aflow(*args):
                 grouped_cache.print_cache_info()
             return stop.output, stop.exit_code
     else:
-        return aux.get_output_and_exit_code(['git', 'af'] + list(args))
+        result = aux.get_output_and_exit_code(['git', 'af'] + list(args))
+        grouped_cache.invalidate()
+        return result
 
 
 def run_tests():
