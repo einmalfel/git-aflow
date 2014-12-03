@@ -27,7 +27,7 @@ def get_output_01(command_and_args):
             return subprocess.check_output(
                 command_and_args, stderr=subprocess.STDOUT).decode()[:-1]
         except subprocess.CalledProcessError as error:
-            if error.returncode == '1':
+            if error.returncode == 1:
                 return None
             else:
                 raise
