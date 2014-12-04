@@ -5,8 +5,7 @@ Gitwrapper will cache results of git commands run in CWD, so take care of
 invalidating cache when changing directory or when modifying repository not via
 gitwrapper.
 Mixing gitwrapper and gitwrapper.cached in one python context is not
-recommended as this makes it hard to predict which mode will actually be
-used.
+supported as this makes it hard to predict which mode will actually be used.
 """
 
 from gitwrapper import tag, branch, commit, misc
