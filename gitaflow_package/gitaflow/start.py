@@ -4,7 +4,7 @@ from os import linesep
 from gitaflow import iteration
 from gitaflow.common import die, say
 from gitaflow.topic import Topic
-from gitwrapper import misc, branch
+from gitwrapper.cached import misc, branch
 
 
 def start(name):

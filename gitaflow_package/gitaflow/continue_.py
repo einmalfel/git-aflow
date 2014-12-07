@@ -4,7 +4,7 @@ from os import linesep
 from gitaflow import iteration
 from gitaflow.common import die, say
 from gitaflow.topic import TopicRevision, TopicMerge
-from gitwrapper import commit, branch, misc
+from gitwrapper.cached import commit, branch, misc
 
 
 def continue_(name=None):

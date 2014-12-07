@@ -4,10 +4,10 @@ import logging
 import sys
 import traceback
 
-from gitwrapper import misc
 from gitaflow import init, merge, start, rebase, continue_, checkout, finish,\
     args
 from gitaflow.common import die
+from gitwrapper.cached import misc
 
 
 def log_unhandled_exception(type_, value, traceback_):
