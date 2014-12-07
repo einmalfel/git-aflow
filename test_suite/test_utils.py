@@ -65,6 +65,17 @@ def call_aflow(*args):
         return result
 
 
+class FunctionalTest(unittest.TestCase):
+    def add_error_replacement(self, _, err):
+        value, traceback = err[1:]
+        raise value.with_traceback(traceback)
+
+    def run(self, result=None):
+        if result and TestDebugState.get_test_debug_mode():
+            result.addError = self.add_error_replacement
+        super().run(result)
+
+
 def run_tests():
     if TestDebugState.get_test_profile_mode():
         profile.run('unittest.main()', sort='cumtime')
