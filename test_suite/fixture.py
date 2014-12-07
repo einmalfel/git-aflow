@@ -361,6 +361,7 @@ class Fixture:
         prev = None
         iters = []
         for line in scheme.splitlines():
+            line = line.strip()
             if re.search('^\d:.*$', line):
                 if iteration_lines:
                     i = Fixture.Iteration.from_str_list(iteration_lines, prev)
