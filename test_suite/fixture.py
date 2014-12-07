@@ -80,9 +80,13 @@ class Fixture:
                 self.BP.actualize()
             misc.checkout('master')
             tag.create(self.name)
+            # create those branches in advance, otherwise aflow wouldn't be
+            # able to detect iteration
             branch.create(self.name + '/develop')
             branch.create(self.name + '/staging')
-            for b in 'develop', 'staging', 'master':
+            self.branches['develop'].actualize()
+            self.branches['staging'].actualize()
+            for b in self.branches:
                 self.branches[b].actualize()
 
     class Branch:
