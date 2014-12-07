@@ -8,7 +8,7 @@ from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
     STAGING_NAME
 from gitaflow.topic import Topic, TopicRevision, TopicMerge, \
     consistency_check_ok, MergeNonConflictError
-from gitwrapper import misc, branch, commit
+from gitwrapper.cached import misc, branch, commit
 
 
 def finish(description, type_, name):
