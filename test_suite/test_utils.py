@@ -1,5 +1,7 @@
 from copy import deepcopy
+import os
 import profile
+from tempfile import TemporaryDirectory
 import unittest
 import atexit
 
@@ -89,6 +91,16 @@ class FunctionalTest(unittest.TestCase):
             self.assertEqual(call_aflow(*cmd_and_args), (message, 1))
         else:
             self.assertEqual(call_aflow(*cmd_and_args)[1], 1)
+
+
+class LocalTest(FunctionalTest):
+    def setUp(self):
+        self.temp_dir = TemporaryDirectory(prefix=self.id() + '_')
+        os.chdir(self.temp_dir.name)
+
+    def tearDown(self):
+        os.chdir(os.pardir)
+        self.temp_dir.cleanup()
 
 
 def run_tests():
