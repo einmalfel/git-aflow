@@ -36,12 +36,14 @@ class Fixture:
             """
             bp = prev.branches['master'][-1] if prev else None
             new = cls(name, bp)
-            for b in 'master', 'staging', 'develop':
-                if b == 'master':
-                    b_treeish = next_tag if next_tag else 'master'
-                else:
-                    b_treeish = name + '/' + b
-                new.branches[b] = Fixture.Branch.from_sha(b, b_treeish, new)
+            new.branches['master'] = Fixture.Branch.from_sha(
+                'master', next_tag if next_tag else 'master', new)
+            for b in branch.get_list([name + '/*']):
+                branch_name = b.split('/')[1]
+                if branch_name not in ('develop', 'staging'):
+                    branch_name = branch_name[0]
+                new.branches[branch_name] = Fixture.Branch.from_sha(
+                    branch_name, b, new)
             return new
 
         @classmethod
