@@ -48,9 +48,11 @@ class Fixture:
 
         @classmethod
         def from_str_list(cls, string_list, prev):
-            new_i = cls(
-                string_list[0][0],
-                prev.branches['master'][-1] if prev else Fixture.InitCommit())
+            if prev:
+                new_i = cls(string_list[0][0],
+                            prev.branches['master'].commits[-1])
+            else:
+                new_i = cls(string_list[0][0], Fixture.InitCommit())
             for string_ in string_list:
                 name, colon, *ln = string_
                 assert colon == ':'
