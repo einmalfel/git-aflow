@@ -46,6 +46,8 @@ class TestDebugState():
                 cls.__test_debug_mode = True
             else:
                 cls.__test_debug_mode = (cls.__test_mode and sys.gettrace())
+            if cls.__test_debug_mode:
+                print('Test debug mode ON')
         return cls.__test_debug_mode
 
     @classmethod
