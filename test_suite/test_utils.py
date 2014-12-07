@@ -75,6 +75,21 @@ class FunctionalTest(unittest.TestCase):
             result.addError = self.add_error_replacement
         super().run(result)
 
+    def assert_aflow_returns_0(self, message, *cmd_and_args):
+        output, code = call_aflow(*cmd_and_args)
+        if code:
+            print('Aflow said:', output)
+        if message:
+            self.assertEqual((output, code), (message, 0))
+        else:
+            self.assertEqual(code, 0)
+
+    def assert_aflow_dies_with(self, message, *cmd_and_args):
+        if message:
+            self.assertEqual(call_aflow(*cmd_and_args), (message, 1))
+        else:
+            self.assertEqual(call_aflow(*cmd_and_args)[1], 1)
+
 
 def run_tests():
     if TestDebugState.get_test_profile_mode():
