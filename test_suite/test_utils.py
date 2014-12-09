@@ -4,6 +4,7 @@ import profile
 from tempfile import TemporaryDirectory
 import unittest
 import atexit
+import logging
 
 from gitaflow import execute
 from gitaflow.debug import TestDebugState
@@ -15,6 +16,10 @@ average_cache_info = None
 cache_samples = 0
 
 log_file = os.environ.get('AFLOW_TEST_LOGGING')
+if log_file and TestDebugState.get_test_debug_mode():
+    # in debug mode logging.py uses stderr as a handler for root logger.
+    # logging.basicConfig doesn't work when there is a handler set up already
+    logging.root.handlers = []
 
 
 def output_average_cache_info():
