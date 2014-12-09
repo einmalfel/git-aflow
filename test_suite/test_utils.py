@@ -14,6 +14,8 @@ TestDebugState.notify_test_mode(True)
 average_cache_info = None
 cache_samples = 0
 
+log_file = os.environ.get('AFLOW_TEST_LOGGING')
+
 
 def output_average_cache_info():
     if average_cache_info:
@@ -41,6 +43,8 @@ def check_aflow(*args):
 
 
 def call_aflow(*args):
+    if log_file:
+        args = ('-vv', '-l', log_file) + args
     if TestDebugState.get_test_debug_mode():
         grouped_cache.invalidate()
         TestDebugState.reset()
