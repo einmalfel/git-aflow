@@ -157,7 +157,7 @@ class Fixture:
                     misc.checkout(branch_name)
                 c.actualize()
                 if (isinstance(c, Fixture.RegularCommit) and up_to and
-                        c.set_revision[-1] == up_to):
+                        c.set_revision and c.set_revision[-1] == up_to):
                     return
             self.actualized = True
 
