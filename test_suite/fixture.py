@@ -282,7 +282,7 @@ class Fixture:
                         random.choice(string.printable) for _ in range(100)))
                 misc.add(self.change)
             if self.delete:
-                misc.rm(self.delete)
+                misc.rm(self.delete.lower())
             commit.commit(
                 'change ' + str(self.change) + ' del ' + str(self.delete), True)
             if self.set_revision:
