@@ -117,18 +117,29 @@ class Fixture:
 
         @classmethod
         def from_sha(cls, name, treeish, iteration_):
-            new = cls(name, iteration_)
-            while not iteration_.BP or not treeish == iteration_.BP.SHA:
+            new_commits = []
+            if name in iteration_.branches:
+                branch_ = iteration_.branches[name]
+                for c in branch_.commits:
+                    if c.SHA == misc.rev_parse(treeish):
+                        return branch_
+            else:
+                branch_ = cls(name, iteration_)
+            while (not iteration_.BP or not treeish == iteration_.BP.SHA or
+                   (branch_.commits and branch_.commits[-1].SHA == treeish)):
                 cmt = Fixture.Commit.from_treeish(treeish)
                 if isinstance(cmt, Fixture.InitCommit):
                     iteration_.BP = cmt
                     break
                 if name == 'develop':
-                    iteration_.topic_create_set_version(
-                        cmt.topic, cmt.version, commit.get_parent(treeish, 2))
-                new.commits.insert(0, cmt)
+                    second_parent = commit.get_parent(treeish, 2)
+                    if second_parent:
+                        iteration_.topic_create_set_version(
+                            cmt.topic, cmt.version, second_parent)
+                new_commits.insert(0, cmt)
                 treeish = commit.get_parent(treeish)
-            return new
+            branch_.commits.extend(new_commits)
+            return branch_
 
         @classmethod
         def from_line(cls, name, string_, iteration_):
