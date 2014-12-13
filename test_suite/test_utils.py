@@ -15,11 +15,15 @@ TestDebugState.notify_test_mode(True)
 average_cache_info = None
 cache_samples = 0
 
-log_file = os.environ.get('AFLOW_TEST_LOGGING')
-if log_file and TestDebugState.get_test_debug_mode():
-    # in debug mode logging.py uses stderr as a handler for root logger.
-    # logging.basicConfig doesn't work when there is a handler set up already
-    logging.root.handlers = []
+log_file = os.environ.get('AFLOW_TEST_LOG')
+if log_file:
+    # logging.basicConfig doesn't work when it has a handler set up
+    # already. When debugging in PyCharm, it initially has stderr as
+    # default handler
+    for handler in logging.root.handlers:
+        handler.close()
+        logging.root.removeHandler(handler)
+    logging.Formatter.default_time_format = '%y%m%d %T'
 
 
 def output_average_cache_info():
@@ -106,8 +110,22 @@ class LocalTest(FunctionalTest):
     def setUp(self):
         self.temp_dir = TemporaryDirectory(prefix=self.id() + '_')
         os.chdir(self.temp_dir.name)
+        if log_file:
+            # Re-config logging. Reasons to do this:
+            # 1. Logging may be used first time before aflow set it up
+            # 2. Log should be stored in temp directory when relative path is
+            # specified
+            logging.basicConfig(
+                filename=log_file,
+                format='{levelname:<7}{asctime:<20}{module}:{lineno} {message}',
+                style='{',
+                level=logging.DEBUG)
 
     def tearDown(self):
+        if log_file:
+            for h in logging.root.handlers:
+                h.close()
+                logging.root.removeHandler(h)
         os.chdir(os.pardir)
         self.temp_dir.cleanup()
 
