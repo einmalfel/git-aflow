@@ -1,3 +1,4 @@
+from itertools import groupby
 import os
 import random
 import re
@@ -38,12 +39,25 @@ class Fixture:
             new = cls(name, bp)
             new.branches['master'] = Fixture.Branch.from_sha(
                 'master', next_tag if next_tag else 'master', new)
-            for b in branch.get_list([name + '/*']):
-                branch_name = b.split('/')[1]
-                if branch_name not in ('develop', 'staging'):
-                    branch_name = branch_name[0]
-                new.branches[branch_name] = Fixture.Branch.from_sha(
-                    branch_name, b, new)
+            # 1. For every topic if there are several branches, take newest by
+            # topology and parse it if it's newer then latest revision of
+            # this topic merged into develop
+            # 2. Parse develop at the end to get remaining topics and to fill
+            # set_revisions
+            by_topic = {t_name: list(branches) for t_name, branches in groupby(
+                branch.get_list([name + '/*']),
+                lambda x: x.split('/')[1][0])}
+            for topic, branches in by_topic.items():
+                if topic == 'd' or topic == 's':
+                    continue
+                latest_branch = misc.sort(branches)[0]
+                # if not merged in develop
+                if not commit.is_ancestor(latest_branch, name + '/develop'):
+                    new.branches[topic] = Fixture.Branch.from_sha(
+                        topic, latest_branch, new)
+            for branch_ in 'develop', 'staging':
+                new.branches[branch_] = Fixture.Branch.from_sha(
+                    branch_, name + '/' + branch_, new)
             return new
 
         @classmethod
