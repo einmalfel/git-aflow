@@ -33,10 +33,9 @@ measure_t = os.environ.get('AFLOW_TEST_TIME')
 # inspect.currentframe() support)
 # AFLOW_TEST_TIME=ALL_CALLS measures all calls
 timings = []
-if TestDebugState.get_test_profile_mode():
-    print('Profiling is incompatible with call time measurement, turning the'
-          'last one off.')
-    measure_t = None
+if TestDebugState.get_test_profile_mode() and measure_t:
+    print('Profiling is incompatible with call time measurement')
+    exit(2)
 if measure_t:
     def print_timings():
         to_print = sorted(timings, key=lambda x: -x[1])
