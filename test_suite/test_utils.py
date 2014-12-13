@@ -17,6 +17,11 @@ TestDebugState.notify_test_mode(True)
 average_cache_info = None
 cache_samples = 0
 
+profiling = os.environ.get('AFLOW_TEST_PROFILE')
+if profiling and not TestDebugState.get_test_debug_mode():
+    print('WARNING: profiling with debug mode disabled. There is no sense in '
+          'running profiler when child processes do all the work')
+
 log_file = os.environ.get('AFLOW_TEST_LOG')
 if log_file:
     # logging.basicConfig doesn't work when it has a handler set up
@@ -33,7 +38,7 @@ measure_t = os.environ.get('AFLOW_TEST_TIME')
 # inspect.currentframe() support)
 # AFLOW_TEST_TIME=ALL_CALLS measures all calls
 timings = []
-if TestDebugState.get_test_profile_mode() and measure_t:
+if profiling and measure_t:
     print('Profiling is incompatible with call time measurement')
     exit(2)
 if measure_t:
@@ -185,7 +190,7 @@ class LocalTest(FunctionalTest):
 
 
 def run_tests():
-    if TestDebugState.get_test_profile_mode():
-        profile.run('unittest.main()', sort='cumtime')
+    if profiling:
+        profile.run('import unittest; unittest.main()', sort='cumtime')
     else:
         unittest.main()
