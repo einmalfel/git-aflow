@@ -35,12 +35,12 @@ if TestDebugState.get_test_profile_mode():
     measure_t = None
 if measure_t:
     def print_timings():
-        to_print = sorted(timings, key=lambda x: x[1])
+        to_print = sorted(timings, key=lambda x: -x[1])
         if len(to_print) > 10:
             to_print = to_print[:10]
         print(('Top ' + str(len(to_print)) +
                ' slowest aflow calls').ljust(80, '-'))
-        for arg_list, spent, caller_info in reversed(to_print):
+        for arg_list, spent, caller_info in to_print:
             print('{:5.3f} {:<20} {}'.format(spent,
                                              caller_info if caller_info else '',
                                              arg_list))
