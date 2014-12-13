@@ -217,18 +217,24 @@ class Fixture:
                 else:
                     result = Fixture.MergeCommit(topic_name, version)
             else:
-                re_result = cls.__commit_e.search(headline)
+                re_result = cls.__revert_e.search(headline)
                 if re_result:
-                    change, delete = (
-                        None if g == 'None' else g for g in re_result.groups())
-                    result = Fixture.RegularCommit(change, delete, None)
+                    topic_name, version = re_result.groups()
+                    result = Fixture.RevertCommit(topic_name, version)
                 else:
-                    re_result = cls.__revert_e.search(headline)
-                    if re_result:
-                        topic_name, version = re_result.groups()
-                        result = Fixture.RevertCommit(topic_name, version)
-                    else:
+                    if not commit.get_parent(treeish):
                         result = Fixture.InitCommit()
+                    else:
+                        re_result = cls.__commit_e.search(headline)
+                        if re_result:
+                            change, delete = re_result.groups()
+                            if change == 'None':
+                                change = None
+                            if delete == 'None':
+                                delete = None
+                        else:
+                            change = delete = None
+                        result = Fixture.RegularCommit(change, delete, None)
             result.SHA = misc.rev_parse(treeish)
             return result
 
