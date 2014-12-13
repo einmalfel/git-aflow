@@ -12,10 +12,8 @@ from gitaflow import execute
 from gitaflow.debug import TestDebugState
 from gitwrapper import aux, grouped_cache
 
-TestDebugState.notify_test_mode(True)
 
-average_cache_info = None
-cache_samples = 0
+TestDebugState.notify_test_mode(True)
 
 profiling = os.environ.get('AFLOW_TEST_PROFILE')
 if profiling and not TestDebugState.get_test_debug_mode():
@@ -54,18 +52,18 @@ if measure_t:
                                              arg_list))
     atexit.register(print_timings)
 
-
-def output_average_cache_info():
-    if average_cache_info:
-        to_print = deepcopy(average_cache_info)
-        for func in to_print:
-            for field in to_print[func]:
-                to_print[func][field] /= cache_samples
-        print('Average cache usage among all aflow invocations:'.ljust(80, '-'))
-        grouped_cache.print_cache_info(to_print)
-
-
+average_cache_info = None
+cache_samples = 0
 if grouped_cache.output_info and TestDebugState.get_test_debug_mode():
+    def output_average_cache_info():
+        if average_cache_info:
+            to_print = deepcopy(average_cache_info)
+            for func in to_print:
+                for field in to_print[func]:
+                    to_print[func][field] /= cache_samples
+            print('Average cache usage among all aflow calls:'.ljust(80, '-'))
+            grouped_cache.print_cache_info(to_print)
+
     atexit.unregister(grouped_cache.print_cache_info)
     atexit.register(output_average_cache_info)
 
