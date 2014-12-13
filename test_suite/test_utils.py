@@ -5,6 +5,8 @@ from tempfile import TemporaryDirectory
 import unittest
 import atexit
 import logging
+import inspect
+import time
 
 from gitaflow import execute
 from gitaflow.debug import TestDebugState
@@ -24,6 +26,25 @@ if log_file:
         handler.close()
         logging.root.removeHandler(handler)
     logging.Formatter.default_time_format = '%y%m%d %T'
+
+measure_t = os.environ.get('AFLOW_TEST_TIME') == '1'
+timings = []
+if TestDebugState.get_test_profile_mode():
+    print('Profiling is incompatible with call time measurement, turning the'
+          'last one off.')
+    measure_t = None
+if measure_t:
+    def print_timings():
+        to_print = sorted(timings, key=lambda x: x[1])
+        if len(to_print) > 10:
+            to_print = to_print[:10]
+        print(('Top ' + str(len(to_print)) +
+               ' slowest aflow calls').ljust(80, '-'))
+        for arg_list, spent, caller_info in reversed(to_print):
+            print('{:5.3f} {:<20} {}'.format(spent,
+                                             caller_info if caller_info else '',
+                                             arg_list))
+    atexit.register(print_timings)
 
 
 def output_average_cache_info():
@@ -51,14 +72,29 @@ def check_aflow(*args):
         raise AflowUnexpectedResult('Output: ' + str(exit_code) + '. ' + output)
 
 
-def call_aflow(*args):
+def call_and_measure_aflow(args, call, caller):
+    if measure_t and caller:
+        t1 = time.perf_counter()
+        try:
+            result = call(list(args))
+        finally:
+            t2 = time.perf_counter()
+            spent = t2 - t1
+            file = os.path.basename(caller.f_code.co_filename)
+            timings.append((args, spent, file + ':' + str(caller.f_lineno)))
+        return result
+    else:
+        return call(list(args))
+
+
+def call_aflow(*args, caller_frame=None):
     if log_file:
         args = ('-vv', '-l', log_file) + args
     if TestDebugState.get_test_debug_mode():
         grouped_cache.invalidate()
         TestDebugState.reset()
         try:
-            execute.execute(args)
+            call_and_measure_aflow(args, execute.execute, caller_frame)
             raise TestDebugState.AflowStopped(129, '')
         except TestDebugState.AflowStopped as stop:
             if grouped_cache.output_info:
@@ -75,7 +111,9 @@ def call_aflow(*args):
                 grouped_cache.print_cache_info()
             return stop.output, stop.exit_code
     else:
-        result = aux.get_output_and_exit_code(['git', 'af'] + list(args))
+        result = call_and_measure_aflow(['git', 'af'] + list(args),
+                                        aux.get_output_and_exit_code,
+                                        caller_frame)
         grouped_cache.invalidate()
         return result
 
@@ -91,7 +129,9 @@ class FunctionalTest(unittest.TestCase):
         super().run(result)
 
     def assert_aflow_returns_0(self, message, *cmd_and_args):
-        output, code = call_aflow(*cmd_and_args)
+        frame = inspect.currentframe()
+        output, code = call_aflow(*cmd_and_args,
+                                  caller_frame=frame.f_back if frame else None)
         if code:
             print('Aflow said:', output)
         if message:
@@ -100,10 +140,13 @@ class FunctionalTest(unittest.TestCase):
             self.assertEqual(code, 0)
 
     def assert_aflow_dies_with(self, message, *cmd_and_args):
+        frame = inspect.currentframe()
+        output, code = call_aflow(*cmd_and_args,
+                                  caller_frame=frame.f_back if frame else None)
         if message:
-            self.assertEqual(call_aflow(*cmd_and_args), (message, 1))
+            self.assertEqual((output, code), (message, 1))
         else:
-            self.assertEqual(call_aflow(*cmd_and_args)[1], 1)
+            self.assertEqual(code, 1)
 
 
 class LocalTest(FunctionalTest):
