@@ -27,7 +27,11 @@ if log_file:
         logging.root.removeHandler(handler)
     logging.Formatter.default_time_format = '%y%m%d %T'
 
-measure_t = os.environ.get('AFLOW_TEST_TIME') == '1'
+measure_t = os.environ.get('AFLOW_TEST_TIME')
+# AFLOW_TEST_TIME=ASSERT_CALLS measures calls like self.assert_aflow_returns_0()
+# ASSERT_CALLS may not work with some python interpreters (need
+# inspect.currentframe() support)
+# AFLOW_TEST_TIME=ALL_CALLS measures all calls
 timings = []
 if TestDebugState.get_test_profile_mode():
     print('Profiling is incompatible with call time measurement, turning the'
@@ -67,27 +71,35 @@ class AflowUnexpectedResult(Exception):
 
 
 def check_aflow(*args):
-    output, exit_code = call_aflow(*args)
+    frame = inspect.currentframe() if measure_t == 'ALL_CALLS' else None
+    output, exit_code = call_aflow(*args,
+                                   caller_frame=frame.f_back if frame else None)
     if not exit_code == 0:
         raise AflowUnexpectedResult('Output: ' + str(exit_code) + '. ' + output)
 
 
 def call_and_measure_aflow(args, call, caller):
-    if measure_t and caller:
+    if measure_t == 'ALL_CALLS' or (measure_t == 'ASSERT_CALLS' and caller):
         t1 = time.perf_counter()
         try:
             result = call(list(args))
         finally:
             t2 = time.perf_counter()
             spent = t2 - t1
-            file = os.path.basename(caller.f_code.co_filename)
-            timings.append((args, spent, file + ':' + str(caller.f_lineno)))
+            if caller:
+                file = os.path.basename(caller.f_code.co_filename)
+                timings.append((args, spent, file + ':' + str(caller.f_lineno)))
+            else:
+                timings.append((args, spent, None))
         return result
     else:
         return call(list(args))
 
 
 def call_aflow(*args, caller_frame=None):
+    if caller_frame is None and measure_t == 'ALL_CALLS':
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back if frame else None
     if log_file:
         args = ('-vv', '-l', log_file) + args
     if TestDebugState.get_test_debug_mode():
