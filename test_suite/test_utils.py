@@ -1,6 +1,7 @@
 from copy import deepcopy
 import os
 import profile
+import pstats
 from tempfile import TemporaryDirectory
 import unittest
 import atexit
@@ -16,6 +17,11 @@ from gitwrapper import aux, grouped_cache
 TestDebugState.notify_test_mode(True)
 
 profiling = os.environ.get('AFLOW_TEST_PROFILE')
+# AFLOW_TEST_PROFILE=OVERALL profile tests altogether
+# AFLOW_TEST_PROFILE=ASSERT_CALLS profiles calls like assert_aflow_returns_0().
+# ASSERT_CALLS may not work with some interpreters
+# AFLOW_TEST_PROFILE=ALL_CALLS profiles all calls
+# ASSERT_CALLS and ALL_CALLS print 20 slowest(by cumtime) functions
 if profiling and not TestDebugState.get_test_debug_mode():
     print('WARNING: profiling with debug mode disabled. There is no sense in '
           'running profiler when child processes do all the work')
@@ -73,7 +79,10 @@ class AflowUnexpectedResult(Exception):
 
 
 def check_aflow(*args):
-    frame = inspect.currentframe() if measure_t == 'ALL_CALLS' else None
+    if measure_t == 'ALL_CALLS' or profiling == 'ALL_CALLS':
+        frame = inspect.currentframe()
+    else:
+        frame = None
     output, exit_code = call_aflow(*args,
                                    caller_frame=frame.f_back if frame else None)
     if not exit_code == 0:
@@ -81,7 +90,20 @@ def check_aflow(*args):
 
 
 def call_and_measure_aflow(args, call, caller):
-    if measure_t == 'ALL_CALLS' or (measure_t == 'ASSERT_CALLS' and caller):
+    if profiling == 'ALL_CALLS' or (profiling == 'ASSERT_CALLS' and caller):
+        print('Profiling ' + call.__name__ + '(["' + '", "'.join(args) + '"])' +
+              (' called from ' + os.path.basename(caller.f_code.co_filename) +
+               ':' + str(caller.f_lineno)) if caller else ':')
+        profiler = profile.Profile()
+        try:
+            result = profiler.runcall(call, list(args))
+        finally:
+            profiler.create_stats()
+            stats = pstats.Stats(profiler)
+            stats.sort_stats('cumtime')
+            stats.print_stats(20)
+        return result
+    elif measure_t == 'ALL_CALLS' or (measure_t == 'ASSERT_CALLS' and caller):
         t1 = time.perf_counter()
         try:
             result = call(list(args))
@@ -99,7 +121,8 @@ def call_and_measure_aflow(args, call, caller):
 
 
 def call_aflow(*args, caller_frame=None):
-    if caller_frame is None and measure_t == 'ALL_CALLS':
+    if caller_frame is None and (measure_t == 'ALL_CALLS' or
+                                 profiling == 'ALL_CALLS'):
         frame = inspect.currentframe()
         caller_frame = frame.f_back if frame else None
     if log_file:
@@ -188,7 +211,7 @@ class LocalTest(FunctionalTest):
 
 
 def run_tests():
-    if profiling:
+    if profiling == 'OVERALL':
         profile.run('import unittest; unittest.main()', sort='cumtime')
     else:
         unittest.main()
