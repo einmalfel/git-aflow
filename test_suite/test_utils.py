@@ -101,7 +101,7 @@ def call_and_measure_aflow(args, call, caller):
             profiler.create_stats()
             stats = pstats.Stats(profiler)
             stats.sort_stats('cumtime')
-            stats.print_stats(20)
+            stats.print_stats(30)
         return result
     elif measure_t == 'ALL_CALLS' or (measure_t == 'ASSERT_CALLS' and caller):
         t1 = time.perf_counter()
