@@ -141,7 +141,8 @@ def finish(description, type_, name):
         if ci == iter_:
             break
         else:
-            if commit.is_based_on(iter_, cr.SHA):
+            if (misc.rev_parse(iter_) == cr.SHA or
+                    commit.is_based_on(iter_, cr.SHA)):
                 die('Current topic branch is based on ' + iter_ +
                     'Use "git af topic port" to bring it to current iteration' +
                     '. And then call "git af topic finish"')
