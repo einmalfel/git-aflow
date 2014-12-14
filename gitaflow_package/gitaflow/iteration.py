@@ -91,7 +91,7 @@ def get_iteration_by_sha(sha):
                           ' for SHA ' + sha + ' BP: ' + position)
             return iterations[position]
         position = commit.get_parent(position, 1)
-    logging.warning('Cannot get iteration for ' + sha)
+    logging.info('Cannot get iteration for ' + sha)
     return None
 atexit.register(lambda: logging.debug('get_iteration_by_SHA cache info:' +
                                       str(get_iteration_by_sha.cache_info())))

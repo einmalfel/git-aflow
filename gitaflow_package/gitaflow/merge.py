@@ -106,8 +106,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     if last_merge.is_newest_in(own_merges + merges_to_commit):
                         merges_to_commit.append(last_merge)
                     else:
-                        say('We already have same or newer version ' +
-                            'of ' + topic + ' in ' + cb)
+                        say('Latest revision of ' + topic + ' in sources is ' +
+                            last_merge.rev.get_branch_name() + '. We '
+                            'already have it merged in ' + cb + '. Skipping..')
                 else:
                     die('Merge failed. No topic ' + topic + ' in sources ' +
                         ', '.join(sources))
@@ -183,7 +184,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         try:
             merge_result = m.merge()
         except MergeNonConflictError:
-            logging.critical('Unexpectd merge error, falling back to ' +
+            logging.critical('Unexpected merge error, falling back to ' +
                              fallback_sha)
             branch.reset(fallback_sha)
             raise
@@ -192,7 +193,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     iteration.is_release(cb)):
                 commit.abort_merge()
                 die('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
-                    'Something went wrong, did not expect conflict there(' +
+                    'Something went wrong, did not expect conflict there (' +
                     cb + '). Please check carefully what you are doing. ' +
                     'Merge aborted.')
             say('Merge of ' + m.rev.get_branch_name() + ' failed. ' +

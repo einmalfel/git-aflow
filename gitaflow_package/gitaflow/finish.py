@@ -144,7 +144,8 @@ def finish(description, type_, name):
             if (misc.rev_parse(iter_) == cr.SHA or
                     commit.is_based_on(iter_, cr.SHA)):
                 die('Current topic branch is based on ' + iter_ +
-                    'Use "git af topic port" to bring it to current iteration' +
+                    '. Use "git af topic port" to bring it to current '
+                    'iteration' +
                     '. And then call "git af topic finish"')
 
     # If there are revisions of this topic in ci, later revisions are based
@@ -159,16 +160,16 @@ def finish(description, type_, name):
                     die('Cannot finish. There is elder revision of this '
                         'topic in ' + cd + ' and SHA you are '
                         'trying to finish is not based on it. Please rebase '
-                        'your work on ' + str(merge.rev))
+                        'your work on ' + merge.rev.get_branch_name())
                 elif (merge.rev.version > cr.version and
                         not commit.is_based_on(cr.SHA, merge.rev.SHA)):
-                    die('Cannot finish. Newer revision (' + str(merge.rev) +
-                        ') of this topic was merged into ' + cd + ' and it is '
+                    die('Cannot finish. Newer revision ' +
+                        merge.rev.get_branch_name() +
+                        ' was merged into ' + cd + ' and it is '
                         'not based on revision you are trying to finish.')
                 elif merge.rev == cr and not merge.rev.SHA == cr.SHA:
-                    die('This revision was already merged(' + str(merge) +
-                        ') in ' + cd + ' with different head SHA. Finish '
-                        'failed.')
+                    die(cr.get_branch_name() + ' was already merged in ' +
+                        cd + ' with different head SHA. Finish failed.')
             elif commit.is_based_on(merge.rev.SHA, cr.SHA):
                 die('TB of current topic is based on another topic, which is '
                     'illegal. You should either merge other topic instead of '
@@ -180,7 +181,8 @@ def finish(description, type_, name):
                     ' which is based on one you are trying to finish.')
 
     logging.info('Topic branch was started from correct place. About to '
-                 'finish revision ' + str(cr) + '. Checking dependencies...')
+                 'finish revision ' + cr.get_branch_name() +
+                 '. Checking dependencies...')
 
     revs_cd = tuple(m.rev for m in eff_m_cd)
     for dep in cr.get_own_effective_merges(recursive=True):
@@ -215,8 +217,8 @@ def finish(description, type_, name):
     try:
         if not cr.merge(description, type_):
             branch.reset(fallback_sha)
-            die('Merge of ' + str(cr) + ' conflicted unexpectedly. '
-                'Conflict detector gave false negative result. ' +
+            die('Merge of ' + cr.get_branch_name() + ' conflicted '
+                'unexpectedly. Conflict detector gave false negative result. ' +
                 cd + ' reset.')
     except MergeNonConflictError:
         logging.critical('Unexpected merge fail. Resetting ' + cd + ' to ' +
