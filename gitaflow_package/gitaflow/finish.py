@@ -129,6 +129,9 @@ def finish(description, type_, name):
 
     logging.info('Checking topic base...')
 
+    # Topic should not be empty
+    if cr.SHA == misc.rev_parse(ci):
+        die('Finish failed. Topic must contain at least one commit.')
     # Topic should be based on ci
     # And should not be based on any later iteration
     if not commit.is_based_on(ci, cr.SHA):
