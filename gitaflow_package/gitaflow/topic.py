@@ -535,10 +535,10 @@ class TopicMerge:
         if self.rev.iteration:
             ci = self.rev.iteration
         else:
-            if self.merge_target:
+            if self.merge_target and not iteration.is_master(self.merge_target):
                 ci = iteration.get_iteration_by_branch(self.merge_target)
-                if not ci:
-                    ci = iteration.get_iteration_by_sha(self.SHA)
+            if not ci:
+                ci = iteration.get_iteration_by_sha(self.SHA)
         if not ci:
             raise IncompleteMergeObjectError(
                 'Unable to find iteration of merge ' + str(self))
