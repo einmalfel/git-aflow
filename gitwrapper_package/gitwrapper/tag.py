@@ -22,11 +22,13 @@ def get_list(pattern=''):
                       ([] if pattern == '' else [pattern])).splitlines()
 
 
+@cache('tags')
 def get_sha(name):
     return get_output(['git', 'show-ref', '--verify', '--hash',
                        'refs/tags/' + name])
 
 
+@cache('tags')
 def exists(name):
     return check_01(['git', 'show-ref', '--verify', '-q', 'refs/tags/' + name])
 

@@ -45,6 +45,7 @@ def list_files_differ(treeish1, treeish2):
     return [line.rsplit('\t', 1)[1] for line in diff if line]
 
 
+@cache()
 def in_git_repo():
     output, code = get_output_and_exit_code(['git', 'rev-parse', '--git-dir'])
     if code == 0:
@@ -61,6 +62,7 @@ def get_git_dir():
     return get_output(['git', 'rev-parse', '--git-dir'])
 
 
+@cache('branches', 'commits', 'tags')
 def rev_parse(treeish):
     return get_output(['git', 'rev-parse', treeish])
 
