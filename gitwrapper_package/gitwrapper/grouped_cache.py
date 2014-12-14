@@ -59,10 +59,10 @@ def get_cache_info():
     result = dict()
     for func in set(itertools.chain(*__lru_funcs_by_group.values())):
         info = func.cache_info()
-        result[func] = {'used': info.currsize,
-                        'size': info.maxsize,
-                        'hits': info.hits,
-                        'misses': info.misses}
+        result[func] = {'use': info.currsize,
+                        'siz': info.maxsize,
+                        'hit': info.hits,
+                        'mis': info.misses}
     return result
 
 
@@ -74,14 +74,14 @@ def print_cache_info(info=None):
     if info is None:
         info = get_cache_info()
     for f in groups_by_func:
-        if f not in info or not (info[f]['used'] or info[f]['misses'] or
-                                 info[f]['hits']):
+        if f not in info or not (info[f]['use'] or info[f]['mis'] or
+                                 info[f]['hit']):
             continue
         s = []
         # We have to maintain consistent print order and handle float values
         for k in sorted(info[f]):
-            s.append(k + '{:.1f}'.format(info[f][k]).replace('.0', '').rjust(5))
-        print(f.__name__.ljust(16),
+            s.append(k + '{:.1f}'.format(info[f][k]).replace('.0', '').rjust(4))
+        print(f.__name__.ljust(26),
               ','.join(map(str, groups_by_func[f])).ljust(21),
               ','.join(s))
 
