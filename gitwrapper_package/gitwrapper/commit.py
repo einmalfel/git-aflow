@@ -102,13 +102,14 @@ def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
         [treeish1 + '..' + treeish2] + ['--']).splitlines()
 
 
-def merge(treeish, description):
+def merge(treeish, description=None):
     """Returns True if merged successfully, False if conflicted.
     Throws AlreadyMergedError if git says "Already up-to-date."
+    Uses default merge message if description is None.
     """
-    output, code = get_output_and_exit_code(['git', 'merge', '--no-ff',
-                                             '--no-edit', '-m',
-                                             description, treeish])
+    output, code = get_output_and_exit_code(
+        ['git', 'merge', '--no-ff', '--no-edit'] +
+        (['-m', description] if description else []) + [treeish])
     if code == 0:
         if output == 'Already up-to-date.':
             raise AlreadyMergedError('Merge object: ' + str(treeish))
