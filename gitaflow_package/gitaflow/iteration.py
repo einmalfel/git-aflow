@@ -7,6 +7,8 @@ from gitaflow.common import die, say
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
 from gitwrapper.cached import tag, branch, misc, commit
+from gitwrapper.grouped_cache import cache
+
 
 def parse_branch_name(branch_name):
     """Returns (iteration, name) tuple or (None, None) if cannot parse.
@@ -77,6 +79,7 @@ def get_iteration_list():
     return [t for t in tag.get_list() if is_iteration(t)]
 
 
+@cache('branches', 'tags')
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
     position = sha
@@ -90,6 +93,7 @@ def get_iteration_by_sha(sha):
     return None
 
 
+@cache('branches', 'tags')
 def get_iteration_by_branch(branch_name):
     iteration = parse_branch_name(branch_name)[0]
     if is_iteration(iteration):
@@ -102,6 +106,7 @@ def get_iteration_by_branch(branch_name):
     return None
 
 
+@cache('branches', 'tags')
 def get_iteration_by_treeish(treeish):
     if branch.exists(treeish):
         iter_ = parse_branch_name(treeish)[0]
@@ -110,6 +115,7 @@ def get_iteration_by_treeish(treeish):
     return iter_ if iter_ else get_iteration_by_sha(misc.rev_parse(treeish))
 
 
+@cache('branches', 'tags')
 def get_current_iteration():
     """Calculates current iteration.
     We cannot store iteration in something like "current_iteration" tag, cause
