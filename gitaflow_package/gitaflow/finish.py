@@ -85,11 +85,13 @@ def finish(description, type_, name):
                     cr.default_version = False
                     say('Using topic version ' + str(cr.version) +
                         ' as default.')
-    elif all_m_cd:
-        for m in all_m_cd:
-            if m.rev.topic == cr.topic and m.rev.version + 1 >= cr.version:
-                break
+    elif cr.version > 1:
+        if all_m_cd:
+            last_v = cr.topic.get_latest_merge(all_m_cd).rev.version
+            previous_present = cr.version <= last_v + 1
         else:
+            previous_present = False
+        if not previous_present:
             die('You should finish version ' + str(cr.version - 1) +
                 ' before finishing ' + cr.get_branch_name())
     if not Topic.is_valid_tb_name(cr.get_branch_name()):
