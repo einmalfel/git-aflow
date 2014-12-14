@@ -55,37 +55,16 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')
 
+    # Topics in own_merges will be excluded from merge
     own_merges = TopicMerge.get_effective_merges_in(cb)
-    current_revision = TopicRevision.from_branch_name(cb)
-    if ((not current_revision or not current_revision.iteration) and
-            not iteration.is_master(cb) and not iteration.is_staging(cb) and
-            not iteration.is_release(cb)):
-        if commit.get_current_sha() == misc.rev_parse(ci):
-            logging.info('Current branch is unknown, but it is empty so it is' +
-                         ' safe to merge')
-        else:
-            logging.info('We are in unknown branch now: ' + cb +
-                         '. Checking if it is based on some topic')
-            d_merges = TopicMerge.get_all_merges_in(iteration.get_develop())
-            for sha in commit.get_commits_between(ci, cb):
-                for m in d_merges:
-                    if m.rev.SHA == sha:
-                        current_revision = m.rev
-                        logging.warning('Current branch is based on ' +
-                                        current_revision.get_branch_name() +
-                                        '. Will exclude it from merge')
-                        break
-            else:
-                logging.info('This branch is not based on any known topic, ' +
-                             'so proceed as is')
-    else:
-        if not current_revision.iteration:
-            current_revision.iteration = ci
-    if current_revision:
-        # Make virtual merge of current topic
-        current_revision_merge = TopicMerge(current_revision, None, None, None,
-                                            None)
-        own_merges.append(current_revision_merge)
+    if (not iteration.is_master(cb) and not iteration.is_staging(cb) and
+            not iteration.is_release(cb) and
+            not commit.get_current_sha() == misc.rev_parse(ci)):
+        for m in TopicMerge.get_all_merges_in(iteration.get_develop()):
+            if m.rev.SHA and (commit.is_based_on(m.rev.SHA, cb) or
+                              m.rev.SHA == misc.rev_parse(cb)):
+                own_merges.append(m)
+                logging.info('Excluding from merge: ' + str(m.rev))
 
     merges_to_commit = []
     source_merges = list(itertools.chain.from_iterable(
