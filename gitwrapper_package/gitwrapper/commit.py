@@ -127,7 +127,7 @@ def abort_merge():
 
 
 def revert(treeish, parent=None, no_commit=False):
-    return check_01(['git', 'revert', treeish] +
+    return check_01(['git', 'revert', '--no-edit', treeish] +
                    (['-m' + str(parent)] if parent else []) +
                    (['-n'] if no_commit else []))
 
