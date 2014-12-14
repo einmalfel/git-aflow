@@ -56,27 +56,24 @@ def rev_parse(treeish):
     return get_output(['git', 'rev-parse', treeish])
 
 
-def sort(list_of_treeish, by_date=False, reverse=False, return_sha=False):
+def sort(list_of_treeish, by_date=False, reverse=False):
     """ Sort list of treeish in topological order (descendants first).
     If by_date - sorts by date, newer first.
     If return_SHA == True, returns a list of SHA of commits pointed by inputted
     treeish list, otherwise returns sorted list of treeish in form they where
     given. First option is faster and deduplicates result.
     """
-    shas = get_output(['git', 'rev-list', '--no-walk'] +
+    shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
                       list_of_treeish + ['--']).splitlines()
-    if return_sha:
-        return shas
-    else:
-        sha_treeish = collections.defaultdict(list)
-        for treeish in list_of_treeish:
-            sha_treeish[rev_parse(treeish)].append(treeish)
-        result = []
-        for sha in shas:
-            result.extend(sha_treeish[sha])
-        return result
+    sha_treeish = collections.defaultdict(list)
+    for treeish in list_of_treeish:
+        sha_treeish[rev_parse(treeish)].append(treeish)
+    result = []
+    for sha in shas:
+        result.extend(sha_treeish.get(sha, []))
+    return result
 
 
 def is_valid_ref_name(name):
