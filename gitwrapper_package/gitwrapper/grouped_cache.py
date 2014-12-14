@@ -6,6 +6,7 @@ The caching is safe for immutable objects only.
 
 import functools
 import collections
+import inspect
 import os
 import atexit
 import itertools
@@ -32,8 +33,19 @@ def cache(*groups, maxsize=128, typed=False):
     return decorator
 
 
-def invalidate(*groups):
+def invalidate(*groups, dont_print_info=False):
     """Calling invalidate() will clear all caches"""
+    if output_info and not dont_print_info:
+        fs_to_print = set()
+        for group in groups if groups else __lru_funcs_by_group.keys():
+            fs_to_print.update(set(__lru_funcs_by_group[group]))
+        if fs_to_print:
+            fr = inspect.currentframe()
+            from_ = (' from ' + os.path.basename(fr.f_back.f_code.co_filename) +
+                     ':' + str(fr.f_back.f_lineno)) if fr else ''
+            print(('Cache being invalidated' + from_).ljust(80, '-'))
+            print_cache_info(
+                {f: i for f, i in get_cache_info().items() if f in fs_to_print})
     for group in groups if groups else __lru_funcs_by_group.keys():
         for lru_func in __lru_funcs_by_group.get(group, []):
             lru_func.cache_clear()
@@ -62,7 +74,8 @@ def print_cache_info(info=None):
     if info is None:
         info = get_cache_info()
     for f in groups_by_func:
-        if not(info[f]['used'] or info[f]['misses'] or info[f]['hits']):
+        if f not in info or not (info[f]['used'] or info[f]['misses'] or
+                                 info[f]['hits']):
             continue
         s = []
         # We have to maintain consistent print order and handle float values
