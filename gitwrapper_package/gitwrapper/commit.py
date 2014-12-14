@@ -1,6 +1,7 @@
 """Commit-related functionality wrapper"""
 
 import logging
+import os
 import re
 
 from gitwrapper.aux import get_output, get_output_and_exit_code,\
@@ -19,7 +20,9 @@ def get_headline(treeish):
 
 
 def get_full_message(treeish):
-    return get_output(['git', 'show', '--format=%B', '-s', treeish])
+    raw = get_output(['git', 'rev-list', '--format=%B', '-s', '-n1', treeish])
+    # git returns empty line at the end. Splitlines removes last empty line
+    return os.linesep.join(raw.splitlines()[1:])
 
 
 def find(start_commits=None, first_parent=False, regexps=None, match_all=False):
