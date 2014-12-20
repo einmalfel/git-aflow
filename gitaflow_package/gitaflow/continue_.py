@@ -32,7 +32,7 @@ def continue_(name=None):
             # there is nothing before first iteration
             for i in p_iters[:-1]:
                 last_m = nr.topic.get_latest_merge(
-                    TopicMerge.get_effective_merges_in(i + '^'))
+                    TopicMerge.get_effective_merges_in(i))
                 if last_m:
                     logging.info('Found effective merge in master before ' + i +
                                  ': ' + str(last_m))
