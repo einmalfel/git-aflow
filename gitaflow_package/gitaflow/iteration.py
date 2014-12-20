@@ -76,7 +76,7 @@ def is_iteration(name):
 
 
 def get_iteration_list():
-    return [t for t in tag.get_list() if is_iteration(t)]
+    return tuple(t for t in tag.get_list() if is_iteration(t))
 
 
 @cache('branches', 'tags')

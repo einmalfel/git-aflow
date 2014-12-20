@@ -77,7 +77,7 @@ def sort(list_of_treeish, by_date=False, reverse=False, return_sha=False):
     shas = get_output(['git', 'rev-list', '--no-walk'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
-                      list_of_treeish + ['--']).splitlines()
+                      list(list_of_treeish) + ['--']).splitlines()
     if return_sha:
         return shas
     else:
