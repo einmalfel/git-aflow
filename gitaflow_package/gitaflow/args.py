@@ -7,9 +7,10 @@ Defaults to current topic (feature/some_feature_'). Also pass default value to
 ArgumentParser
 """
 
-
 import argparse
 import sys
+
+from gitaflow.common import say
 
 
 def parse_args(args_list):
@@ -257,15 +258,15 @@ from the top of master branch')
     args = main_parser.parse_args(args_list)
 
     if args.subcommand is None:
-        main_parser.print_help()
+        say(main_parser.format_help())
         return None
     elif args.subcommand == 'release':
         if args.subsubcommand is None:
-            release_parser.print_help()
+            say(release_parser.format_help())
             return None
     elif args.subcommand == 'topic':
         if args.subsubcommand is None:
-            topic_parser.print_help()
+            say(topic_parser.format_help())
             return None
     elif args.subcommand == 'merge':
         if args.merge_object is None and not args.topic:
