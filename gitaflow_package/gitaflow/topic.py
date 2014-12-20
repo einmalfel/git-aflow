@@ -442,13 +442,9 @@ class TopicMerge(collections.namedtuple(
     def get_all_merges_in(cls, treeish):
         """ Returns all (including reverted) in BP..treeish"""
         iter_name = iteration.get_iteration_by_treeish(treeish)
-        result = []
-        for sha in commit.get_commits_between(iter_name, treeish, True,
-                                              ["^Merge branch .*$"]):
-            merge = cls.from_treeish(sha)
-            if merge:
-                result.append(merge)
-        return result
+        shas = commit.get_commits_between(iter_name, treeish, True,
+                                          ["^Merge branch .*$"])
+        return tuple(m for m in (cls.from_treeish(sha) for sha in shas) if m)
 
     @staticmethod
     def get_reverted_merges_in(treeish, original_only=False):
