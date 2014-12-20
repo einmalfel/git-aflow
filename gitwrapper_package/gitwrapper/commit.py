@@ -147,6 +147,7 @@ def revert(treeish, parent=None, no_commit=False):
         invalidate('branches', 'commits', 'index')
     else:
         invalidate('index')
+    return result
 
 
 def abort_revert():
