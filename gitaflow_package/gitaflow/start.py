@@ -44,7 +44,7 @@ def start(name):
                 ') in current iteration(' + ci + ').')
 
     logging.info('Ok, now check if there was such topic somewhere in history')
-    shas = topic.get_all_merges()
+    shas = tuple(str(m.SHA) for m in topic.get_all_merges())
     if shas:
         die('Cannot start topic, it already exists in history, see SHA: ' +
             ', '.join(shas))
