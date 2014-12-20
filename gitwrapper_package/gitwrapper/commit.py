@@ -22,10 +22,12 @@ class AlreadyMergedError(Exception):
     """
 
 
+@cache('branches', 'tags', 'commits')  # any ref may be given
 def get_headline(treeish):
     return get_output(['git', 'log', '--format=%s', '-n1', treeish, '--'])
 
 
+@cache('branches', 'tags', 'commits')  # any ref may be given
 def get_full_message(treeish):
     raw = get_output(['git', 'rev-list', '--format=%B', '-s', '-n1', treeish])
     # git returns empty line at the end. Splitlines removes last empty line
@@ -47,10 +49,12 @@ def find(start_commits=None, first_parent=False, regexps=None, match_all=False):
         (start_commits if start_commits else ['--all']) + ['--']).splitlines()
 
 
+@cache('branches')
 def get_current_sha():
     return get_output(['git', 'rev-parse', 'HEAD'])
 
 
+@cache('branches', 'tags', 'commits')  # any ref may be given
 def is_ancestor(ancestor, descendant):
     """Works with Git1.8+"""
     # I'd say a commit is rather not ancestor of itself, although git does
@@ -62,6 +66,7 @@ def is_ancestor(ancestor, descendant):
                          descendant])
 
 
+@cache('branches', 'tags', 'commits')  # any ref may be given
 def is_based_on(ancestor, descendant):
     """This checks whether ancestor is reachable from descendant via
     first-parent tree traversal.
@@ -77,6 +82,7 @@ def is_based_on(ancestor, descendant):
         return misc.rev_parse(ancestor) == get_parent(rev_list[-1])
 
 
+@cache('branches', 'tags', 'commits')  # any ref may be given
 def get_parent(treeish, number=1):
     """Get parent commit SHA. If commit is merge commit, use number to select
     which parent to return. Parent #1 belongs to merge target. If specified
@@ -144,6 +150,7 @@ def revert(treeish, parent=None, no_commit=False):
         invalidate('branches', 'commits', 'index')
     else:
         invalidate('index')
+    return result
 
 
 def abort_revert():

@@ -50,14 +50,11 @@ def finish(description, type_, name):
                     '"git af checkout topicA" or specify name '
                     '(like git af topic finish -n TopicName if you '
                     'are going to merge a commit, not branch')
-    cr = TopicRevision.from_branch_name(name)
-    cr.SHA = tb_head
+    cr = TopicRevision.from_branch_name(name, sha=tb_head, default_iteration=ci)
     if cr.iteration:
         if not cr.iteration == ci:
             die('It is not possible to finish in current iteration topic from '
                 'other one. Finish failed.')
-    else:
-        cr.iteration = ci
     last_m = cr.topic.get_latest_merge(cr.topic.get_all_merges())
     if last_m:
         if last_m.rev.version < cr.version - 1:
@@ -73,16 +70,16 @@ def finish(description, type_, name):
         if all_m_cd:
             for m in all_m_cd:
                 if m.rev.topic == cr.topic and m.rev.SHA == cr.SHA:
-                    cr.version = m.rev.version
-                    cr.default_version = False
+                    cr = TopicRevision(cr.topic, cr.SHA,
+                                       m.rev.version, cr.iteration)
                     say('Using version ' + str(cr.version) +
                         ' of already merged revision with same head SHA.')
                     break
             else:
                 last_m_cd = cr.topic.get_latest_merge(all_m_cd)
                 if last_m_cd and commit.is_based_on(last_m_cd.rev.SHA, cr.SHA):
-                    cr.version = last_m_cd.rev.version + 1
-                    cr.default_version = False
+                    cr = TopicRevision(cr.topic, cr.SHA,
+                                       last_m_cd.rev.version + 1, cr.iteration)
                     say('Using topic version ' + str(cr.version) +
                         ' as default.')
     elif cr.version > 1:

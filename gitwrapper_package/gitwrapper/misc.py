@@ -45,6 +45,7 @@ def list_files_differ(treeish1, treeish2):
     return [line.rsplit('\t', 1)[1] for line in diff if line]
 
 
+@cache()
 def in_git_repo():
     output, code = get_output_and_exit_code(['git', 'rev-parse', '--git-dir'])
     if code == 0:
@@ -61,6 +62,7 @@ def get_git_dir():
     return get_output(['git', 'rev-parse', '--git-dir'])
 
 
+@cache('branches', 'commits', 'tags')
 def rev_parse(treeish):
     return get_output(['git', 'rev-parse', treeish])
 
@@ -77,7 +79,7 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
-                      list_of_treeish + ['--']).splitlines()
+                      list(list_of_treeish) + ['--']).splitlines()
     sha_treeish = collections.defaultdict(list)
     for treeish in list_of_treeish:
         sha_treeish[rev_parse(treeish)].append(treeish)

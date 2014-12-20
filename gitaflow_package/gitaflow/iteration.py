@@ -7,6 +7,8 @@ from gitaflow.common import die, say
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
 from gitwrapper.cached import tag, branch, misc, commit
+from gitwrapper.grouped_cache import cache
+
 
 def parse_branch_name(branch_name):
     """Returns (iteration, name) tuple or (None, None) if cannot parse.
@@ -61,6 +63,7 @@ def start_iteration(iteration_name):
     return True
 
 
+@cache('tags', 'branches')
 def is_iteration(name):
     """Checks whether there is a base point with given name"""
     if name is None:
@@ -73,10 +76,12 @@ def is_iteration(name):
     return result
 
 
+@cache('tags', 'branches')
 def get_iteration_list():
-    return [t for t in tag.get_list() if is_iteration(t)]
+    return tuple(t for t in tag.get_list() if is_iteration(t))
 
 
+@cache('branches', 'tags')
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
     position = commit.get_parent(sha, 1)
@@ -90,6 +95,7 @@ def get_iteration_by_sha(sha):
     return None
 
 
+@cache('branches', 'tags')
 def get_iteration_by_branch(branch_name):
     assert branch.exists(branch_name)
     # try to extract iteration from name
@@ -108,6 +114,7 @@ def get_iteration_by_branch(branch_name):
         return get_iteration_by_sha(branching_point)
 
 
+@cache('branches', 'tags')
 def get_iteration_by_treeish(treeish):
     if branch.exists(treeish):
         return get_iteration_by_branch(treeish)
@@ -115,6 +122,7 @@ def get_iteration_by_treeish(treeish):
         return get_iteration_by_sha(treeish)
 
 
+@cache('branches', 'tags')
 def get_current_iteration():
     for t in tag.find_by_target('HEAD'):
         if is_iteration(t):
