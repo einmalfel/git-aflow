@@ -22,6 +22,11 @@ profiling = os.environ.get('AFLOW_TEST_PROFILE')
 # ASSERT_CALLS may not work with some interpreters
 # AFLOW_TEST_PROFILE=ALL_CALLS profiles all calls
 # ASSERT_CALLS and ALL_CALLS print 20 slowest(by cumtime) functions
+if profiling and not (profiling == 'ALL_CALLS' or profiling == 'ASSERT_CALLS' or
+                      profiling == 'OVERALL'):
+    print('Wrong AFLOW_TEST_PROFILE value', profiling,
+          'choose one of ALL_CALLS, ASSERT_CALLS, OVERALL')
+    exit(2)
 if profiling and not TestDebugState.get_test_debug_mode():
     print('WARNING: profiling with debug mode disabled. There is no sense in '
           'running profiler when child processes do all the work')
@@ -41,6 +46,10 @@ measure_t = os.environ.get('AFLOW_TEST_TIME')
 # ASSERT_CALLS may not work with some python interpreters (need
 # inspect.currentframe() support)
 # AFLOW_TEST_TIME=ALL_CALLS measures all calls
+if measure_t and not (measure_t == 'ALL_CALLS' or measure_t == 'ASSERT_CALLS'):
+    print('Wrong AFLOW_TEST_TIME value', measure_t,
+          'possible values are ALL_CALLS and ASSERT_CALLS')
+    exit(2)
 timings = []
 if profiling and measure_t:
     print('Profiling is incompatible with call time measurement')
