@@ -78,7 +78,8 @@ def continue_(name=None):
     last_v_ever = last_r_cd.topic.get_latest_merge(
         last_r_cd.topic.get_all_merges()).rev.version
     if last_v_ever >= last_r_cd.version:
-        say('Please, note that ' + tb_name +
+        say('Please, note that ' +
+            last_r_cd.topic.name + '_v' + str(last_r_cd.version) +
             ' is already present in other iteration(s), so changes you will '
             'make for this revision in current iteration should correspond to '
             'changes made for same revision in other iterations. You may '

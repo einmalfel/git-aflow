@@ -145,8 +145,7 @@ def finish(description, type_, name):
                     commit.is_based_on(iter_, cr.SHA)):
                 die('Current topic branch is based on ' + iter_ +
                     '. Use "git af topic port" to bring it to current '
-                    'iteration' +
-                    '. And then call "git af topic finish"')
+                    'iteration and then call "git af topic finish"')
 
     # If there are revisions of this topic in ci, later revisions are based
     # on elder.
