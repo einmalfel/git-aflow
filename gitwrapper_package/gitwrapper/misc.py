@@ -63,6 +63,8 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     treeish list, otherwise returns sorted list of treeish in form they where
     given. First option is faster and deduplicates result.
     """
+    if not list_of_treeish:
+        return []
     shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
