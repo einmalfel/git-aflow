@@ -7,6 +7,7 @@ import itertools
 import collections
 
 from gitaflow.common import say
+from gitwrapper.grouped_cache import cache
 from gitwrapper.cached import misc, branch, commit
 from gitaflow import iteration
 from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
@@ -439,6 +440,7 @@ class TopicMerge(collections.namedtuple(
         return TopicMerge(revision, treeish, d, type_, target)
 
     @classmethod
+    @cache('tags', 'branches')
     def get_all_merges_in(cls, treeish):
         """ Returns all (including reverted) in BP..treeish"""
         iter_name = iteration.get_iteration_by_treeish(treeish)
@@ -461,6 +463,7 @@ class TopicMerge(collections.namedtuple(
         return result
 
     @classmethod
+    @cache('branches', 'tags')
     def get_effective_merges_in(cls, treeish, recursive=False):
         """ Returns all not-reverted merges in BP..treeish
         If some topic was reverted and remerged, returns original merge of this
