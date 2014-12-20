@@ -424,6 +424,7 @@ class TopicMerge(collections.namedtuple(
             return None, None, None
 
     @classmethod
+    @cache('branches', 'tags')
     def from_treeish(cls, treeish):
         headline, type_, d = cls.parse_message(commit.get_full_message(treeish))
         if not headline:
