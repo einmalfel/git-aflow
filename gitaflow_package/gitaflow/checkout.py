@@ -6,7 +6,7 @@ from gitaflow import iteration
 from gitaflow.common import say, die
 from gitaflow.constants import STAGING_NAME, DEVELOP_NAME
 from gitaflow.topic import TopicRevision, TopicMerge
-from gitwrapper import branch, misc
+from gitwrapper.cached import branch, misc
 
 
 def _checkout(ci, treeish):

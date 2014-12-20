@@ -3,10 +3,17 @@
 import logging
 import os
 import re
+import sys
 
 from gitwrapper.aux import get_output, get_output_and_exit_code,\
     GitUnexpectedError, call, check_01, get_output_01
 from gitwrapper import misc
+
+
+if 'gitwrapper.cached' in sys.modules:
+    from gitwrapper.grouped_cache import cache, invalidate
+else:
+    from gitwrapper.stub_cache import cache, invalidate
 
 
 class AlreadyMergedError(Exception):
@@ -109,6 +116,7 @@ def merge(treeish, description):
         if output == 'Already up-to-date.':
             raise AlreadyMergedError('Merge object: ' + str(treeish))
         else:
+            invalidate('branches', 'commits', 'index')
             return True
     else:
         if code == 1:
@@ -116,6 +124,7 @@ def merge(treeish, description):
                 merge.conflict_re = re.compile(
                     '^CONFLICT .*: Merge conflict in .*$', re.MULTILINE)
             if merge.conflict_re.search(output):
+                invalidate('index')
                 return False
             raise GitUnexpectedError('Git merge returned ' + str(code) +
                                      '. Output: ' + output)
@@ -123,17 +132,23 @@ merge.conflict_re = None
 
 
 def abort_merge():
+    invalidate('index')
     return get_output(['git', 'merge', '--abort'])
 
 
 def revert(treeish, parent=None, no_commit=False):
-    return check_01(['git', 'revert', '--no-edit', treeish] +
-                   (['-m' + str(parent)] if parent else []) +
-                   (['-n'] if no_commit else []))
+    result = check_01(['git', 'revert', '--no-edit', treeish] +
+                      (['-m' + str(parent)] if parent else []) +
+                      (['-n'] if no_commit else []))
+    if result:
+        invalidate('branches', 'commits', 'index')
+    else:
+        invalidate('index')
 
 
 def abort_revert():
     call(['git', 'revert', '--abort'])
+    invalidate('index')
 
 
 def commit(message=None, allow_empty=False):
@@ -145,6 +160,7 @@ def commit(message=None, allow_empty=False):
         (['-m' + message] if message else []) +
         (['--allow-empty'] if allow_empty else []))
     if code == 0:
+        invalidate('branches', 'commits', 'index')
         return True
     else:
         if ("error: 'commit' is not possible because you have unmerged files."

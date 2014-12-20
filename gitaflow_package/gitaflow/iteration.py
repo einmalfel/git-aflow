@@ -1,15 +1,12 @@
 """Iteration management functionality"""
 
-import atexit
-from functools import lru_cache
 import logging
 import re
 
 from gitaflow.common import die, say
-from gitwrapper import misc, branch, tag, commit
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
-
+from gitwrapper.cached import tag, branch, misc, commit
 
 def parse_branch_name(branch_name):
     """Returns (iteration, name) tuple or (None, None) if cannot parse.
@@ -61,7 +58,6 @@ def start_iteration(iteration_name):
         logging.critical('Failed to create iteration ' + iteration_name)
         raise
     say('Iteration ' + iteration_name + ' created successfully')
-    get_iteration_by_sha.cache_clear()
     return True
 
 
@@ -81,7 +77,6 @@ def get_iteration_list():
     return [t for t in tag.get_list() if is_iteration(t)]
 
 
-@lru_cache()
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
     position = commit.get_parent(sha, 1)
@@ -93,8 +88,6 @@ def get_iteration_by_sha(sha):
         position = commit.get_parent(position, 1)
     logging.info('Cannot get iteration for ' + sha)
     return None
-atexit.register(lambda: logging.debug('get_iteration_by_SHA cache info:' +
-                                      str(get_iteration_by_sha.cache_info())))
 
 
 def get_iteration_by_branch(branch_name):
