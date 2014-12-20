@@ -63,6 +63,7 @@ def start_iteration(iteration_name):
     return True
 
 
+@cache('tags', 'branches')
 def is_iteration(name):
     """Checks whether there is a base point with given name"""
     if name is None:
@@ -75,6 +76,7 @@ def is_iteration(name):
     return result
 
 
+@cache('tags', 'branches')
 def get_iteration_list():
     return tuple(t for t in tag.get_list() if is_iteration(t))
 
