@@ -496,15 +496,13 @@ class TopicMerge(collections.namedtuple(
 
         if recursive:
             recursive_result = []
-            for merge in result:
-                merges2 = merge.rev.get_own_effective_merges(True)
-                merges2.append(merge)
-                for merge2 in merges2:
+            for m in result:
+                for merge2 in m.rev.get_own_effective_merges(True) + (m,):
                     if merge2.is_newest_in(recursive_result):
                         recursive_result.append(merge2)
-            return recursive_result
+            return tuple(recursive_result)
         else:
-            return result
+            return tuple(result)
 
     def merge(self, set_description=None, set_type=None):
         return self.rev.merge(

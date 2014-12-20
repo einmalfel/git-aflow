@@ -55,7 +55,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')
 
-    own_merges = TopicMerge.get_effective_merges_in(cb)
+    own_merges = list(TopicMerge.get_effective_merges_in(cb))
     current_revision = TopicRevision.from_branch_name(cb)
     if ((not current_revision or not current_revision.iteration) and
             not iteration.is_master(cb) and not iteration.is_staging(cb) and
