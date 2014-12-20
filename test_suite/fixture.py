@@ -317,7 +317,8 @@ class Fixture:
             commit.commit(
                 'change ' + str(self.change) + ' del ' + str(self.delete), True)
             if self.set_revision:
-                branch.create(self.set_revision)
+                branch.create(branch.get_current().split('/')[0] + '/' +
+                              self.set_revision)
 
     class MergeCommit(Commit):
         def __init__(self, topic, version):
@@ -341,7 +342,8 @@ class Fixture:
             super().__init__(topic, version)
 
         def _commit(self):
-            misc.checkout(self.topic + '_v' + self.version)
+            misc.checkout(branch.get_current().split('/')[0] + '/' +
+                          self.topic + '_v' + self.version)
             check_aflow('topic', 'finish')
 
     class RevertCommit(Commit):
