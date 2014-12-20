@@ -211,8 +211,7 @@ class TopicRevision(collections.namedtuple('TopicRevisionT', (
 
     def get_own_effective_merges(self, recursive=False):
         if self.SHA:
-            return TopicMerge.get_effective_merges_in(self.SHA,
-                                                      [] if recursive else None)
+            return TopicMerge.get_effective_merges_in(self.SHA, recursive)
         else:
             logging.critical('Searching for merges it topic w/o Topic.SHA')
             return None
@@ -465,7 +464,7 @@ class TopicMerge(collections.namedtuple(
         return result
 
     @classmethod
-    def get_effective_merges_in(cls, treeish, recursive_merges=None):
+    def get_effective_merges_in(cls, treeish, recursive=False):
         """ Returns all not-reverted merges in BP..treeish
         If some topic was reverted and remerged, returns original merge of this
         topic with revision extracted from original merge
@@ -498,13 +497,15 @@ class TopicMerge(collections.namedtuple(
             if merge.is_fake():
                 merge.rev = merge.get_original().rev
 
-        if recursive_merges is not None:
+        if recursive:
+            recursive_result = []
             for merge in result:
-                if merge.is_newest_in(recursive_merges):
-                    recursive_merges.append(merge)
-                    cls.get_effective_merges_in(merge.rev.SHA, recursive_merges)
-                    # merge.rev.get_own_effective_merges(recursive_merges)
-            return recursive_merges
+                merges2 = merge.rev.get_own_effective_merges(True)
+                merges2.append(merge)
+                for merge2 in merges2:
+                    if merge2.is_newest_in(recursive_result):
+                        recursive_result.append(merge2)
+            return recursive_result
         else:
             return result
 
