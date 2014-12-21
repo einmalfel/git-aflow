@@ -84,10 +84,7 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     sha_treeish = collections.defaultdict(list)
     for treeish in list_of_treeish:
         sha_treeish[rev_parse(treeish)].append(treeish)
-    result = []
-    for sha in shas:
-        result.extend(sha_treeish.get(sha, []))
-    return result
+    return tuple(t for sha in shas for t in sha_treeish.get(sha, tuple()))
 
 
 def is_valid_ref_name(name):
