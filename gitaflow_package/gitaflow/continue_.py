@@ -58,8 +58,8 @@ def continue_(name=None):
     logging.info('Last revision: ' + str(last_r_cd) + '. Checking branch '
                  'not exists and working tree is clean')
 
-    last_r_cd.version += 1
-    tb_name = last_r_cd.get_branch_name()
+    new_r = TopicRevision(last_r_cd.topic, None, last_r_cd.version + 1, ci)
+    tb_name = new_r.get_branch_name()
     if branch.exists(tb_name):
         die(tb_name + ' already exists. Use "git af checkout ' + tb_name +
             '" to continue your work on topic')
@@ -77,7 +77,7 @@ def continue_(name=None):
                 'Use "git clean" to remove all untracked files')
     last_v_ever = last_r_cd.topic.get_latest_merge(
         last_r_cd.topic.get_all_merges()).rev.version
-    if last_v_ever >= last_r_cd.version:
+    if last_v_ever >= new_r.version:
         say('Please, note that ' + tb_name +
             ' is already present in other iteration(s), so changes you will '
             'make for this revision in current iteration should correspond to '
