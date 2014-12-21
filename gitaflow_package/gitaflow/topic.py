@@ -566,15 +566,13 @@ class TopicMerge(collections.namedtuple(
         return None
 
 
-class TopicRevert:
+class TopicRevert(collections.namedtuple('TopicRevertT', (
+        'rev', 'SHA', 'merge_target', 'reverted_SHA'))):
     """ Represents revert of topic revision merge
     """
 
-    def __init__(self, revision, sha, merge_target, reverted_sha):
-        self.rev = revision
-        self.SHA = sha
-        self.merge_target = merge_target
-        self.reverted_SHA = reverted_sha
+    def __new__(cls, revision, sha, merge_target, reverted_sha):
+        return super().__new__(cls, revision, sha, merge_target, reverted_sha)
 
     def __str__(self):
         s = '{Revert of merge of ' + str(self.rev)
@@ -588,37 +586,35 @@ class TopicRevert:
         return s
 
     @classmethod
+    @cache('branches', 'tags')
     def from_treeish(cls, treeish):
-        new = cls.from_message(commit.get_full_message(treeish))
-        if new:
-            new.SHA = misc.rev_parse(treeish)
-            if not new.rev.iteration:
-                new.rev.iteration = iteration.get_iteration_by_treeish(treeish)
-        return new
+        headline, sha = cls.parse_message(commit.get_full_message(treeish))
+        branch_name, target = TopicMerge.parse_headline(headline)
+        return TopicRevert(
+            TopicRevision.from_branch_name(
+                branch_name,
+                default_iteration=iteration.get_iteration_by_treeish(treeish)),
+            misc.rev_parse(treeish),
+            target,
+            sha)
 
     message_regexp = None
 
     @classmethod
-    def from_message(cls, message):
+    def parse_message(cls, message):
         """ Parses revert commit message, extracting reverted SHA and headline
         info
         TODO: it's also possible to found commit revert was made relative to
         """
         if cls.message_regexp is None:
             cls.message_regexp = re.compile(
-                '^This reverts commit (.*)[,\.].*$')
-        new = None
-        for line in message.splitlines():
-            if not new:
-                new = cls.from_headline(line)
-                if not new:
-                    return None
-            else:
-                result = cls.message_regexp.search(line)
-                if result:
-                    new.reverted_SHA = result.groups()[0]
-                    break
-        return new
+                '\ARevert "(.*?)"[\n\r]+This reverts commit (.*?)[.,].*',
+                re.DOTALL)
+        result = cls.message_regexp.search(message)
+        if result:
+            return result.groups()
+        else:
+            return None, None
 
     def get_reverted_merge(self):
         if self.reverted_SHA:
@@ -633,29 +629,3 @@ class TopicRevert:
         for m in reversed(self.rev.topic.get_all_merges_in(self.SHA)):
             if m.rev == self.rev:
                 return m
-
-    headline_regexp = None
-
-    @classmethod
-    def from_headline(cls, headline):
-        if cls.headline_regexp is None:
-            cls.headline_regexp = re.compile(
-                "^Revert \"Merge branch '(.*)'(?: into ([^/]*/.*))?\"$")
-        re_result = cls.headline_regexp.search(headline)
-        if not re_result:
-            re_result = re.search(
-                "^Revert \"Merge branch '(.*)' into (.*)\"$", headline)
-            if not re_result:
-                logging.warning('Failed to parse revert headline: ' + headline)
-                return None
-            else:
-                logging.warning('Warning: incorrect branch name: ' +
-                                re_result.groups()[1] +
-                                '. Which iteration does this branch belong to?')
-        branch_name, target = re_result.groups()
-        if not target:
-            target = 'master'
-        revision = TopicRevision.from_branch_name(branch_name)
-        if not revision.iteration:
-            revision.iteration = iteration.parse_branch_name(target)[0]
-        return TopicRevert(revision, None, target, None)
