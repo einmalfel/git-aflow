@@ -581,6 +581,7 @@ class TopicRevert(collections.namedtuple('TopicRevertT', (
         return s
 
     @classmethod
+    @cache('branches', 'tags')
     def from_treeish(cls, treeish):
         headline, sha = cls.parse_message(commit.get_full_message(treeish))
         branch_name, target = TopicMerge.parse_headline(headline)
