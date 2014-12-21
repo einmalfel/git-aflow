@@ -77,8 +77,12 @@ def is_iteration(name):
 
 
 @cache('tags', 'branches')
-def get_iteration_list():
-    return tuple(t for t in tag.get_list() if is_iteration(t))
+def get_iteration_list(sort=False):
+    iteration_generator = (t for t in tag.get_list() if is_iteration(t))
+    if sort:
+        return misc.sort(iteration_generator)
+    else:
+        return tuple(iteration_generator)
 
 
 @cache('branches', 'tags')

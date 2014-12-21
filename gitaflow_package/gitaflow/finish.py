@@ -134,7 +134,7 @@ def finish(description, type_, name):
     if not commit.is_based_on(ci, cr.SHA):
         die('Finish failed. Current topic branch is not based on iteration '
             'start which is not allowed in git-aflow')
-    for iter_ in misc.sort(iteration.get_iteration_list()):
+    for iter_ in iteration.get_iteration_list(sort=True):
         if ci == iter_:
             break
         else:
