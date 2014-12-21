@@ -38,12 +38,13 @@ def start(name):
 
     logging.info('Check if there is branch for this topic already')
     branches = topic.get_branches()
-    if branches:
-        die('Cannot start topic, there are already branches: ' +
-            ', '.join(branches))
+    for b in branches:
+        if iteration.get_iteration_by_treeish(b) == ci:
+            die('Cannot start topic, it already has a branch(' + b +
+                ') in current iteration(' + ci + ').')
 
     logging.info('Ok, now check if there was such topic somewhere in history')
-    shas = topic.get_all_merges()
+    shas = tuple(str(m.SHA) for m in topic.get_all_merges())
     if shas:
         die('Cannot start topic, it already exists in history, see SHA: ' +
             ', '.join(shas))
