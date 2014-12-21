@@ -48,9 +48,7 @@ def checkout(name):
 
     # 3 if version specified look for branch of this rev in ci
     # 4 if not, look for latest branch of this topic in ci
-    rev = TopicRevision.from_branch_name(name)
-    if not rev.iteration:
-        rev.iteration = ci
+    rev = TopicRevision.from_branch_name(name, default_iteration=ci)
     logging.info('Searching for branch of revision ' + str(rev))
     branches = rev.topic.get_branches()
     last = 0, None  # version and name of last branch of this topic in ci

@@ -4,8 +4,10 @@ import logging
 from os import linesep
 import re
 import itertools
+import collections
 
 from gitaflow.common import say
+from gitwrapper.grouped_cache import cache
 from gitwrapper.cached import misc, branch, commit
 from gitaflow import iteration
 from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
@@ -62,7 +64,7 @@ def consistency_check_ok(list_of_treeish):
     return result
 
 
-class Topic:
+class Topic(collections.namedtuple('TopicT', ('name',))):
     """ This class represents topic. Topic is a sequence of commits merged
     one or multiple times somewhere in history into develop, staging or master.
     Topic may exists in multiple iterations and topic commits may differ from
@@ -70,8 +72,8 @@ class Topic:
     Topic also may have a topic branch associated with it
     """
 
-    def __init__(self, name):
-        self.name = name
+    def __new__(cls, name):
+        return super().__new__(cls, name)
 
     def __str__(self):
         return self.name
@@ -165,28 +167,25 @@ class Topic:
         return last
 
 
-class TopicRevision:
+class TopicRevision(collections.namedtuple('TopicRevisionT', (
+        'topic', 'SHA', 'version', 'iteration', 'default_version'))):
     """ This class represents a version on topic which was merged in one or
     more branches of single iteration
     """
 
-    def __init__(self, topic, sha, version, iteration_):
+    def __new__(cls, topic, sha, version, iteration_):
         if version:
             version = int(version)
             if version <= 0:
                 topic.name = topic.name + '_v' + str(version)
                 version = 1
-                self.default_version = True
+                default_v = True
             else:
-                self.default_version = False
+                default_v = False
         else:
             version = 1
-            self.default_version = True
-
-        self.SHA = sha
-        self.version = version
-        self.topic = topic
-        self.iteration = iteration_
+            default_v = True
+        return super().__new__(cls, topic, sha, version, iteration_, default_v)
 
     def __str__(self):
         s = str(self.topic)
@@ -274,20 +273,24 @@ class TopicRevision:
             logging.info('Re-reverting ' + str(reverted_merge))
             if not commit.revert(revert.SHA, None, True):
                 return None
-            reverted_merge.merge_target = branch.get_current()
             if reverted_merge.rev == self:
-                if description:
-                    reverted_merge.description = description
-                if type_:
-                    reverted_merge.type = type_
+                message = TopicMerge.get_merge_message(
+                    reverted_merge.rev,
+                    branch.get_current(),
+                    description if description else reverted_merge.description,
+                    type_ if type_ else reverted_merge.type)
+            else:
+                message = TopicMerge.get_merge_message(
+                    reverted_merge.rev,
+                    branch.get_current(),
+                    reverted_merge.description,
+                    reverted_merge.type)
             try:
-                misc.set_merge_msg(reverted_merge.get_message())
+                misc.set_merge_msg(message)
             except misc.MergeMsgError as msg_error:
                 commit.abort_revert()
                 raise MergeNonConflictError from msg_error
-            if commit.commit(None, True):
-                reverted_merge.SHA = commit.get_current_sha()
-            else:
+            if not commit.commit(None, True):
                 commit.abort_revert()
                 raise MergeNonConflictError('Failed to commit while ' +
                                             'reverting ' + str(revert))
@@ -295,17 +298,16 @@ class TopicRevision:
         # If revision we are going to merge was not re-reverted on previous
         # stage we should make true merge:
         if reverted_merge and reverted_merge.rev == self:
-            return reverted_merge
+            return TopicMerge.from_treeish('HEAD')
         else:
             if not self.SHA:
                 raise MergeNonConflictError('Cannot merge w/o revision SHA')
-            new_merge = TopicMerge(self, None, description, type_,
-                                   branch.get_current())
-            message = new_merge.get_message()
+            message = TopicMerge.get_merge_message(self, branch.get_current(),
+                                                   type_, description)
             logging.info('Merging ' + str(self))
             if commit.merge(self.SHA, message):
-                new_merge.SHA = commit.get_current_sha()
-                return new_merge
+                return TopicMerge(self, commit.get_current_sha(), description,
+                                  type_, branch.get_current())
             else:
                 # don't let git to add "Conflicts:" section
                 try:
@@ -324,7 +326,13 @@ class TopicRevision:
     branch_name_regexp = None
 
     @classmethod
-    def from_branch_name(cls, branch_name):
+    def from_branch_name(cls, branch_name, sha=None, default_iteration=None):
+        n, v, i = cls.parse_branch_name(branch_name)
+        return TopicRevision(Topic(n), sha, v, i if i else default_iteration)
+
+    @classmethod
+    def parse_branch_name(cls, branch_name):
+        """Returns (name, version, iteration)"""
         if cls.branch_name_regexp is None:
             cls.branch_name_regexp = re.compile(
                 '^(?:([^/]+)/)?(.+?)(?:_v(\d+))?$')
@@ -332,7 +340,7 @@ class TopicRevision:
         logging.debug('Parsing branch name ' + branch_name + ' result: ' +
                       (str(result.groups()) if result else ' failed'))
         if not result:
-            return None
+            return None, None, None
         iteration_, name, version = result.groups()
 
         # TB names may contain slash
@@ -340,22 +348,19 @@ class TopicRevision:
             name = iteration_ + '/' + name
             iteration_ = None
 
-        return TopicRevision(Topic(name), None, version, iteration_)
+        return name, version, iteration_
 
     def get_branch_name(self):
         return self.iteration + '/' + self.topic.name + '_v' + str(self.version)
 
 
-class TopicMerge:
+class TopicMerge(collections.namedtuple(
+        'TopicMergeT', ('rev', 'SHA', 'description', 'type', 'merge_target'))):
     """ This class represents merge of revision of topic into some branch
     """
-
-    def __init__(self, revision, merge_sha, description, type_, merge_target):
-        self.rev = revision
-        self.SHA = merge_sha
-        self.description = description
-        self.type = type_
-        self.merge_target = merge_target
+    def __new__(cls, revision, merge_sha, description, type_, merge_target):
+        return super().__new__(cls, revision, merge_sha, description, type_,
+                               merge_target)
 
     def __str__(self):
         s = '{Merge'
@@ -381,7 +386,7 @@ class TopicMerge:
     headline_regexp = None
 
     @classmethod
-    def from_headline(cls, headline):
+    def parse_headline(cls, headline):
         if cls.headline_regexp is None:
             cls.headline_regexp = re.compile(
                 "^Merge branch '((?:[^/]*/)?.*)'(?: into ([^/]*/.*))?$")
@@ -392,59 +397,56 @@ class TopicMerge:
                                   headline)
             if not re_result:
                 logging.warning('Failed to parse merge headline: ' + headline)
-                return None
+                return None, None, None, None
             else:
                 logging.warning('Warning: incorrect branch name: ' +
                                 re_result.groups()[1] +
                                 '. Which iteration does this branch belong to?')
         branch_name, target = re_result.groups()
-        revision = TopicRevision.from_branch_name(branch_name)
-        if not target:
-            target = 'master'
-        if not revision.iteration:
-            revision.iteration = iteration.parse_branch_name(target)[0]
-        return TopicMerge(revision, None, None, None, target)
+        return branch_name, target if target else 'master'
+
+    message_regexp = None
 
     @classmethod
-    def from_message(cls, message):
-        new = None
-        for line in message.splitlines():
-            if not new:
-                new = cls.from_headline(line)
-                if not new:
-                    return None
-            elif not new.type:
-                new.type = line
-            else:
-                new.description = (new.description + linesep +
-                                   line if new.description else line)
-        if new.type not in (FIX_NAME, DEV_NAME, EUF_NAME):
-            if new.type:
-                new.description = new.type + linesep + new.description
-            new.type = None
-        return new
+    def parse_message(cls, message):
+        """Returns (headline, type, description)"""
+        if not cls.message_regexp:
+            cls.message_regexp = re.compile(
+                '\A(^.+?$)(?:[\r\n]+^({}|{}|{})$)?(?:[\r\n]+(^.*?))?\Z'.format(
+                    DEV_NAME, FIX_NAME, EUF_NAME),
+                re.MULTILINE | re.DOTALL)
+        result = cls.message_regexp.search(message)
+        if result:
+            headline, type_, d = result.groups()
+            if not type_:
+                type_ = EUF_NAME
+            return headline, type_, d
+        else:
+            return None, None, None
 
     @classmethod
+    @cache('branches', 'tags')
     def from_treeish(cls, treeish):
-        new = cls.from_message(commit.get_full_message(treeish))
-        if new:
-            new.SHA = misc.rev_parse(treeish)
-            if not new.rev.iteration:
-                new.rev.iteration = iteration.get_iteration_by_treeish(treeish)
-            new.rev.SHA = commit.get_parent(new.SHA, 2)
-        return new
+        headline, type_, d = cls.parse_message(commit.get_full_message(treeish))
+        if not headline:
+            return None
+        branch_name, target = cls.parse_headline(headline)
+        default_i = iteration.parse_branch_name(target)[0] if target else None
+        if not default_i:
+            default_i = iteration.get_iteration_by_treeish(treeish)
+        revision = TopicRevision.from_branch_name(branch_name,
+                                                  commit.get_parent(treeish, 2),
+                                                  default_i)
+        return TopicMerge(revision, treeish, d, type_, target)
 
     @classmethod
+    @cache('tags', 'branches')
     def get_all_merges_in(cls, treeish):
         """ Returns all (including reverted) in BP..treeish"""
         iter_name = iteration.get_iteration_by_treeish(treeish)
-        result = []
-        for sha in commit.get_commits_between(iter_name, treeish, True,
-                                              ["^Merge branch .*$"]):
-            merge = cls.from_treeish(sha)
-            if merge:
-                result.append(merge)
-        return result
+        shas = commit.get_commits_between(iter_name, treeish, True,
+                                          ["^Merge branch .*$"])
+        return tuple(m for m in (cls.from_treeish(sha) for sha in shas) if m)
 
     @staticmethod
     def get_reverted_merges_in(treeish, original_only=False):
@@ -461,6 +463,7 @@ class TopicMerge:
         return result
 
     @classmethod
+    @cache('branches', 'tags')
     def get_effective_merges_in(cls, treeish, recursive=False):
         """ Returns all not-reverted merges in BP..treeish
         If some topic was reverted and remerged, returns original merge of this
@@ -496,27 +499,32 @@ class TopicMerge:
 
         if recursive:
             recursive_result = []
-            for merge in result:
-                merges2 = merge.rev.get_own_effective_merges(True)
-                merges2.append(merge)
-                for merge2 in merges2:
+            for m in result:
+                for merge2 in m.rev.get_own_effective_merges(True) + (m,):
                     if merge2.is_newest_in(recursive_result):
                         recursive_result.append(merge2)
-            return recursive_result
+            return tuple(recursive_result)
         else:
-            return result
+            return tuple(result)
 
-    def merge(self):
-        return self.rev.merge(self.description, self.type)
+    def merge(self, set_description=None, set_type=None):
+        return self.rev.merge(
+            set_description if set_description else self.description,
+            set_type if set_type else self.type)
+
+    @staticmethod
+    def get_merge_message(revision, target, type_=None, description=None):
+        result = "Merge branch '" + revision.get_branch_name() + "'"
+        if not iteration.is_master(target):
+            result += ' into ' + target
+        result = result + linesep + (type_ if type_ else EUF_NAME)
+        if description:
+            result = result + linesep + description
+        return result
 
     def get_message(self):
-        result = "Merge branch '" + self.rev.get_branch_name() + "'"
-        if not iteration.is_master(self.merge_target):
-            result += ' into ' + self.merge_target
-        result = result + linesep + (self.type if self.type else EUF_NAME)
-        if self.description:
-            result = result + linesep + self.description
-        return result
+        return TopicMerge.get_merge_message(self.rev, self.merge_target,
+                                            self.type, self.description)
 
     def is_fake(self):
         if not self.SHA:

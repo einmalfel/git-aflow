@@ -21,16 +21,19 @@ def get_list(patterns=None):
     return re.sub('[ *]', '', output).splitlines()
 
 
+@cache('branches')
 def get_current():
     """Returns current branch name or None if in detached HEAD state"""
     return get_output_01(['git', 'symbolic-ref', '--short', '--q', 'HEAD'])
 
 
+@cache('branches')
 def get_head_sha(name):
     return get_output(['git', 'show-ref', '--verify', '--hash',
                        'refs/heads/' + name])
 
 
+@cache('branches')
 def exists(name):
     return check_01(['git', 'show-ref', '--verify', '-q', 'refs/heads/' + name])
 
