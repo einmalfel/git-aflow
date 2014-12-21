@@ -55,37 +55,17 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')
 
-    own_merges = list(TopicMerge.get_effective_merges_in(cb))
-    current_revision = TopicRevision.from_branch_name(cb)
-    if ((not current_revision or not current_revision.iteration) and
-            not iteration.is_master(cb) and not iteration.is_staging(cb) and
-            not iteration.is_release(cb)):
-        if commit.get_current_sha() == misc.rev_parse(ci):
-            logging.info('Current branch is unknown, but it is empty so it is' +
-                         ' safe to merge')
-        else:
-            logging.info('We are in unknown branch now: ' + cb +
-                         '. Checking if it is based on some topic')
-            d_merges = TopicMerge.get_all_merges_in(iteration.get_develop())
-            for sha in commit.get_commits_between(ci, cb):
-                for m in d_merges:
-                    if m.rev.SHA == sha:
-                        current_revision = m.rev
-                        logging.warning('Current branch is based on ' +
-                                        current_revision.get_branch_name() +
-                                        '. Will exclude it from merge')
-                        break
-            else:
-                logging.info('This branch is not based on any known topic, ' +
-                             'so proceed as is')
-    else:
-        if not current_revision.iteration:
-            current_revision.iteration = ci
-    if current_revision:
-        # Make virtual merge of current topic
-        current_revision_merge = TopicMerge(current_revision, None, None, None,
-                                            None)
-        own_merges.append(current_revision_merge)
+    # Topics in own_merges will be excluded from merge
+    own_merges = list(TopicMerge.get_effective_merges_in(
+        cb, treeish1=iteration.get_first_iteration()))
+    if (not iteration.is_master(cb) and not iteration.is_staging(cb) and
+            not iteration.is_release(cb) and
+            not commit.get_current_sha() == misc.rev_parse(ci)):
+        for m in TopicMerge.get_all_merges_in(iteration.get_develop()):
+            if m.rev.SHA and (commit.is_based_on(m.rev.SHA, cb) or
+                              m.rev.SHA == misc.rev_parse(cb)):
+                own_merges.append(m)
+                logging.info('Excluding from merge: ' + str(m.rev))
 
     merges_to_commit = []
     source_merges = list(itertools.chain.from_iterable(
@@ -126,8 +106,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     if last_merge.is_newest_in(own_merges + merges_to_commit):
                         merges_to_commit.append(last_merge)
                     else:
-                        say('We already have same or newer version ' +
-                            'of ' + topic + ' in ' + cb)
+                        say('Latest revision of ' + topic + ' in sources is ' +
+                            last_merge.rev.get_branch_name() + '. We '
+                            'already have it merged in ' + cb + '. Skipping..')
                 else:
                     die('Merge failed. No topic ' + topic + ' in sources ' +
                         ', '.join(sources))
@@ -173,6 +154,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     # add elder versions of topics being merged
     merges_with_versions = []
+    own_revisions = tuple(m.rev for m in own_merges)
     for m in merges_with_deps:
         for v in range(1, m.rev.version):
             rev = TopicRevision(m.rev.topic, None, v, ci)
@@ -182,10 +164,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         merges_with_versions.append(sm)
                         break
                 else:
-                    die('Merge failed. We should merge ' +
-                        m.rev.get_branch_name() + ' along with ' +
-                        rev.get_branch_name() + ', but ' +
-                        rev.get_branch_name() + ' is absent in sources.')
+                    if rev.is_newest_in(own_revisions):
+                        die('Merge failed. We should merge ' +
+                            m.rev.get_branch_name() + ' along with ' +
+                            rev.get_branch_name() + ', but ' +
+                            rev.get_branch_name() + ' is absent in sources.')
         merges_with_versions.append(m)
 
     logging.info(
@@ -199,7 +182,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         try:
             merge_result = m.merge(description, merge_type)
         except MergeNonConflictError:
-            logging.critical('Unexpectd merge error, falling back to ' +
+            logging.critical('Unexpected merge error, falling back to ' +
                              fallback_sha)
             branch.reset(fallback_sha)
             raise
@@ -208,7 +191,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     iteration.is_release(cb)):
                 commit.abort_merge()
                 die('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
-                    'Something went wrong, did not expect conflict there(' +
+                    'Something went wrong, did not expect conflict there (' +
                     cb + '). Please check carefully what you are doing. ' +
                     'Merge aborted.')
             say('Merge of ' + m.rev.get_branch_name() + ' failed. ' +

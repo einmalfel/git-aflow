@@ -1,6 +1,7 @@
 """Commit-related functionality wrapper"""
 
 import logging
+import os
 import re
 import sys
 
@@ -28,7 +29,9 @@ def get_headline(treeish):
 
 @cache('branches', 'tags', 'commits')  # any ref may be given
 def get_full_message(treeish):
-    return get_output(['git', 'show', '--format=%B', '-s', treeish])
+    raw = get_output(['git', 'rev-list', '--format=%B', '-s', '-n1', treeish])
+    # git returns empty line at the end. Splitlines removes last empty line
+    return os.linesep.join(raw.splitlines()[1:])
 
 
 def find(start_commits=None, first_parent=False, regexps=None, match_all=False):
@@ -140,7 +143,7 @@ def abort_merge():
 
 
 def revert(treeish, parent=None, no_commit=False):
-    result = check_01(['git', 'revert', treeish] +
+    result = check_01(['git', 'revert', '--no-edit', treeish] +
                       (['-m' + str(parent)] if parent else []) +
                       (['-n'] if no_commit else []))
     if result:
