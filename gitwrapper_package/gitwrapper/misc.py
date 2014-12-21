@@ -70,9 +70,6 @@ def rev_parse(treeish):
 def sort(list_of_treeish, by_date=False, reverse=False):
     """ Sort list of treeish in topological order (descendants first).
     If by_date - sorts by date, newer first.
-    If return_SHA == True, returns a list of SHA of commits pointed by inputted
-    treeish list, otherwise returns sorted list of treeish in form they where
-    given. First option is faster and deduplicates result.
     """
     list_of_treeish = list(list_of_treeish)
     if not list_of_treeish:
