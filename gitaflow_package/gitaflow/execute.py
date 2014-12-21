@@ -30,9 +30,12 @@ def setup_logging(verbosity, file_name):
     else:
         loglevel = logging.DEBUG
 
+    # this is the only way to specify time format and print milliseconds:
+    logging.Formatter.default_time_format = '%y%m%d %T'
     logging.basicConfig(
         filename=file_name,
-        format='%(levelname)s %(module)s:%(lineno)d %(asctime)s %(message)s',
+        format='{levelname:<7}{asctime:<20}{module}:{lineno} {message}',
+        style='{',
         level=loglevel)
 
     if file_name:

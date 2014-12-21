@@ -1,3 +1,4 @@
+from itertools import groupby
 import os
 import random
 import re
@@ -36,19 +37,36 @@ class Fixture:
             """
             bp = prev.branches['master'][-1] if prev else None
             new = cls(name, bp)
-            for b in 'master', 'staging', 'develop':
-                if b == 'master':
-                    b_treeish = next_tag if next_tag else 'master'
-                else:
-                    b_treeish = name + '/' + b
-                new.branches[b] = Fixture.Branch.from_sha(b, b_treeish, new)
+            new.branches['master'] = Fixture.Branch.from_sha(
+                'master', next_tag if next_tag else 'master', new)
+            # 1. For every topic if there are several branches, take newest by
+            # topology and parse it if it's newer then latest revision of
+            # this topic merged into develop
+            # 2. Parse develop at the end to get remaining topics and to fill
+            # set_revisions
+            by_topic = {t_name: list(branches) for t_name, branches in groupby(
+                branch.get_list([name + '/*']),
+                lambda x: x.split('/')[1][0])}
+            for topic, branches in by_topic.items():
+                if topic == 'd' or topic == 's':
+                    continue
+                latest_branch = misc.sort(branches)[0]
+                # if not merged in develop
+                if not commit.is_ancestor(latest_branch, name + '/develop'):
+                    new.branches[topic] = Fixture.Branch.from_sha(
+                        topic, latest_branch, new)
+            for branch_ in 'develop', 'staging':
+                new.branches[branch_] = Fixture.Branch.from_sha(
+                    branch_, name + '/' + branch_, new)
             return new
 
         @classmethod
         def from_str_list(cls, string_list, prev):
-            new_i = cls(
-                string_list[0][0],
-                prev.branches['master'][-1] if prev else Fixture.InitCommit())
+            if prev:
+                new_i = cls(string_list[0][0],
+                            prev.branches['master'].commits[-1])
+            else:
+                new_i = cls(string_list[0][0], Fixture.InitCommit())
             for string_ in string_list:
                 name, colon, *ln = string_
                 assert colon == ':'
@@ -59,6 +77,9 @@ class Fixture:
                 elif name == 's':
                     name = 'staging'
                 new_i.branches[name] = Fixture.Branch.from_line(name, ln, new_i)
+            for b in 'develop', 'staging':
+                if b not in new_i.branches:
+                    new_i.branches[b] = Fixture.Branch.from_line(b, '', new_i)
             return new_i
 
         def topic_create_set_version(self, name, version, sha):
@@ -73,9 +94,13 @@ class Fixture:
                 self.BP.actualize()
             misc.checkout('master')
             tag.create(self.name)
+            # create those branches in advance, otherwise aflow wouldn't be
+            # able to detect iteration
             branch.create(self.name + '/develop')
             branch.create(self.name + '/staging')
-            for b in 'develop', 'staging', 'master':
+            self.branches['develop'].actualize()
+            self.branches['staging'].actualize()
+            for b in self.branches:
                 self.branches[b].actualize()
 
     class Branch:
@@ -106,18 +131,29 @@ class Fixture:
 
         @classmethod
         def from_sha(cls, name, treeish, iteration_):
-            new = cls(name, iteration_)
-            while not iteration_.BP or not treeish == iteration_.BP.SHA:
+            new_commits = []
+            if name in iteration_.branches:
+                branch_ = iteration_.branches[name]
+                for c in branch_.commits:
+                    if c.SHA == misc.rev_parse(treeish):
+                        return branch_
+            else:
+                branch_ = cls(name, iteration_)
+            while (not iteration_.BP or not treeish == iteration_.BP.SHA or
+                   (branch_.commits and branch_.commits[-1].SHA == treeish)):
                 cmt = Fixture.Commit.from_treeish(treeish)
                 if isinstance(cmt, Fixture.InitCommit):
                     iteration_.BP = cmt
                     break
                 if name == 'develop':
-                    iteration_.topic_create_set_version(
-                        cmt.topic, cmt.version, commit.get_parent(treeish, 2))
-                new.commits.insert(0, cmt)
+                    second_parent = commit.get_parent(treeish, 2)
+                    if second_parent:
+                        iteration_.topic_create_set_version(
+                            cmt.topic, cmt.version, second_parent)
+                new_commits.insert(0, cmt)
                 treeish = commit.get_parent(treeish)
-            return new
+            branch_.commits.extend(new_commits)
+            return branch_
 
         @classmethod
         def from_line(cls, name, string_, iteration_):
@@ -146,7 +182,7 @@ class Fixture:
                     misc.checkout(branch_name)
                 c.actualize()
                 if (isinstance(c, Fixture.RegularCommit) and up_to and
-                        c.set_revision[-1] == up_to):
+                        c.set_revision and c.set_revision[-1] == up_to):
                     return
             self.actualized = True
 
@@ -181,18 +217,24 @@ class Fixture:
                 else:
                     result = Fixture.MergeCommit(topic_name, version)
             else:
-                re_result = cls.__commit_e.search(headline)
+                re_result = cls.__revert_e.search(headline)
                 if re_result:
-                    change, delete = (
-                        None if g == 'None' else g for g in re_result.groups())
-                    result = Fixture.RegularCommit(change, delete, None)
+                    topic_name, version = re_result.groups()
+                    result = Fixture.RevertCommit(topic_name, version)
                 else:
-                    re_result = cls.__revert_e.search(headline)
-                    if re_result:
-                        topic_name, version = re_result.groups()
-                        result = Fixture.RevertCommit(topic_name, version)
-                    else:
+                    if not commit.get_parent(treeish):
                         result = Fixture.InitCommit()
+                    else:
+                        re_result = cls.__commit_e.search(headline)
+                        if re_result:
+                            change, delete = re_result.groups()
+                            if change == 'None':
+                                change = None
+                            if delete == 'None':
+                                delete = None
+                        else:
+                            change = delete = None
+                        result = Fixture.RegularCommit(change, delete, None)
             result.SHA = misc.rev_parse(treeish)
             return result
 
@@ -271,11 +313,12 @@ class Fixture:
                         random.choice(string.printable) for _ in range(100)))
                 misc.add(self.change)
             if self.delete:
-                misc.rm(self.delete)
+                misc.rm(self.delete.lower())
             commit.commit(
                 'change ' + str(self.change) + ' del ' + str(self.delete), True)
             if self.set_revision:
-                branch.create(self.set_revision)
+                branch.create(branch.get_current().split('/')[0] + '/' +
+                              self.set_revision)
 
     class MergeCommit(Commit):
         def __init__(self, topic, version):
@@ -299,7 +342,8 @@ class Fixture:
             super().__init__(topic, version)
 
         def _commit(self):
-            misc.checkout(self.topic + '_v' + self.version)
+            misc.checkout(branch.get_current().split('/')[0] + '/' +
+                          self.topic + '_v' + self.version)
             check_aflow('topic', 'finish')
 
     class RevertCommit(Commit):
@@ -350,6 +394,7 @@ class Fixture:
         prev = None
         iters = []
         for line in scheme.splitlines():
+            line = line.strip()
             if re.search('^\d:.*$', line):
                 if iteration_lines:
                     i = Fixture.Iteration.from_str_list(iteration_lines, prev)

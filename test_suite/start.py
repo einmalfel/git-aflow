@@ -1,0 +1,37 @@
+#!/usr/bin/python3
+
+from fixture import Fixture
+import test_utils
+from gitwrapper.cached import misc
+
+
+class StartTests(test_utils.LocalTest):
+    def test_success(self):
+        Fixture.from_scheme("""1:
+                               a:""").actualize()
+        self.assert_aflow_returns_0(
+            'Topic a1 created. You are in 1/a1 branch',
+            'topic', 'start', 'a1')
+
+    def test_checks(self):
+        Fixture.from_scheme("""1:-a1
+                               s:-a1
+                               d:-a1
+                               a:-1a
+                               2:
+                               b:""").actualize()
+        misc.checkout('2/develop')
+        self.assert_aflow_dies_with(
+            'Please correct topic name. "..", "~", "^", ":", "?", "*", "[", '
+            '"@", "", spaces and ASCII control characters are not allowed. '
+            'Input something like "fix_issue18" or "do_api_refactoring"',
+            'topic', 'start', '\ / @')
+        self.assert_aflow_dies_with(
+            'Cannot start topic, it already has a branch(2/b) in current '
+            'iteration(2).',
+            'topic', 'start', 'b')
+        self.assert_aflow_dies_with(None, 'topic', 'start', 'a')
+
+
+if __name__ == '__main__':
+    test_utils.run_tests()
