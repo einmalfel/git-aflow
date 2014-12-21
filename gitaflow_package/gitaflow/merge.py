@@ -56,7 +56,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         die('Please, fix aforementioned problems and rerun merge.')
 
     # Topics in own_merges will be excluded from merge
-    own_merges = list(TopicMerge.get_effective_merges_in(cb))
+    own_merges = list(TopicMerge.get_effective_merges_in(
+        cb, treeish1=iteration.get_first_iteration()))
     if (not iteration.is_master(cb) and not iteration.is_staging(cb) and
             not iteration.is_release(cb) and
             not commit.get_current_sha() == misc.rev_parse(ci)):
@@ -153,6 +154,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     # add elder versions of topics being merged
     merges_with_versions = []
+    own_revisions = tuple(m.rev for m in own_merges)
     for m in merges_with_deps:
         for v in range(1, m.rev.version):
             rev = TopicRevision(m.rev.topic, None, v, ci)
@@ -162,10 +164,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         merges_with_versions.append(sm)
                         break
                 else:
-                    die('Merge failed. We should merge ' +
-                        m.rev.get_branch_name() + ' along with ' +
-                        rev.get_branch_name() + ', but ' +
-                        rev.get_branch_name() + ' is absent in sources.')
+                    if rev.is_newest_in(own_revisions):
+                        die('Merge failed. We should merge ' +
+                            m.rev.get_branch_name() + ' along with ' +
+                            rev.get_branch_name() + ', but ' +
+                            rev.get_branch_name() + ' is absent in sources.')
         merges_with_versions.append(m)
 
     logging.info(
