@@ -464,16 +464,19 @@ class TopicMerge(collections.namedtuple(
 
     @classmethod
     @cache('branches', 'tags')
-    def get_effective_merges_in(cls, treeish, recursive=False):
-        """ Returns all not-reverted merges in BP..treeish
+    def get_effective_merges_in(cls, treeish2, recursive=False, treeish1=None):
+        """ Returns all not-reverted merges in treeish1..treeish2
+        Treeish1 defaults to BP of iteration treeish2 belongs to
         If some topic was reverted and remerged, returns original merge of this
         topic with revision extracted from original merge
         We cannot return here just not reverted original merges, cause latest
         merges contain actual type/descriptions
         """
-        iter_name = iteration.get_iteration_by_treeish(treeish)
+        if not treeish1:
+            treeish1 = iteration.get_iteration_by_treeish(treeish2)
+        assert treeish1
         result = []
-        commits = commit.get_commits_between(iter_name, treeish, True,
+        commits = commit.get_commits_between(treeish1, treeish2, True,
                                              ['^Revert "Merge branch .*"$',
                                               "^Merge branch .*$"])
         for sha in commits:
@@ -483,14 +486,16 @@ class TopicMerge(collections.namedtuple(
                     for merge in reversed(result):
                         if merge.rev == revert.rev:
                             result.remove(merge)
-                            logging.debug('Searching for topics in ' + treeish +
+                            logging.debug('Searching for topics in ' +
+                                          treeish1 + '..' + treeish2 +
                                           ' Removing ' + str(merge))
                             break
             else:
                 merge = TopicMerge.from_treeish(sha)
                 if merge:
                     result.append(merge)
-                    logging.debug('Searching for topics in ' + treeish +
+                    logging.debug('Searching for topics in ' +
+                                  treeish1 + '..' + treeish2 +
                                   ' Adding ' + str(merge))
 
         for merge in result:
