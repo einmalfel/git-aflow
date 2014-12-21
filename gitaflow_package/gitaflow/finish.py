@@ -84,11 +84,12 @@ def finish(description, type_, name):
                         ' as default.')
     elif cr.version > 1:
         if all_m_cd:
-            last_v = cr.topic.get_latest_merge(all_m_cd).rev.version
-            previous_present = cr.version <= last_v + 1
+            last_v = cr.topic.get_latest_merge(all_m_cd)
         else:
-            previous_present = False
-        if not previous_present:
+            eff_m_master = TopicMerge.get_effective_merges_in(
+                ci, treeish1=iteration.get_first_iteration())
+            last_v = cr.topic.get_latest_merge(eff_m_master)
+        if not last_v or cr.version > last_v.rev.version + 1:
             die('You should finish version ' + str(cr.version - 1) +
                 ' before finishing ' + cr.get_branch_name())
     if not Topic.is_valid_tb_name(cr.get_branch_name()):
