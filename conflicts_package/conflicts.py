@@ -14,7 +14,7 @@ import re
 import logging
 import itertools
 
-from gitwrapper.misc import get_merge_base, get_diff, list_files_differ
+from gitwrapper.cached import misc
 
 
 def hunk_to_scope(hunk):
@@ -31,7 +31,7 @@ def get_first_conflict(heads_list):
     """
 
     # bases is a dictionary of merge bases which keys are frozensets of 2 heads
-    bases = {frozenset((head1, head2)): get_merge_base([head1, head2])
+    bases = {frozenset((head1, head2)): misc.get_merge_base([head1, head2])
              for head1, head2 in itertools.combinations(heads_list, 2)}
     logging.info('Bases: ' + os.linesep + str(bases))
 
@@ -68,8 +68,8 @@ def get_first_conflict(heads_list):
                     if head not in diffs:
                         logging.info('Reading files changed for head ' + head +
                                      ' relative to base ' + base)
-                        diffs[head] = dict.fromkeys(list_files_differ(base,
-                                                                      head))
+                        diffs[head] = dict.fromkeys(
+                            misc.list_files_differ(base, head))
                 for file in diffs[head1].keys() & diffs[head2].keys():
                     logging.info('File ' + file + ' was changed in both ' +
                                  head1 + ' and ' + head2)
@@ -78,7 +78,7 @@ def get_first_conflict(heads_list):
                             diffs[head][file] = tuple(
                                 hunk_to_scope(hunk) for hunk in
                                 get_first_conflict.regex.findall(
-                                    get_diff(base, head, [file])))
+                                    misc.get_diff(base, head, [file])))
                             logging.debug('File ' + file + ' changes in ' +
                                           head + ' relative to ' + base + ': ' +
                                           str(list(diffs[head][file])))

@@ -1,8 +1,15 @@
 """Branch-related functionality wrapper"""
 
 import re
+import sys
 
 from gitwrapper.aux import get_output, call, check_01, get_output_01
+
+
+if 'gitwrapper.cached' in sys.modules:
+    from gitwrapper.grouped_cache import cache, invalidate
+else:
+    from gitwrapper.stub_cache import cache, invalidate
 
 
 def get_list(patterns=None):
@@ -38,11 +45,14 @@ def create(name, start_point=None):
     """ Starts branch from start_point or from HEAD if no start_point specified.
     """
     call(['git', 'branch', name] + ([start_point] if start_point else []))
+    invalidate('branches')
 
 
 def delete(name):
     call(['git', 'branch', '-D', name])
+    invalidate('branches')
 
 
 def reset(treeish, mode='hard'):
     call(['git', 'reset', '--' + mode, treeish])
+    invalidate('branches', 'index')
