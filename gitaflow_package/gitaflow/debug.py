@@ -18,11 +18,9 @@ class TestDebugState():
             self.output = output
 
     __ENV_DEBUG = 'AFLOW_TEST_DEBUG'
-    __ENV_PROFILE = 'AFLOW_TEST_PROFILE'
     __output_buffer = ''
     __test_debug_mode = None
     __test_mode = None
-    __profile_mode = None
 
     @classmethod
     def notify_test_mode(cls, value):
@@ -30,22 +28,14 @@ class TestDebugState():
         cls.__test_debug_mode = None
 
     @classmethod
-    def get_test_profile_mode(cls):
-        if cls.__profile_mode is None:
-            cls.__profile_mode = os.environ.get(cls.__ENV_PROFILE) == '1'
-        return cls.__profile_mode
-
-    @classmethod
     def get_test_debug_mode(cls):
         if cls.__test_debug_mode is None:
             if cls.__ENV_DEBUG in os.environ:
                 cls.__test_debug_mode = os.environ[cls.__ENV_DEBUG] == '1'
-            elif cls.get_test_profile_mode():
-                # there is no sense in running profiler when child processes
-                # do all the work
-                cls.__test_debug_mode = True
             else:
                 cls.__test_debug_mode = (cls.__test_mode and sys.gettrace())
+            if cls.__test_debug_mode:
+                print('Test debug mode ON')
         return cls.__test_debug_mode
 
     @classmethod
