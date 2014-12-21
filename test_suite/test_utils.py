@@ -137,10 +137,12 @@ def call_aflow(*args, caller_frame=None):
     if log_file:
         args = ('-vv', '-l', log_file) + args
     if TestDebugState.get_test_debug_mode():
-        grouped_cache.invalidate()
+        grouped_cache.invalidate(dont_print_info=True)
         TestDebugState.reset()
         try:
             call_and_measure_aflow(args, execute.execute, caller_frame)
+            if grouped_cache.output_info:
+                print(('Collecting cache info for ' + str(args)).ljust(80, '-'))
             raise TestDebugState.AflowStopped(129, '')
         except TestDebugState.AflowStopped as stop:
             if grouped_cache.output_info:
@@ -153,14 +155,14 @@ def call_aflow(*args, caller_frame=None):
                     for func in info:
                         for field in info[func]:
                             average_cache_info[func][field] += info[func][field]
-                print(('Cache info for ' + str(args) + ':').ljust(80, '-'))
+                print(('Cache info after ' + str(args) + ':').ljust(80, '-'))
                 grouped_cache.print_cache_info()
             return stop.output, stop.exit_code
     else:
         result = call_and_measure_aflow(['git', 'af'] + list(args),
                                         aux.get_output_and_exit_code,
                                         caller_frame)
-        grouped_cache.invalidate()
+        grouped_cache.invalidate(dont_print_info=True)
         return result
 
 

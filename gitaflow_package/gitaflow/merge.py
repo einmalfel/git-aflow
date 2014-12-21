@@ -55,7 +55,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')
 
-    own_merges = TopicMerge.get_effective_merges_in(cb)
+    own_merges = list(TopicMerge.get_effective_merges_in(cb))
     current_revision = TopicRevision.from_branch_name(cb)
     if ((not current_revision or not current_revision.iteration) and
             not iteration.is_master(cb) and not iteration.is_staging(cb) and
@@ -118,9 +118,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         logging.info('Source merges: ' +
                      ', '.join(str(m) for m in source_merges))
         for topic in topics:
-            revision = TopicRevision.from_branch_name(topic)
-            if not revision.iteration:
-                revision.iteration = ci
+            revision = TopicRevision.from_branch_name(topic,
+                                                      default_iteration=ci)
             if revision.default_version:
                 last_merge = revision.topic.get_latest_merge(source_merges)
                 if last_merge:
@@ -144,10 +143,6 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 else:
                     die('Merge failed. No topic ' + topic + ' in sources ' +
                         ', '.join(sources))
-        if description:
-            merges_to_commit[0].description = description
-        if merge_type:
-            merges_to_commit[0].type = merge_type
     else:
         logging.critical('Unknown merge object ' + str(merge_object))
 
@@ -202,7 +197,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     for idx, m in enumerate(merges_with_versions):
         logging.info('Merging ' + m.rev.get_branch_name())
         try:
-            merge_result = m.merge()
+            merge_result = m.merge(description, merge_type)
         except MergeNonConflictError:
             logging.critical('Unexpectd merge error, falling back to ' +
                              fallback_sha)
