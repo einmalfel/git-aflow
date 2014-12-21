@@ -60,10 +60,6 @@ def finish(description, type_, name):
         if last_m.rev.version < cr.version - 1:
             die('Wrong topic version specified. Latest revision has version ' +
                 '== ' + str(last_m.rev.version) + '. Increment version by 1')
-    elif not cr.version == 1:
-        say('Correcting topic version from ' + str(cr.version) + ' to 1')
-        cr.version = 1
-        cr.default_version = False
     # If no version specified and this topic was ever merged in ci, try to
     # select appropriate version.
     if cr.default_version:
