@@ -85,6 +85,10 @@ def get_iteration_list(sort=False):
         return tuple(iteration_generator)
 
 
+def get_first_iteration():
+    return get_iteration_list(sort=True)[-1]
+
+
 @cache('branches', 'tags')
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
