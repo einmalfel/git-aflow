@@ -74,12 +74,13 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     treeish list, otherwise returns sorted list of treeish in form they where
     given. First option is faster and deduplicates result.
     """
+    list_of_treeish = list(list_of_treeish)
     if not list_of_treeish:
         return []
     shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
-                      list(list_of_treeish) + ['--']).splitlines()
+                      list_of_treeish + ['--']).splitlines()
     sha_treeish = collections.defaultdict(list)
     for treeish in list_of_treeish:
         sha_treeish[rev_parse(treeish)].append(treeish)
