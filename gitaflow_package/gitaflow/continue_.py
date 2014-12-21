@@ -24,11 +24,8 @@ def continue_(name=None):
         if last_m:
             last_r_cd = last_m.rev
         else:
-            iters = iteration.get_iteration_list()
-            p_iters = misc.sort([i for i in iters if commit.is_ancestor(i, ci)])
-            if not p_iters:
-                die('No topic ' + str(nr.topic) + ' in the only iteration ' +
-                    ci + '.')
+            p_iters = tuple(i for i in iteration.get_iteration_list(sort=True)
+                            if commit.is_ancestor(i, ci))
             # there is nothing before first iteration
             for i in p_iters[:-1]:
                 last_m = nr.topic.get_latest_merge(
@@ -41,7 +38,7 @@ def continue_(name=None):
                     break
             else:
                 die('Failed to find merges of ' + str(nr.topic) +
-                    ' in iterations: ' + ', '.join([ci] + p_iters) + '.')
+                    ' in iterations: ' + ', '.join((ci,) + p_iters) + '.')
 
     else:
         ci = iteration.get_current_iteration()
