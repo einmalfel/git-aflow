@@ -24,15 +24,12 @@ def continue_(name=None):
         if last_m:
             last_r_cd = last_m.rev
         else:
-            iters = iteration.get_iteration_list()
-            p_iters = misc.sort([i for i in iters if commit.is_ancestor(i, ci)])
-            if not p_iters:
-                die('No topic ' + str(nr.topic) + ' in the only iteration ' +
-                    ci + '.')
+            p_iters = tuple(i for i in iteration.get_iteration_list(sort=True)
+                            if commit.is_ancestor(i, ci))
             # there is nothing before first iteration
             for i in p_iters[:-1]:
                 last_m = nr.topic.get_latest_merge(
-                    TopicMerge.get_effective_merges_in(i + '^'))
+                    TopicMerge.get_effective_merges_in(i))
                 if last_m:
                     logging.info('Found effective merge in master before ' + i +
                                  ': ' + str(last_m))
@@ -41,7 +38,7 @@ def continue_(name=None):
                     break
             else:
                 die('Failed to find merges of ' + str(nr.topic) +
-                    ' in iterations: ' + ', '.join([ci] + p_iters) + '.')
+                    ' in iterations: ' + ', '.join((ci,) + p_iters) + '.')
 
     else:
         ci = iteration.get_current_iteration()
@@ -78,7 +75,8 @@ def continue_(name=None):
     last_v_ever = last_r_cd.topic.get_latest_merge(
         last_r_cd.topic.get_all_merges()).rev.version
     if last_v_ever >= new_r.version:
-        say('Please, note that ' + tb_name +
+        say('Please, note that ' +
+            new_r.topic.name + '_v' + str(new_r.version) +
             ' is already present in other iteration(s), so changes you will '
             'make for this revision in current iteration should correspond to '
             'changes made for same revision in other iterations. You may '

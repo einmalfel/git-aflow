@@ -60,10 +60,6 @@ def finish(description, type_, name):
         if last_m.rev.version < cr.version - 1:
             die('Wrong topic version specified. Latest revision has version ' +
                 '== ' + str(last_m.rev.version) + '. Increment version by 1')
-    elif not cr.version == 1:
-        say('Correcting topic version from ' + str(cr.version) + ' to 1')
-        cr.version = 1
-        cr.default_version = False
     # If no version specified and this topic was ever merged in ci, try to
     # select appropriate version.
     if cr.default_version:
@@ -82,11 +78,14 @@ def finish(description, type_, name):
                                        last_m_cd.rev.version + 1, cr.iteration)
                     say('Using topic version ' + str(cr.version) +
                         ' as default.')
-    elif all_m_cd:
-        for m in all_m_cd:
-            if m.rev.topic == cr.topic and m.rev.version + 1 >= cr.version:
-                break
+    elif cr.version > 1:
+        if all_m_cd:
+            last_v = cr.topic.get_latest_merge(all_m_cd)
         else:
+            eff_m_master = TopicMerge.get_effective_merges_in(
+                ci, treeish1=iteration.get_first_iteration())
+            last_v = cr.topic.get_latest_merge(eff_m_master)
+        if not last_v or cr.version > last_v.rev.version + 1:
             die('You should finish version ' + str(cr.version - 1) +
                 ' before finishing ' + cr.get_branch_name())
     if not Topic.is_valid_tb_name(cr.get_branch_name()):
@@ -124,19 +123,23 @@ def finish(description, type_, name):
 
     logging.info('Checking topic base...')
 
+    # Topic should not be empty
+    if cr.SHA == misc.rev_parse(ci):
+        die('Finish failed. Topic must contain at least one commit.')
     # Topic should be based on ci
     # And should not be based on any later iteration
     if not commit.is_based_on(ci, cr.SHA):
         die('Finish failed. Current topic branch is not based on iteration '
             'start which is not allowed in git-aflow')
-    for iter_ in misc.sort(iteration.get_iteration_list()):
+    for iter_ in iteration.get_iteration_list(sort=True):
         if ci == iter_:
             break
         else:
-            if commit.is_based_on(iter_, cr.SHA):
+            if (misc.rev_parse(iter_) == cr.SHA or
+                    commit.is_based_on(iter_, cr.SHA)):
                 die('Current topic branch is based on ' + iter_ +
-                    'Use "git af topic port" to bring it to current iteration' +
-                    '. And then call "git af topic finish"')
+                    '. Use "git af topic port" to bring it to current '
+                    'iteration and then call "git af topic finish"')
 
     # If there are revisions of this topic in ci, later revisions are based
     # on elder.
@@ -150,16 +153,16 @@ def finish(description, type_, name):
                     die('Cannot finish. There is elder revision of this '
                         'topic in ' + cd + ' and SHA you are '
                         'trying to finish is not based on it. Please rebase '
-                        'your work on ' + str(merge.rev))
+                        'your work on ' + merge.rev.get_branch_name())
                 elif (merge.rev.version > cr.version and
                         not commit.is_based_on(cr.SHA, merge.rev.SHA)):
-                    die('Cannot finish. Newer revision (' + str(merge.rev) +
-                        ') of this topic was merged into ' + cd + ' and it is '
+                    die('Cannot finish. Newer revision ' +
+                        merge.rev.get_branch_name() +
+                        ' was merged into ' + cd + ' and it is '
                         'not based on revision you are trying to finish.')
                 elif merge.rev == cr and not merge.rev.SHA == cr.SHA:
-                    die('This revision was already merged(' + str(merge) +
-                        ') in ' + cd + ' with different head SHA. Finish '
-                        'failed.')
+                    die(cr.get_branch_name() + ' was already merged in ' +
+                        cd + ' with different head SHA. Finish failed.')
             elif commit.is_based_on(merge.rev.SHA, cr.SHA):
                 die('TB of current topic is based on another topic, which is '
                     'illegal. You should either merge other topic instead of '
@@ -171,7 +174,8 @@ def finish(description, type_, name):
                     ' which is based on one you are trying to finish.')
 
     logging.info('Topic branch was started from correct place. About to '
-                 'finish revision ' + str(cr) + '. Checking dependencies...')
+                 'finish revision ' + cr.get_branch_name() +
+                 '. Checking dependencies...')
 
     revs_cd = tuple(m.rev for m in eff_m_cd)
     for dep in cr.get_own_effective_merges(recursive=True):
@@ -206,8 +210,8 @@ def finish(description, type_, name):
     try:
         if not cr.merge(description, type_):
             branch.reset(fallback_sha)
-            die('Merge of ' + str(cr) + ' conflicted unexpectedly. '
-                'Conflict detector gave false negative result. ' +
+            die('Merge of ' + cr.get_branch_name() + ' conflicted '
+                'unexpectedly. Conflict detector gave false negative result. ' +
                 cd + ' reset.')
     except MergeNonConflictError:
         logging.critical('Unexpected merge fail. Resetting ' + cd + ' to ' +

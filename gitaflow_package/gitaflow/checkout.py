@@ -55,7 +55,7 @@ def checkout(name):
     for b in branches:
         b_rev = TopicRevision.from_branch_name(b)
         if rev.default_version:
-            if b_rev.iteration == ci and b_rev.version > last[0]:
+            if b_rev.iteration == rev.iteration and b_rev.version > last[0]:
                 logging.info('Latest branch so far: ' + b)
                 last = b_rev.version, b
         else:

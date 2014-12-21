@@ -364,7 +364,7 @@ class Fixture:
     @classmethod
     def from_repo(cls):
         iterations = []
-        tags = misc.sort(tag.get_list())
+        tags = list(misc.sort(tag.get_list()))
         prev = None
         next_tag = tags.pop()
         while next_tag:

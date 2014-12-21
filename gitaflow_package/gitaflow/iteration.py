@@ -77,52 +77,64 @@ def is_iteration(name):
 
 
 @cache('tags', 'branches')
-def get_iteration_list():
-    return tuple(t for t in tag.get_list() if is_iteration(t))
+def get_iteration_list(sort=False):
+    iteration_generator = (t for t in tag.get_list() if is_iteration(t))
+    if sort:
+        return misc.sort(iteration_generator)
+    else:
+        return tuple(iteration_generator)
+
+
+def get_first_iteration():
+    return get_iteration_list(sort=True)[-1]
 
 
 @cache('branches', 'tags')
 def get_iteration_by_sha(sha):
     iterations = {tag.get_sha(t): t for t in get_iteration_list()}
-    position = sha
+    position = commit.get_parent(sha, 1)
     while position:
         if position in iterations:
             logging.debug('found latest iteration ' + iterations[position] +
                           ' for SHA ' + sha + ' BP: ' + position)
             return iterations[position]
         position = commit.get_parent(position, 1)
-    logging.warning('Cannot get iteration for ' + sha)
+    logging.info('Cannot get iteration for ' + sha)
     return None
 
 
 @cache('branches', 'tags')
 def get_iteration_by_branch(branch_name):
+    assert branch.exists(branch_name)
+    # try to extract iteration from name
     iteration = parse_branch_name(branch_name)[0]
     if is_iteration(iteration):
         logging.debug('found iteration ' + iteration + ' for branch ' +
                       branch_name)
         return iteration
-    if branch.exists(branch_name):
-        return get_iteration_by_sha(branch.get_head_sha(branch_name))
-    logging.warning('Failed to get iteration for branch ' + branch_name)
-    return None
+    else:
+        # check whether branch was started from BP
+        branching_point = misc.get_merge_base(['master', branch_name])
+        for t in tag.find_by_target(branching_point):
+            if is_iteration(t):
+                return t
+        # look for BP nearest to point where branch was created
+        return get_iteration_by_sha(branching_point)
 
 
 @cache('branches', 'tags')
 def get_iteration_by_treeish(treeish):
     if branch.exists(treeish):
-        iter_ = parse_branch_name(treeish)[0]
+        return get_iteration_by_branch(treeish)
     else:
-        iter_ = None
-    return iter_ if iter_ else get_iteration_by_sha(misc.rev_parse(treeish))
+        return get_iteration_by_sha(treeish)
 
 
 @cache('branches', 'tags')
 def get_current_iteration():
-    """Calculates current iteration.
-    We cannot store iteration in something like "current_iteration" tag, cause
-    user may switch branches without git-aflow.
-    """
+    for t in tag.find_by_target('HEAD'):
+        if is_iteration(t):
+            return t
     current_branch = branch.get_current()
     if current_branch:
         return get_iteration_by_branch(current_branch)
