@@ -46,9 +46,9 @@ def start_iteration(iteration_name):
     if tag.exists(iteration_name):
         die('Cannot start iteration, tag ' + iteration_name + ' exists')
     if branch.exists(develop_name):
-        die('Cannot start iteration, branch + ' + develop_name + ' exists')
+        die('Cannot start iteration, branch ' + develop_name + ' exists')
     if branch.exists(staging_name):
-        die('Cannot start iteration, branch + ' + staging_name + ' exists')
+        die('Cannot start iteration, branch ' + staging_name + ' exists')
     try:
         tag.create(iteration_name, MASTER_NAME)
         branch.create(develop_name, MASTER_NAME)
