@@ -3,6 +3,12 @@ import os
 import subprocess
 
 
+try:
+    from subprocess import DEVNULL
+except ImportError:
+    DEVNULL = open(os.devnull, 'w')
+
+
 debug_mode = os.environ.get('GIT_WRAPPER_DEBUG') == '1'
 
 
@@ -46,8 +52,8 @@ def check_01(command_and_args):
                                      '. 0 or 1 expected. Output: ' + output)
     else:
         exit_code = subprocess.call(command_and_args,
-                                    stderr=subprocess.DEVNULL,
-                                    stdout=subprocess.DEVNULL)
+                                    stderr=DEVNULL,
+                                    stdout=DEVNULL)
         if exit_code == 0:
             return True
         elif exit_code == 1:
@@ -66,8 +72,8 @@ def call(command_and_args):
                                      'Output: ' + output)
     else:
         subprocess.check_call(command_and_args,
-                              stderr=subprocess.DEVNULL,
-                              stdout=subprocess.DEVNULL)
+                              stderr=DEVNULL,
+                              stdout=DEVNULL)
 
 
 def get_output(command_and_args):
@@ -89,8 +95,8 @@ def get_exit_code(command_and_args):
         return get_output_and_exit_code(command_and_args)[1]
     else:
         return subprocess.call(command_and_args,
-                               stderr=subprocess.DEVNULL,
-                               stdout=subprocess.DEVNULL)
+                               stderr=DEVNULL,
+                               stdout=DEVNULL)
 
 
 def get_output_and_exit_code(command_and_args):
