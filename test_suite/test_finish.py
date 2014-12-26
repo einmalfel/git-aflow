@@ -125,7 +125,6 @@ Branch 1/a deleted.""",
         # may lose untracked files
         with open('b', 'w') as b:
             b.write('Does not matter')
-            b.close()
         self.assert_aflow_dies_with(
             'You have some untracked files which you may loose while finishing '
             'topic branch. Please, delete or commit them. Here they are: b.' +
