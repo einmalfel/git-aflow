@@ -46,9 +46,9 @@ def start_iteration(iteration_name):
     if tag.exists(iteration_name):
         die('Cannot start iteration, tag ' + iteration_name + ' exists')
     if branch.exists(develop_name):
-        die('Cannot start iteration, branch + ' + develop_name + ' exists')
+        die('Cannot start iteration, branch ' + develop_name + ' exists')
     if branch.exists(staging_name):
-        die('Cannot start iteration, branch + ' + staging_name + ' exists')
+        die('Cannot start iteration, branch ' + staging_name + ' exists')
     try:
         tag.create(iteration_name, MASTER_NAME)
         branch.create(develop_name, MASTER_NAME)
@@ -77,7 +77,7 @@ def is_iteration(name):
 
 
 @cache('tags', 'branches')
-def get_iteration_list(sort=False):
+def get_iterations(sort=False):
     iteration_generator = (t for t in tag.get_list() if is_iteration(t))
     if sort:
         return misc.sort(iteration_generator)
@@ -86,12 +86,12 @@ def get_iteration_list(sort=False):
 
 
 def get_first_iteration():
-    return get_iteration_list(sort=True)[-1]
+    return get_iterations(sort=True)[-1]
 
 
 @cache('branches', 'tags')
 def get_iteration_by_sha(sha):
-    iterations = {tag.get_sha(t): t for t in get_iteration_list()}
+    iterations = {tag.get_sha(t): t for t in get_iterations()}
     position = commit.get_parent(sha, 1)
     while position:
         if position in iterations:

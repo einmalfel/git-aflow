@@ -24,7 +24,7 @@ def continue_(name=None):
         if last_m:
             last_r_cd = last_m.rev
         else:
-            p_iters = tuple(i for i in iteration.get_iteration_list(sort=True)
+            p_iters = tuple(i for i in iteration.get_iterations(sort=True)
                             if commit.is_ancestor(i, ci))
             # there is nothing before first iteration
             for i in p_iters[:-1]:
