@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from copy import deepcopy
 import os
 import profile
@@ -221,3 +223,5 @@ class LocalTest(FunctionalTest):
         self.temp_dir.cleanup()
 
 
+if __name__ == '__main__':
+    unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('.'))
