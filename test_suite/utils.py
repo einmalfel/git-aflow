@@ -19,15 +19,13 @@ from gitwrapper import aux, grouped_cache
 TestDebugState.notify_test_mode(True)
 
 profiling = os.environ.get('AFLOW_TEST_PROFILE')
-# AFLOW_TEST_PROFILE=OVERALL profile tests altogether
 # AFLOW_TEST_PROFILE=ASSERT_CALLS profiles calls like assert_aflow_returns_0().
 # ASSERT_CALLS may not work with some interpreters
 # AFLOW_TEST_PROFILE=ALL_CALLS profiles all calls
 # ASSERT_CALLS and ALL_CALLS print 20 slowest(by cumtime) functions
-if profiling and not (profiling == 'ALL_CALLS' or profiling == 'ASSERT_CALLS' or
-                      profiling == 'OVERALL'):
+if profiling and not (profiling == 'ALL_CALLS' or profiling == 'ASSERT_CALLS'):
     print('Wrong AFLOW_TEST_PROFILE value', profiling,
-          'choose one of ALL_CALLS, ASSERT_CALLS, OVERALL')
+          'choose one of ALL_CALLS, ASSERT_CALLS')
     exit(2)
 if profiling and not TestDebugState.get_test_debug_mode():
     print('WARNING: profiling with debug mode disabled. There is no sense in '
