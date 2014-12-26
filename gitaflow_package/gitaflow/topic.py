@@ -106,7 +106,7 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         """ Searches for merges of this topic into all develops, stagings and
         master branches
         """
-        iters = iteration.get_iteration_list()
+        iters = iteration.get_iterations()
         heads = ['master']
         heads.extend(iteration.get_develop(i) for i in iters)
         heads.extend(iteration.get_staging(i) for i in iters)
