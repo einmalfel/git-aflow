@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
 import os
+import unittest
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import misc, branch
 
 
-class CheckoutTests(test_utils.LocalTest):
+class CheckoutTests(utils.LocalTest):
     def test_existing_branch(self):
         Fixture.from_scheme("""1:
                                a:-1a-2a""").actualize()
@@ -70,4 +71,4 @@ class CheckoutTests(test_utils.LocalTest):
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    unittest.main(module='test_rebase')

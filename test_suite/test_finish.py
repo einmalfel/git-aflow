@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
 import os
+import unittest
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import commit, misc, branch
 
 
-class FinishTests(test_utils.LocalTest):
+class FinishTests(utils.LocalTest):
     def test_refinish(self):
         Fixture.from_scheme("""1:
                                d:-a1
@@ -25,6 +26,20 @@ class FinishTests(test_utils.LocalTest):
             1:
             d:-a1-A1-a1
             a:-1a"""))
+
+    def test_unexpected_conflict(self):
+        Fixture.from_scheme("""1:
+                               a:-1a""").actualize()
+        misc.checkout('1/develop')
+        with open('a', 'w') as b:
+            b.write('Does not matter')
+        misc.add('a')
+        commit.commit('No matter')
+        misc.checkout('1/a_v1')
+        self.assert_aflow_dies_with(
+            'Merge of 1/a_v1 conflicted unexpectedly. Conflict detector gave '
+            'false negative result. 1/develop reset.',
+            'topic', 'finish')
 
     def test_complex(self):
         Fixture.from_scheme("""1:
@@ -108,9 +123,8 @@ Branch 1/a deleted.""",
             'topic', 'finish', '-n', '\\')
 
         # may lose untracked files
-        with open('b', 'x') as b:
+        with open('b', 'w') as b:
             b.write('Does not matter')
-            b.close()
         self.assert_aflow_dies_with(
             'You have some untracked files which you may loose while finishing '
             'topic branch. Please, delete or commit them. Here they are: b.' +
@@ -247,4 +261,4 @@ Branch 1/a deleted.""",
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    unittest.main(module='test_finish')
