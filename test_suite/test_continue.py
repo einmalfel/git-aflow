@@ -2,11 +2,11 @@
 import os
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import misc, commit
 
 
-class ContinueTests(test_utils.LocalTest):
+class ContinueTests(utils.LocalTest):
     def test_auto_name(self):
         Fixture.from_scheme("""1:
                                d:-a1
@@ -69,4 +69,4 @@ class ContinueTests(test_utils.LocalTest):
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    utils.run_tests()

@@ -6,7 +6,7 @@ import string
 import abc
 
 from gitwrapper.cached import misc, commit, branch, tag
-from test_utils import check_aflow
+from utils import check_aflow
 
 
 class Fixture:

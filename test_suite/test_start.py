@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import misc
 
 
-class StartTests(test_utils.LocalTest):
+class StartTests(utils.LocalTest):
     def test_success(self):
         Fixture.from_scheme("""1:
                                a:""").actualize()
@@ -34,4 +34,4 @@ class StartTests(test_utils.LocalTest):
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    utils.run_tests()

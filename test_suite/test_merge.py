@@ -3,11 +3,11 @@
 import os
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import commit, misc, branch
 
 
-class MergeTests(test_utils.LocalTest):
+class MergeTests(utils.LocalTest):
     def test_dependencies(self):
         Fixture.from_scheme('''1:
                                d:----a1-b1-a2-c1
@@ -230,4 +230,4 @@ No matter.""")
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    utils.run_tests()

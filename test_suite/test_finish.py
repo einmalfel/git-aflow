@@ -3,11 +3,11 @@
 import os
 
 from fixture import Fixture
-import test_utils
+import utils
 from gitwrapper.cached import commit, misc, branch
 
 
-class FinishTests(test_utils.LocalTest):
+class FinishTests(utils.LocalTest):
     def test_refinish(self):
         Fixture.from_scheme("""1:
                                d:-a1
@@ -108,7 +108,7 @@ Branch 1/a deleted.""",
             'topic', 'finish', '-n', '\\')
 
         # may lose untracked files
-        with open('b', 'x') as b:
+        with open('b', 'w') as b:
             b.write('Does not matter')
             b.close()
         self.assert_aflow_dies_with(
@@ -247,4 +247,4 @@ Branch 1/a deleted.""",
 
 
 if __name__ == '__main__':
-    test_utils.run_tests()
+    utils.run_tests()
