@@ -27,6 +27,20 @@ class FinishTests(utils.LocalTest):
             d:-a1-A1-a1
             a:-1a"""))
 
+    def test_unexpected_conflict(self):
+        Fixture.from_scheme("""1:
+                               a:-1a""").actualize()
+        misc.checkout('1/develop')
+        with open('a', 'w') as b:
+            b.write('Does not matter')
+        misc.add('a')
+        commit.commit('No matter')
+        misc.checkout('1/a_v1')
+        self.assert_aflow_dies_with(
+            'Merge of 1/a_v1 conflicted unexpectedly. Conflict detector gave '
+            'false negative result. 1/develop reset.',
+            'topic', 'finish')
+
     def test_complex(self):
         Fixture.from_scheme("""1:
                                d:-a1-b1-a2-b2-c1
