@@ -20,9 +20,9 @@ __lru_funcs_by_group = collections.defaultdict(list)
 # - index (includes working tree state)
 
 
-def cache(*groups, maxsize=128, typed=False):
+def cache(*groups, maxsize=128):
     def decorator(func):
-        lru = functools.lru_cache(maxsize, typed)(func)
+        lru = functools.lru_cache(maxsize)(func)
         if groups:
             for group in groups:
                 __lru_funcs_by_group[group].append(lru)
