@@ -73,7 +73,7 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     """
     list_of_treeish = list(list_of_treeish)
     if not list_of_treeish:
-        return []
+        return tuple()
     shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
