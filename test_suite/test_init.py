@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import unittest
+
 import utils
 from gitwrapper.cached import misc, branch, commit
 
@@ -32,4 +34,4 @@ Git-aflow initialized successfully""",
 
 
 if __name__ == '__main__':
-    utils.run_tests()
+    unittest.main(module='test_init')

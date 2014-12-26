@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import unittest
 
 from fixture import Fixture
 import utils
@@ -247,4 +248,4 @@ Branch 1/a deleted.""",
 
 
 if __name__ == '__main__':
-    utils.run_tests()
+    unittest.main(module='test_finish')

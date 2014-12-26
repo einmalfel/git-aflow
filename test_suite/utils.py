@@ -221,8 +221,3 @@ class LocalTest(FunctionalTest):
         self.temp_dir.cleanup()
 
 
-def run_tests():
-    if profiling == 'OVERALL':
-        profile.run('import unittest; unittest.main()', sort='cumtime')
-    else:
-        unittest.main()

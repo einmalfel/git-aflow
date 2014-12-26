@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import unittest
+
 from fixture import Fixture
 import utils
 from gitwrapper.cached import misc
@@ -34,4 +36,4 @@ class StartTests(utils.LocalTest):
 
 
 if __name__ == '__main__':
-    utils.run_tests()
+    unittest.main(module='test_start')
