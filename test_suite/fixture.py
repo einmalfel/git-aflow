@@ -35,7 +35,7 @@ class Fixture:
             """Everything not merged into develop, staging or master branch
             will be ignored
             """
-            bp = prev.branches['master'][-1] if prev else None
+            bp = prev.branches['master'].commits[-1] if prev else None
             new = cls(name, bp)
             new.branches['master'] = Fixture.Branch.from_sha(
                 'master', next_tag if next_tag else 'master', new)
@@ -139,7 +139,8 @@ class Fixture:
                         return branch_
             else:
                 branch_ = cls(name, iteration_)
-            while (not iteration_.BP or not treeish == iteration_.BP.SHA or
+            while (not iteration_.BP or
+                   not misc.rev_parse(treeish) == iteration_.BP.SHA or
                    (branch_.commits and branch_.commits[-1].SHA == treeish)):
                 cmt = Fixture.Commit.from_treeish(treeish)
                 if isinstance(cmt, Fixture.InitCommit):
