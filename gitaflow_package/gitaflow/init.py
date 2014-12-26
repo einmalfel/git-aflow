@@ -1,8 +1,6 @@
 """Git-aflow repo initialization functionality"""
 
-import sys
-
-from gitaflow.common import say
+from gitaflow.common import say, die
 from gitaflow.iteration import start_iteration, get_iteration_list
 
 
@@ -11,12 +9,9 @@ def init_aflow(iteration_name):
     TODO: make interactive?
     """
     if in_aflow_repo():
-        say('There is a git-aflow repo already, aborting')
-        sys.exit(1)
+        die('There is a git-aflow repo already, aborting')
     if start_iteration(iteration_name):
         say('Git-aflow initialized successfully')
-    else:
-        say('Git-aflow initialization failed')
 
 
 def in_aflow_repo():
