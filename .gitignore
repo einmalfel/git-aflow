@@ -18,3 +18,6 @@
 
 #Egg metadata files
 *.egg-info/
+
+#Tox temp directory
+test_suite/.tox/
