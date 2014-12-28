@@ -522,7 +522,7 @@ class TopicMerge(collections.namedtuple(
         result = "Merge branch '" + revision.get_branch_name() + "'"
         if not iteration.is_master(target):
             result += ' into ' + target
-        result = result + linesep + (type_ if type_ else EUF_NAME)
+        result = result + linesep * 2 + (type_ if type_ else EUF_NAME)
         if description:
             result = result + linesep + description
         return result
