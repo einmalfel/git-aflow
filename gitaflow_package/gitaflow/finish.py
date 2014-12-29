@@ -3,11 +3,11 @@ from os import linesep
 
 import conflicts
 from gitaflow import iteration
-from gitaflow.common import die, say
+from gitaflow.common import die, say, consistency_check_ok
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
     STAGING_NAME
-from gitaflow.topic import Topic, TopicRevision, TopicMerge, \
-    consistency_check_ok, MergeNonConflictError
+from gitaflow.topic import TopicRevision, TopicMerge, \
+    MergeNonConflictError
 from gitwrapper.cached import misc, branch, commit
 
 

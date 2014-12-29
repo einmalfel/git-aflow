@@ -3,7 +3,7 @@ import itertools
 
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
-from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok, \
+from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die
 from gitwrapper.cached import branch, misc, commit
