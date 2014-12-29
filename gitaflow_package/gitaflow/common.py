@@ -95,3 +95,50 @@ def consistency_check_ok(list_of_treeish):
                     result = False
 
     return result
+
+
+def check_iteration():
+    ci = iteration.get_current_iteration()
+    if ci is None:
+        die('Error: could not get current iteration, we are probably not in ' +
+            'git-aflow repo.')
+    return ci
+
+
+def check_working_tree_clean():
+    if not misc.is_working_tree_clean():
+        die('Error: your working tree is dirty. Please, stash or reset your ' +
+            'changes before proceeding.')
+
+
+def check_untracked_not_differ(treeish):
+    intersection = (frozenset(misc.get_untracked_files()) &
+                    frozenset(misc.list_files_differ('HEAD', treeish)))
+    if intersection:
+        die('Error: you have some untracked files which you may loose when ' +
+            'switching to ' + treeish + '. Please, delete or commit them. ' +
+            'Here they are: ' + ', '.join(intersection) + '.')
+
+
+def default_sources():
+    cb = branch.get_current()
+    assert cb
+    if iteration.is_master(cb):
+        sources = [STAGING_NAME]
+    elif iteration.is_release(cb):
+        sources = [MASTER_NAME, STAGING_NAME]
+    else:
+        sources = [DEVELOP_NAME]
+    logging.info('Auto-sources: ' + ', '.join(sources))
+    return sources
+
+
+def check_topic_name_valid(name):
+    if not Topic.is_valid_tb_name(name):
+        die('Error: invalid topic name ' + name +
+            '. "..", "~", "^", ":", "?", "*", ' +
+            '"[", "@", "\", spaces and ASCII control characters' +
+            ' are not allowed. */' + RELEASE_NAME + '/*, ' +
+            '*/' + DEVELOP_NAME + ', */' + STAGING_NAME + ' and ' +
+            MASTER_NAME + ' are not ' + 'allowed too. Input something '
+            'like "fix_issue18" or "do_api_refactoring"')
