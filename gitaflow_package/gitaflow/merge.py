@@ -6,7 +6,7 @@ from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die, consistency_check_ok, check_iteration, \
-    check_working_tree_clean, default_sources
+    check_working_tree_clean, default_sources, complete_sources
 from gitwrapper.cached import branch, misc, commit
 
 
@@ -31,16 +31,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     if not sources:
         sources = default_sources()
-
-    for idx, source in enumerate(sources):
-        if (not source == MASTER_NAME and not source.startswith(ci + '/') and
-                not branch.exists(source)):
-            sources[idx] = ci + '/' + source
-            logging.info('Correcting ' + source + ' to ' + sources[idx])
-        if (not branch.exists(sources[idx]) or
-                not ci == iteration.get_iteration_by_branch(sources[idx])):
-            die('Cannot find branch ' + sources[idx] + '. Note: sources may ' +
-                'contain only master and branches from current iteration')
+    sources = complete_sources(sources, ci)
+    for source in sources:
+        if not iteration.get_iteration_by_branch(source) == ci:
+            die('Merge sources should belong to current iteration. ' + source +
+                " doesn't.")
 
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')

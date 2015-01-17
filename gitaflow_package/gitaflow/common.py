@@ -142,3 +142,16 @@ def check_topic_name_valid(name):
             '*/' + DEVELOP_NAME + ', */' + STAGING_NAME + ' and ' +
             MASTER_NAME + ' are not ' + 'allowed too. Input something '
             'like "fix_issue18" or "do_api_refactoring"')
+
+
+def complete_sources(sources, iteration_):
+    result = []
+    for s in sources:
+        iter_s = iteration_ + '/' + s
+        if branch.exists(iter_s):
+            result.append(iter_s)
+        elif branch.exists(s):
+            result.append(s)
+        else:
+            die('Cannot find branch ' + iter_s + ' or ' + s + '.')
+    return result
