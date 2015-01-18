@@ -129,7 +129,7 @@ def default_sources():
         sources = [MASTER_NAME, STAGING_NAME]
     else:
         sources = [DEVELOP_NAME]
-    logging.info('Auto-sources: ' + ', '.join(sources))
+    say('Using default topic source(s): ' + ', '.join(sources))
     return sources
 
 
