@@ -38,6 +38,7 @@ class MergeTests(utils.LocalTest):
 
         misc.checkout('1/staging')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Merge failed. Topic 1/a_v3 depends on 1/c_v1. Try merge it first '
             'or use "git af merge -d" to merge dependencies automatically',
             'merge', '-u')
@@ -62,7 +63,9 @@ class MergeTests(utils.LocalTest):
         branch.create('c')
         misc.checkout('c')
         self.assert_aflow_returns_0(
-            '1/b_v1 merged successfully', 'merge', '-d', 'b')
+            'Using default topic source(s): develop' + os.linesep +
+            '1/b_v1 merged successfully',
+            'merge', '-d', 'b')
 
     def test_description_type(self):
         Fixture.from_scheme('''1:
@@ -95,15 +98,20 @@ No matter.""")
 
         misc.checkout('1/b')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Latest revision of a in sources is 1/a_v2. We already have it '
             'merged in 1/b. Skipping..' + os.linesep +
             'There is nothing to merge.',
             'merge', 'a')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'We already have this version of a_v2 in 1/b. Skipping..' +
             os.linesep + 'There is nothing to merge.',
             'merge', 'a_v2')
-        self.assert_aflow_dies_with('There is nothing to merge.', 'merge', '-a')
+        self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
+            'There is nothing to merge.',
+            'merge', '-a')
 
     def test_conflict(self):
         Fixture.from_scheme('''1:
@@ -114,6 +122,7 @@ No matter.""")
 
         misc.checkout('1/a')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Merge of 1/b_v1 failed. See conflicted files via "git status", '
             'resolve conflicts, add files to index ("git add") and do '
             '"git commit --no-edit" to finish the merge.' + os.linesep +
@@ -122,6 +131,7 @@ No matter.""")
         commit.abort_merge()
 
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Merge of 1/b_v1 failed. See conflicted files via "git status", '
             'resolve conflicts, add files to index ("git add") and do '
             '"git commit --no-edit" to finish the merge.' + os.linesep +
@@ -138,6 +148,7 @@ No matter.""")
         misc.checkout('1/staging')
         self.assert_aflow_returns_0(None, 'merge', 'b')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Merge of 1/a_v1 failed. Something went wrong, did not '
             'expect conflict there (1/staging). Please check carefully what '
             'you are doing. Merge aborted.',
@@ -169,14 +180,16 @@ No matter.""")
         # working tree
         self.assert_aflow_returns_0(None, 'topic', 'continue', 'a')
         os.remove('a')
-        self.assert_aflow_dies_with('Your working tree is dirty. Please, stash '
-                                    'or reset your changes before merge',
-                                    'merge', 'no_matter')
+        self.assert_aflow_dies_with(
+            'Error: your working tree is dirty. Please, stash or reset your '
+            'changes before proceeding.',
+            'merge', 'no_matter')
         branch.reset('HEAD')
 
         # topic present in sources
         misc.checkout('master')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): staging' + os.linesep +
             'Merge failed. No topic a in sources 1/staging',
             'merge', 'a')
         self.assert_aflow_dies_with(
@@ -184,7 +197,10 @@ No matter.""")
             'merge', '-s', 'develop', 'a_v2')
 
         # is there anything to merge
-        self.assert_aflow_dies_with('There is nothing to merge.', 'merge', '-a')
+        self.assert_aflow_dies_with(
+            'Using default topic source(s): staging' + os.linesep +
+            'There is nothing to merge.',
+            'merge', '-a')
 
         # dependency check
         self.assert_aflow_returns_0(None, 'topic', 'start', 'c')
@@ -192,23 +208,35 @@ No matter.""")
         self.assert_aflow_returns_0(None, 'topic', 'finish')
         misc.checkout('1/staging')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): develop' + os.linesep +
             'Merge failed. Topic 1/c_v1 depends on 1/a_v1. Try merge it first '
             'or use "git af merge -d" to merge dependencies automatically',
             'merge', 'c')
         commit.merge('1/a_v2', "Merge branch '1/a_v2' into 1/staging")
         misc.checkout('master')
         self.assert_aflow_dies_with(
+            'Using default topic source(s): staging' + os.linesep +
             'Merge failed. We should merge 1/a_v2 along with 1/a_v1, but '
             '1/a_v1 is absent in sources.',
             'merge', 'a')
         misc.checkout('1/staging')
         branch.reset('HEAD^')
 
-        # source exists
+        # source exists and belongs to ci
         self.assert_aflow_dies_with(
-            'Cannot find branch 1/wrong_source. Note: sources may contain '
-            'only master and branches from current iteration',
+            'Cannot find branch 1/wrong_source or wrong_source.',
             'merge', '-a', '-s', 'wrong_source')
+        misc.checkout('1/staging')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        misc.checkout('master')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        self.assert_aflow_returns_0(None, 'rebase', '-n', '2')
+        self.assert_aflow_returns_0(None, 'topic', 'start', 'wrong_source')
+        misc.checkout('1/staging')
+        self.assert_aflow_dies_with(
+            "Merge sources should belong to current iteration. 2/wrong_source"
+            " doesn't.",
+            'merge', '-a', '-s', '2/wrong_source')
 
         # consistency check
         branch.create('1/b_v2')
@@ -228,8 +256,9 @@ No matter.""")
         # not valid aflow repo
         branch.delete('1/staging')
         self.assert_aflow_dies_with(
-            'Cannot get current iteration, we are probably not in git-aflow '
-            'repo', 'merge', 'no_matter')
+            'Error: could not get current iteration, we are probably not in '
+            'git-aflow repo.',
+            'merge', 'no_matter')
 
 
 if __name__ == '__main__':
