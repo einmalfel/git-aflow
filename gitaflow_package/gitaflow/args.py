@@ -291,4 +291,10 @@ one of [-u|-a] options.')
             merge_parser.error('Cannot process --all or --update with topic \
 list. You may choose to merge all topics from sources OR update your topics \
 OR specify a list of topics to merge.')
+    elif args.subcommand == 'list':
+        if args.source and args.all:
+            list_parser.error(
+                'Cannot process -a/--all together with sources list. You may '
+                'choose to list topics from all branches (master, develop and '
+                'staging) OR specify sources manually')
     return args
