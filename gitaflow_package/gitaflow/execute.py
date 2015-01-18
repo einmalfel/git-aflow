@@ -61,15 +61,14 @@ def execute(cli_args):
 
         if args_namespace.subcommand == 'init':
             init.init_aflow(args_namespace.name)
-        elif args_namespace.subcommand == 'topic':
-            if args_namespace.subsubcommand == 'start':
-                start.start(args_namespace.name)
-            elif args_namespace.subsubcommand == 'continue':
-                continue_.continue_(args_namespace.name)
-            elif args_namespace.subsubcommand == 'finish':
-                finish.finish(args_namespace.description,
-                              args_namespace.topic_finish_type,
-                              args_namespace.name)
+        elif args_namespace.subcommand == 'start':
+            start.start(args_namespace.name)
+        elif args_namespace.subcommand == 'continue':
+            continue_.continue_(args_namespace.name)
+        elif args_namespace.subcommand == 'finish':
+            finish.finish(args_namespace.description,
+                          args_namespace.topic_finish_type,
+                          args_namespace.name)
         elif args_namespace.subcommand == 'merge':
             merge.merge(args_namespace.source,
                         args_namespace.merge_type,
