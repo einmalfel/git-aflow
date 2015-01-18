@@ -5,7 +5,7 @@ import sys
 import traceback
 
 from gitaflow import init, merge, start, rebase, continue_, checkout, finish,\
-    args
+    args, list_
 from gitaflow.common import die
 from gitwrapper.cached import misc
 
@@ -81,5 +81,9 @@ def execute(cli_args):
             rebase.rebase(args_namespace.name, args_namespace.port)
         elif args_namespace.subcommand == 'checkout':
             checkout.checkout(args_namespace.name)
+        elif args_namespace.subcommand == 'list':
+            list_.list_(args_namespace.source,
+                        args_namespace.all,
+                        args_namespace.filters)
 
     die(None, 0)
