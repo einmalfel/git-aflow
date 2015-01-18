@@ -24,9 +24,10 @@ class StartTests(utils.LocalTest):
                                b:""").actualize()
         misc.checkout('2/develop')
         self.assert_aflow_dies_with(
-            'Please correct topic name. "..", "~", "^", ":", "?", "*", "[", '
-            '"@", "", spaces and ASCII control characters are not allowed. '
-            'Input something like "fix_issue18" or "do_api_refactoring"',
+            'Error: invalid topic name 2/\ / @. "..", "~", "^", ":", "?", "*", '
+            '"[", "@", "", spaces and ASCII control characters are not allowed.'
+            ' */release/*, */develop, */staging and master are not allowed too.'
+            ' Input something like "fix_issue18" or "do_api_refactoring"',
             'start', '\ / @')
         self.assert_aflow_dies_with(
             'Cannot start topic, it already has a branch(2/b) in current '
