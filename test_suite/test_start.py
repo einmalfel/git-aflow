@@ -13,7 +13,7 @@ class StartTests(utils.LocalTest):
                                a:""").actualize()
         self.assert_aflow_returns_0(
             'Topic a1 created. You are in 1/a1 branch',
-            'topic', 'start', 'a1')
+            'start', 'a1')
 
     def test_checks(self):
         Fixture.from_scheme("""1:-a1
@@ -27,12 +27,12 @@ class StartTests(utils.LocalTest):
             'Please correct topic name. "..", "~", "^", ":", "?", "*", "[", '
             '"@", "", spaces and ASCII control characters are not allowed. '
             'Input something like "fix_issue18" or "do_api_refactoring"',
-            'topic', 'start', '\ / @')
+            'start', '\ / @')
         self.assert_aflow_dies_with(
             'Cannot start topic, it already has a branch(2/b) in current '
             'iteration(2).',
-            'topic', 'start', 'b')
-        self.assert_aflow_dies_with(None, 'topic', 'start', 'a')
+            'start', 'b')
+        self.assert_aflow_dies_with(None, 'start', 'a')
 
 
 if __name__ == '__main__':
