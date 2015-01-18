@@ -3,7 +3,6 @@
 import logging
 import re
 
-from gitaflow.common import die, say
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
 from gitwrapper.cached import tag, branch, misc, commit
@@ -30,37 +29,6 @@ def is_valid_iteration_name(name):
     return (misc.is_valid_ref_name(name) and
             misc.is_valid_ref_name(name + '/' + DEVELOP_NAME) and
             misc.is_valid_ref_name(name + '/' + STAGING_NAME))
-
-
-def start_iteration(iteration_name):
-    for tag_ in tag.find_by_target(MASTER_NAME):
-        if is_iteration(tag_):
-            die('There is already an iteration ' + tag_ +
-                ' started from the top of master branch')
-    if not is_valid_iteration_name(iteration_name):
-        die('Please, correct your iteration name. "..", "~", "^", ":", "?",' +
-            ' "*", "[", "@", "\", spaces and ASCII control characters' +
-            ' are not allowed. Input something like "iter_1" or "start"')
-    develop_name = get_develop(iteration_name)
-    staging_name = get_staging(iteration_name)
-    if tag.exists(iteration_name):
-        die('Cannot start iteration, tag ' + iteration_name + ' exists')
-    if branch.exists(develop_name):
-        die('Cannot start iteration, branch ' + develop_name + ' exists')
-    if branch.exists(staging_name):
-        die('Cannot start iteration, branch ' + staging_name + ' exists')
-    try:
-        tag.create(iteration_name, MASTER_NAME)
-        branch.create(develop_name, MASTER_NAME)
-        branch.create(staging_name, MASTER_NAME)
-    except:
-        tag.delete(iteration_name)
-        branch.delete(staging_name)
-        branch.delete(develop_name)
-        logging.critical('Failed to create iteration ' + iteration_name)
-        raise
-    say('Iteration ' + iteration_name + ' created successfully')
-    return True
 
 
 @cache('tags', 'branches')

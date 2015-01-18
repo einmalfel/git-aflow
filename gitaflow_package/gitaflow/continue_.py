@@ -1,8 +1,8 @@
 import logging
-from os import linesep
 
 from gitaflow import iteration
-from gitaflow.common import die, say
+from gitaflow.common import die, say, check_iteration, \
+    check_working_tree_clean, check_untracked_not_differ
 from gitaflow.topic import TopicRevision, TopicMerge
 from gitwrapper.cached import commit, branch, misc
 
@@ -14,9 +14,7 @@ def continue_(name=None):
     last_r_cd = None
     if name:
         nr = TopicRevision.from_branch_name(name)  # revision for name parsing
-        ci = nr.iteration if nr.iteration else iteration.get_current_iteration()
-        if not ci:
-            die('Could not continue topic outside of iteration.')
+        ci = nr.iteration if nr.iteration else check_iteration()
         if not nr.default_version:
             say('Version suffix ignored.')
         cd_all_merges = TopicMerge.get_all_merges_in(iteration.get_develop(ci))
@@ -41,9 +39,7 @@ def continue_(name=None):
                     ' in iterations: ' + ', '.join((ci,) + p_iters) + '.')
 
     else:
-        ci = iteration.get_current_iteration()
-        if not ci:
-            die('Could not continue topic outside of iteration.')
+        ci = check_iteration()
         for m in TopicMerge.get_all_merges_in(iteration.get_develop(ci)):
             if m.rev.SHA == head:
                 last_r_cd = m.rev
@@ -62,16 +58,8 @@ def continue_(name=None):
             '" to continue your work on topic')
     if not head == last_r_cd.SHA:
         logging.info('Check working tree')
-        if not misc.is_working_tree_clean():
-            die('You are going to create and checkout ' + tb_name + ' but your '
-                'working tree is dirty. Please, stash or reset your changes.')
-        intersection = (frozenset(misc.get_untracked_files()) &
-                        frozenset(misc.list_files_differ(head, last_r_cd.SHA)))
-        if intersection:
-            die('You have some untracked files which you may loose when '
-                'switching to new topic branch. Please, delete or commit them. '
-                'Here they are: ' + ', '.join(intersection) + '.' + linesep +
-                'Use "git clean" to remove all untracked files')
+        check_working_tree_clean()
+        check_untracked_not_differ(last_r_cd.SHA)
     last_v_ever = last_r_cd.topic.get_latest_merge(
         last_r_cd.topic.get_all_merges()).rev.version
     if last_v_ever >= new_r.version:
