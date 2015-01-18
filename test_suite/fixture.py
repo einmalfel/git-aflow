@@ -345,7 +345,7 @@ class Fixture:
         def _commit(self):
             misc.checkout(branch.get_current().split('/')[0] + '/' +
                           self.topic + '_v' + self.version)
-            check_aflow('topic', 'finish')
+            check_aflow('finish')
 
     class RevertCommit(Commit):
         def __init__(self, topic, version):
