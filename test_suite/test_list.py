@@ -13,13 +13,13 @@ class ListTests(utils.LocalTest):
         Fixture.from_scheme("""1:
                                d:-a1
                                a:-1a""").actualize()
-        self.assert_aflow_returns_0(None, 'topic', 'start', 'refactoring')
+        self.assert_aflow_returns_0(None, 'start', 'refactoring')
         commit.commit('No matter1', allow_empty=True)
-        self.assert_aflow_returns_0(None, 'topic', 'finish', '-D', 'Blah blah.')
-        self.assert_aflow_returns_0(None, 'topic', 'start', 'fix')
+        self.assert_aflow_returns_0(None, 'finish', '-D', 'Blah blah.')
+        self.assert_aflow_returns_0(None, 'start', 'fix')
         commit.commit('No matter2', allow_empty=True)
         self.assert_aflow_returns_0(
-            None, 'topic', 'finish', '-F',
+            None, 'finish', '-F',
             'Very long description very long description very long description')
         self.assert_aflow_returns_0("""\
 Using default topic source(s): develop
