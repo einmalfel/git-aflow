@@ -5,7 +5,7 @@ from gitaflow import iteration
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
-from gitaflow.common import say, die, consistency_check_ok, check_iteration, \
+from gitaflow.common import say, die, consistency_check, check_iteration, \
     check_working_tree_clean, default_sources, complete_sources
 from gitwrapper.cached import branch, misc, commit
 
@@ -37,8 +37,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             die('Merge sources should belong to current iteration. ' + source +
                 " doesn't.")
 
-    if not consistency_check_ok(sources + [cb]):
-        die('Please, fix aforementioned problems and rerun merge.')
+    consistency_check(sources + [cb])
 
     # Topics in own_merges will be excluded from merge
     own_merges = list(TopicMerge.get_effective_merges_in(

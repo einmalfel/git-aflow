@@ -54,7 +54,7 @@ def start_iteration(iteration_name):
     return True
 
 
-def consistency_check_ok(list_of_treeish):
+def consistency_check(list_of_treeish):
     """Checks revisions merged in all given treeish:
     - same revisions have same head SHAs
     - newer revisions based on elder ones
@@ -94,7 +94,8 @@ def consistency_check_ok(list_of_treeish):
                         'based on elder.')
                     result = False
 
-    return result
+    if not result:
+        die('Please, fix aforementioned problems and rerun git-aflow again.')
 
 
 def check_iteration():
