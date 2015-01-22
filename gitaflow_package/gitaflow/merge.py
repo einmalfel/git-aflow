@@ -2,7 +2,6 @@ import logging
 import itertools
 
 from gitaflow import iteration
-from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die, consistency_check, check_iteration, \
