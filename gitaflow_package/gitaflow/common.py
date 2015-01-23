@@ -156,3 +156,12 @@ def complete_sources(sources, iteration_):
         else:
             die('Cannot find branch ' + iter_s + ' or ' + s + '.')
     return result
+
+
+def check_current_branch():
+    cb = branch.get_current()
+    if not cb:
+        die('Error: detached head state. Please checkout some branch before '
+            'proceed')
+    else:
+        return cb

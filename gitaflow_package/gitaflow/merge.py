@@ -5,17 +5,14 @@ from gitaflow import iteration
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die, consistency_check, check_iteration, \
-    check_working_tree_clean, default_sources, complete_sources
+    check_working_tree_clean, default_sources, complete_sources, \
+    check_current_branch
 from gitwrapper.cached import branch, misc, commit
 
 
 def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
           topics=None, description=None):
-    cb = branch.get_current()
-    if not cb:
-        die('Cannot merge while in detached head state. Please check out a ' +
-            'branch into which you are going to merge, e.g. "git af ' +
-            'checkout staging"')
+    cb = check_current_branch()
 
     if (merge_type or description) and (not topics or len(topics) != 1):
         die('If you are going to specify topic description and/or type, ' +
