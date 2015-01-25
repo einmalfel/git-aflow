@@ -145,17 +145,15 @@ def check_topic_name_valid(name):
             'like "fix_issue18" or "do_api_refactoring"')
 
 
-def complete_sources(sources, iteration_):
-    result = []
-    for s in sources:
-        iter_s = iteration_ + '/' + s
-        if branch.exists(iter_s):
-            result.append(iter_s)
-        elif branch.exists(s):
-            result.append(s)
+def complete_branch_name(name, iteration_):
+    if branch.exists(name):
+        return name
+    else:
+        iter_n = iteration_ + '/' + name
+        if branch.exists(iter_n):
+            return iter_n
         else:
-            die('Cannot find branch ' + iter_s + ' or ' + s + '.')
-    return result
+            die('Cannot find branch ' + iter_n + ' or ' + name + '.')
 
 
 def check_current_branch():

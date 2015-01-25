@@ -5,7 +5,7 @@ from gitaflow import iteration
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die, consistency_check, check_iteration, \
-    check_working_tree_clean, default_sources, complete_sources, \
+    check_working_tree_clean, default_sources, complete_branch_name, \
     check_current_branch
 from gitwrapper.cached import branch, misc, commit
 
@@ -27,13 +27,13 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     if not sources:
         sources = default_sources()
-    sources = complete_sources(sources, ci)
+    sources = tuple(complete_branch_name(s, ci) for s in sources)
     for source in sources:
         if not iteration.get_iteration_by_branch(source) == ci:
             die('Merge sources should belong to current iteration. ' + source +
                 " doesn't.")
 
-    consistency_check(sources + [cb])
+    consistency_check(sources + (cb, ))
 
     # Topics in own_merges will be excluded from merge
     own_merges = list(TopicMerge.get_effective_merges_in(
