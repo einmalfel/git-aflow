@@ -32,7 +32,7 @@ def continue_(name=None):
                     logging.info('Found effective merge in master before ' + i +
                                  ': ' + str(last_m))
                     last_r_cd = TopicRevision(nr.topic, ci,
-                                              last_m.rev.version + 1, ci)
+                                              last_m.rev.version, ci)
                     break
             else:
                 die('Failed to find merges of ' + str(nr.topic) +
