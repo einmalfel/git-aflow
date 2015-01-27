@@ -25,7 +25,7 @@ def continue_(name=None):
             p_iters = tuple(i for i in iteration.get_iterations(sort=True)
                             if commit.is_ancestor(i, ci))
             # there is nothing before first iteration
-            for i in p_iters[:-1]:
+            for i in (ci,) + p_iters[:-1]:
                 last_m = nr.topic.get_latest_merge(
                     TopicMerge.get_effective_merges_in(i))
                 if last_m:
