@@ -44,19 +44,12 @@ verbosity level by one')
     # description is what (s)he sees in git af topic -h
     #
     # TODO more detailed description
-    topic_parser = main_subparsers.add_parser(
-        'topic',
-        help='Topic branches management',
-        description='Topic branches management')
-    topic_subparsers = topic_parser.add_subparsers(
-        title='Topic subcommands',
-        dest='subsubcommand')
-    topic_start_parser = topic_subparsers.add_parser(
+    topic_start_parser = main_subparsers.add_parser(
         'start',
         help='Start new topic branch and switch to it',
         description='Start new topic branch and switch to it')
     topic_start_parser.add_argument('name', help='Name for new topic branch')
-    topic_finish_parser = topic_subparsers.add_parser(
+    topic_finish_parser = main_subparsers.add_parser(
         'finish',
         help='Finish topic and merge it into develop',
         description='Finish topic: checks if it conflicts with other topics, ' +
@@ -83,7 +76,7 @@ verbosity level by one')
         '-F', '--FIX', dest='topic_finish_type',
         action='store_const', const='FIX',
         help='Set topic type to FIX (bug fix)')
-    topic_stage_parser = topic_subparsers.add_parser(
+    topic_stage_parser = main_subparsers.add_parser(
         'stage',
         help='Finish topic and put it into develop',
         description='Finish topic and put it into develop')
@@ -92,7 +85,7 @@ verbosity level by one')
         nargs='?',
         help='Topic will be checked for conflicts against and merged into \
 stage. Defaults to current branch')
-    topic_continue_parser = topic_subparsers.add_parser(
+    topic_continue_parser = main_subparsers.add_parser(
         'continue',
         help='Create a branch for new version of topic',
         description='Use this to update topic by making a new version of it. '
@@ -263,10 +256,6 @@ from the top of master branch')
     elif args.subcommand == 'release':
         if args.subsubcommand is None:
             say(release_parser.format_help())
-            return None
-    elif args.subcommand == 'topic':
-        if args.subsubcommand is None:
-            say(topic_parser.format_help())
             return None
     elif args.subcommand == 'merge':
         if args.merge_object is None and not args.topic:
