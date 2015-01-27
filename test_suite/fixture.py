@@ -76,6 +76,7 @@ class Fixture:
                     name = 'develop'
                 elif name == 's':
                     name = 'staging'
+                assert name not in new_i.branches
                 new_i.branches[name] = Fixture.Branch.from_line(name, ln, new_i)
             for b in 'develop', 'staging':
                 if b not in new_i.branches:
