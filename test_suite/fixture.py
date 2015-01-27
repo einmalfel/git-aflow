@@ -189,7 +189,7 @@ class Fixture:
 
     class Commit(abc.ABC):
         __merge_e = re.compile(
-            "^Merge branch '\w*/(\w*)_v(\d)'(?: into 1/(\w*))?.*$")
+            "^Merge branch '\w*/(\w*)_v(\d)'(?: into \w+/(\w*))?.*$")
         __commit_e = re.compile("^(?:change (\w*))? ?(?:del (\w*))?$")
         __revert_e = re.compile("^Revert \"Merge branch '\w*/(\w*)_v(\d)'.*\"$")
 
