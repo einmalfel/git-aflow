@@ -168,7 +168,16 @@ def finish(description, type_, name):
             die('Finish failed. Your topic depends on ' +
                 dep.rev.get_branch_name() + ' which is absent in ' + cd)
 
-    logging.info('Dependencies are OK. Checking develop and cb consistency...')
+    logging.info('Dependencies are OK. Checking reverts of topics from ' + ci)
+
+    for m in TopicMerge.get_reverted_merges_in(tb_head, original_only=True):
+        if iteration.get_iteration_by_sha(m.rev.SHA) == ci:
+            die('Current topic contains reverts of topics from current '
+                'iteration which is forbidden. Please rebase your topic '
+                "excluding merges you don't like and try to finish it again.")
+
+    logging.info('Forbidden reverts not found. '
+                 'Checking develop and cb consistency...')
 
     consistency_check([cd, cb if cb else cr.SHA])
 
