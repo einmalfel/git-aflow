@@ -16,73 +16,6 @@ from gitaflow.debug import TestDebugState
 from gitwrapper import aux, grouped_cache
 
 
-TestDebugState.notify_test_mode(True)
-
-profiling = os.environ.get('AFLOW_TEST_PROFILE')
-# AFLOW_TEST_PROFILE=ASSERT_CALLS profiles calls like assert_aflow_returns_0().
-# ASSERT_CALLS may not work with some interpreters
-# AFLOW_TEST_PROFILE=ALL_CALLS profiles all calls
-# ASSERT_CALLS and ALL_CALLS print 20 slowest(by cumtime) functions
-if profiling and not (profiling == 'ALL_CALLS' or profiling == 'ASSERT_CALLS'):
-    print('Wrong AFLOW_TEST_PROFILE value', profiling,
-          'choose one of ALL_CALLS, ASSERT_CALLS')
-    exit(2)
-if profiling and not TestDebugState.get_test_debug_mode():
-    print('WARNING: profiling with debug mode disabled. There is no sense in '
-          'running profiler when child processes do all the work')
-
-log_file = os.environ.get('AFLOW_TEST_LOG')
-if log_file:
-    # logging.basicConfig doesn't work when it has a handler set up
-    # already. When debugging in PyCharm, it initially has stderr as
-    # default handler
-    for handler in logging.root.handlers:
-        handler.close()
-        logging.root.removeHandler(handler)
-    logging.Formatter.default_time_format = '%y%m%d %T'
-
-measure_t = os.environ.get('AFLOW_TEST_TIME')
-# AFLOW_TEST_TIME=ASSERT_CALLS measures calls like self.assert_aflow_returns_0()
-# ASSERT_CALLS may not work with some python interpreters (need
-# inspect.currentframe() support)
-# AFLOW_TEST_TIME=ALL_CALLS measures all calls
-if measure_t and not (measure_t == 'ALL_CALLS' or measure_t == 'ASSERT_CALLS'):
-    print('Wrong AFLOW_TEST_TIME value', measure_t,
-          'possible values are ALL_CALLS and ASSERT_CALLS')
-    exit(2)
-timings = []
-if profiling and measure_t:
-    print('Profiling is incompatible with call time measurement')
-    exit(2)
-if measure_t:
-    def print_timings():
-        to_print = sorted(timings, key=lambda x: -x[1])
-        if len(to_print) > 10:
-            to_print = to_print[:10]
-        print(('Top ' + str(len(to_print)) +
-               ' slowest aflow calls').ljust(80, '-'))
-        for arg_list, spent, caller_info in to_print:
-            print('{:5.3f} {:<20} {}'.format(spent,
-                                             caller_info if caller_info else '',
-                                             arg_list))
-    atexit.register(print_timings)
-
-average_cache_info = None
-cache_samples = 0
-if grouped_cache.output_info and TestDebugState.get_test_debug_mode():
-    def output_average_cache_info():
-        if average_cache_info:
-            to_print = deepcopy(average_cache_info)
-            for func in to_print:
-                for field in to_print[func]:
-                    to_print[func][field] /= cache_samples
-            print('Average cache usage among all aflow calls:'.ljust(80, '-'))
-            grouped_cache.print_cache_info(to_print)
-
-    atexit.unregister(grouped_cache.print_cache_info)
-    atexit.register(output_average_cache_info)
-
-
 class AflowUnexpectedResult(Exception):
     pass
 
@@ -223,3 +156,69 @@ class LocalTest(FunctionalTest):
 
 if __name__ == '__main__':
     unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('.'))
+else:
+    TestDebugState.notify_test_mode(True)
+    profiling = os.environ.get('AFLOW_TEST_PROFILE')
+    # AFLOW_TEST_PROFILE=ASSERT_CALLS profiles calls like assert_aflow_*().
+    # ASSERT_CALLS may not work with some interpreters
+    # AFLOW_TEST_PROFILE=ALL_CALLS profiles all calls
+    # ASSERT_CALLS and ALL_CALLS print 20 slowest(by cumtime) functions
+    if profiling and not (profiling == 'ALL_CALLS' or
+                          profiling == 'ASSERT_CALLS'):
+        print('Wrong AFLOW_TEST_PROFILE value', profiling,
+              'choose one of ALL_CALLS, ASSERT_CALLS')
+        exit(2)
+    if profiling and not TestDebugState.get_test_debug_mode():
+        print('WARNING: profiling with debug mode disabled. There is no sense '
+              'in running profiler when child processes do all the work')
+
+    log_file = os.environ.get('AFLOW_TEST_LOG')
+    if log_file:
+        # logging.basicConfig doesn't work when it has a handler set up
+        # already. When debugging in PyCharm, it initially has stderr as
+        # default handler
+        for handler in logging.root.handlers:
+            handler.close()
+            logging.root.removeHandler(handler)
+        logging.Formatter.default_time_format = '%y%m%d %T'
+
+    measure_t = os.environ.get('AFLOW_TEST_TIME')
+    # AFLOW_TEST_TIME=ASSERT_CALLS measures calls like self.assert_aflow_*()
+    # ASSERT_CALLS may not work with some python interpreters (need
+    # inspect.currentframe() support)
+    # AFLOW_TEST_TIME=ALL_CALLS measures all calls
+    if measure_t and not (measure_t == 'ALL_CALLS' or
+                          measure_t == 'ASSERT_CALLS'):
+        print('Wrong AFLOW_TEST_TIME value', measure_t,
+              'possible values are ALL_CALLS and ASSERT_CALLS')
+        exit(2)
+    timings = []
+    if profiling and measure_t:
+        print('Profiling is incompatible with call time measurement')
+        exit(2)
+    if measure_t:
+        def print_timings():
+            to_print = sorted(timings, key=lambda x: -x[1])
+            if len(to_print) > 10:
+                to_print = to_print[:10]
+            print(('Top ' + str(len(to_print)) +
+                   ' slowest aflow calls').ljust(80, '-'))
+            for arg_list, spent, caller_info in to_print:
+                print('{:5.3f} {:<20} {}'.format(
+                    spent, caller_info if caller_info else '', arg_list))
+        atexit.register(print_timings)
+
+    average_cache_info = None
+    cache_samples = 0
+    if grouped_cache.output_info and TestDebugState.get_test_debug_mode():
+        def output_average_cache_info():
+            if average_cache_info:
+                to_print = deepcopy(average_cache_info)
+                for func in to_print:
+                    for field in to_print[func]:
+                        to_print[func][field] /= cache_samples
+                print('Average cache usage of all aflow calls:'.ljust(80, '-'))
+                grouped_cache.print_cache_info(to_print)
+
+        atexit.unregister(grouped_cache.print_cache_info)
+        atexit.register(output_average_cache_info)
