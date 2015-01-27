@@ -355,7 +355,7 @@ class Fixture:
             self.version = version
 
         def __str__(self):
-            return self.topic + self.version
+            return self.topic.upper() + self.version
 
         def __eq__(self, other):
             return (type(other) == type(self) and
