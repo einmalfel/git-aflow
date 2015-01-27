@@ -459,10 +459,6 @@ class TopicMerge(collections.namedtuple(
                                   treeish1 + '..' + treeish2 +
                                   ' Adding ' + str(merge))
 
-        for merge in result:
-            if merge.is_fake():
-                merge.rev = merge.get_original().rev
-
         if recursive:
             recursive_result = []
             for m in result:
