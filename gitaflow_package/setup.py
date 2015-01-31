@@ -8,7 +8,7 @@ ImportError trying to import module dependencies
 
 from os import path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open(path.join(path.abspath(path.dirname(__file__)), 'README.txt')) as f:
@@ -19,7 +19,7 @@ setup(name='gitaflow',
       version='0.1',
       description='Implementation of git branching model, \
 alternative to git-flow',
-      packages=['gitaflow'],
+      packages=find_packages(),
       scripts=['git-af'],
       maintainer="Vasily Makarov",
       maintainer_email="einmalfel@gmail.com",
