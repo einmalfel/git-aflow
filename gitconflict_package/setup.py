@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-from distutils.core import setup
+from setuptools import setup
 
 
 setup(name='gitconflict',
