@@ -4,7 +4,7 @@
 from distutils.core import setup
 
 
-setup(name='conflicts',
+setup(name='gitconflict',
       version='0.1',
       description='Git merge-conflicts checker',
       py_modules=['git_conflict'],
@@ -13,6 +13,6 @@ setup(name='conflicts',
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
       install_requires=["gitwrapper"],
-      provides=["conflicts"],
+      provides=["gitconflict"],
       long_description=open("README.txt").read(),
       )
