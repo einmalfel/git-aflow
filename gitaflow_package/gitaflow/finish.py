@@ -191,7 +191,7 @@ def finish(description, type_, name):
     logging.info('Consistency OK. Checking if topic conflicts with '
                  'others...')
 
-    cfl = conflicts.get_first_conflict([cr.SHA] + [r.SHA for r in revs_cd])
+    cfl = git_conflict.get_first_conflict([cr.SHA] + [r.SHA for r in revs_cd])
     if cfl:
         # getting names of conflicted branches: might be two branches from
         # develop or branch from develop and current one
