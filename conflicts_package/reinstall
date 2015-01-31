@@ -1,2 +1,0 @@
-sudo pip3 -q uninstall conflicts
-( ./setup.py sdist ) && ( sudo pip3 install dist/conflicts-0.1.tar.gz )
