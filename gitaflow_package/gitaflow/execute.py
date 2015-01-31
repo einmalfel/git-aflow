@@ -7,6 +7,7 @@ import traceback
 from gitaflow import init, merge, start, rebase, continue_, checkout, finish,\
     args
 from gitaflow.common import die
+from gitaflow.constants import VERSION
 from gitwrapper.cached import misc
 
 
@@ -46,8 +47,8 @@ def execute(cli_args):
     args_namespace = args.parse_args(cli_args)
     if args_namespace:
         setup_logging(args_namespace.verbosity, args_namespace.log_file)
-        logging.info('Git aflow ' + str(sys.modules['gitaflow'].VERSION) +
-                     '. Processing namespace ' + str(args_namespace))
+        logging.info(
+            'Git aflow ' + VERSION + '. Processing args ' + str(args_namespace))
 
         # here is first git call, so do coupla checks:
         # - we are inside git repo
