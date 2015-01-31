@@ -3,7 +3,7 @@
 import logging
 from sys import argv
 
-from conflicts import get_first_conflict
+from git_conflict import get_first_conflict
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import logging
 from os import linesep
 
-import conflicts
+import git_conflict
 from gitaflow import iteration
 from gitaflow.common import die, say
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
