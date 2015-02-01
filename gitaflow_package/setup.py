@@ -19,6 +19,7 @@ setup(name='gitaflow',
       version='0.1',
       description='Implementation of git branching model, \
 alternative to git-flow',
+      license='GNU LGPL 2.1',
       packages=find_packages(),
       classifiers=['Development Status :: 2 - Pre-Alpha',
                    'Environment :: Console',
