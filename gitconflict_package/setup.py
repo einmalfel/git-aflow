@@ -17,6 +17,7 @@ setup(name='gitconflict',
       author="Vasily Makarov",
       entry_points={'console_scripts': [
           'git-conflict = git_conflict:test_and_print_first_conflict']},
+      keywords='git merge conflict detector git-aflow',
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
       install_requires=["gitwrapper"],
