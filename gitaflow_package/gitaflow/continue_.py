@@ -25,16 +25,17 @@ def continue_(name=None):
             p_iters = tuple(i for i in iteration.get_iterations(sort=True)
                             if commit.is_ancestor(i, ci))
             # there is nothing before first iteration
-            for i in (ci,) + p_iters[:-1]:
-                last_m = nr.topic.get_latest_merge(
-                    TopicMerge.get_effective_merges_in(i))
-                if last_m:
-                    logging.info('Found effective merge in master before ' + i +
-                                 ': ' + str(last_m))
-                    last_r_cd = TopicRevision(nr.topic, ci,
-                                              last_m.rev.version, ci)
-                    break
-            else:
+            if p_iters:
+                for i in (ci,) + p_iters[:-1]:
+                    last_m = nr.topic.get_latest_merge(
+                        TopicMerge.get_effective_merges_in(i))
+                    if last_m:
+                        logging.info('Found effective merge in master before ' +
+                                     i + ': ' + str(last_m))
+                        last_r_cd = TopicRevision(nr.topic, ci,
+                                                  last_m.rev.version, ci)
+                        break
+            if not last_m:
                 die('Failed to find merges of ' + str(nr.topic) +
                     ' in iterations: ' + ', '.join((ci,) + p_iters) + '.')
 
