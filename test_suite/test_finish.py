@@ -159,7 +159,8 @@ Branch 1/a deleted.""",
         commit.commit('no matter')
         self.assert_aflow_dies_with(
             'Finish failed because of conflicts in develop and current topic. '
-            'First found conflict is between 1/b_v1 and 1/a_v1 in file b',
+            'First found conflict is between 1/b_v1 and 1/a_v1 in file ' +
+            os.path.join(os.getcwd(), 'b'),
             'finish')
         os.remove('b')
         branch.reset('HEAD^')
