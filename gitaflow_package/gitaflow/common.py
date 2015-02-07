@@ -54,7 +54,7 @@ def start_iteration(iteration_name):
     return True
 
 
-def consistency_check_ok(list_of_treeish):
+def consistency_check(list_of_treeish):
     """Checks revisions merged in all given treeish:
     - same revisions have same head SHAs
     - newer revisions based on elder ones
@@ -94,7 +94,8 @@ def consistency_check_ok(list_of_treeish):
                         'based on elder.')
                     result = False
 
-    return result
+    if not result:
+        die('Please, fix aforementioned problems and rerun git-aflow again.')
 
 
 def check_iteration():
@@ -144,14 +145,21 @@ def check_topic_name_valid(name):
             'like "fix_issue18" or "do_api_refactoring"')
 
 
-def complete_sources(sources, iteration_):
-    result = []
-    for s in sources:
-        iter_s = iteration_ + '/' + s
-        if branch.exists(iter_s):
-            result.append(iter_s)
-        elif branch.exists(s):
-            result.append(s)
+def complete_branch_name(name, iteration_):
+    if branch.exists(name):
+        return name
+    else:
+        iter_n = iteration_ + '/' + name
+        if branch.exists(iter_n):
+            return iter_n
         else:
-            die('Cannot find branch ' + iter_s + ' or ' + s + '.')
-    return result
+            die('Cannot find branch ' + iter_n + ' or ' + name + '.')
+
+
+def check_current_branch():
+    cb = branch.get_current()
+    if not cb:
+        die('Error: detached head state. Please checkout some branch before '
+            'proceed')
+    else:
+        return cb
