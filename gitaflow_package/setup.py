@@ -20,7 +20,7 @@ setup(name='gitaflow',
       description='Implementation of git branching model, \
 alternative to git-flow',
       packages=find_packages(),
-      scripts=['git-af'],
+      entry_points={'console_scripts': ['git-af = gitaflow.execute:execute']},
       maintainer="Vasily Makarov",
       maintainer_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",

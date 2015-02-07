@@ -43,7 +43,7 @@ def setup_logging(verbosity, file_name):
         sys.excepthook = log_unhandled_exception
 
 
-def execute(cli_args):
+def execute(cli_args=sys.argv[1:]):
     args_namespace = args.parse_args(cli_args)
     if args_namespace:
         setup_logging(args_namespace.verbosity, args_namespace.log_file)
