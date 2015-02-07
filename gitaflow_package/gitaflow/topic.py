@@ -571,6 +571,13 @@ class TopicRevert(collections.namedtuple('TopicRevertT', (
         s += '}'
         return s
 
+    def revert(self):
+        assert self.reverted_SHA
+        if commit.get_parent(self.reverted_SHA, 2):
+            return commit.revert(self.reverted_SHA, 1)
+        else:
+            return commit.revert(self.reverted_SHA)
+
     @classmethod
     @cache('branches', 'tags')
     def from_treeish(cls, treeish):
