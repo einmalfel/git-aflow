@@ -344,8 +344,14 @@ class Fixture:
             super().__init__(topic, version)
 
         def _commit(self):
-            misc.checkout(branch.get_current().split('/')[0] + '/' +
-                          self.topic + '_v' + self.version)
+            # develop should be checked out when this method gets called
+            branch_name = (branch.get_current().split('/')[0] + '/' +
+                           self.topic + '_v' + self.version)
+            # if rev was merged and reverted, finish has already deleted branch
+            if branch.exists(branch_name):
+                misc.checkout(branch_name)
+            else:
+                check_aflow('checkout', branch_name)
             check_aflow('topic', 'finish')
 
     class RevertCommit(Commit):
