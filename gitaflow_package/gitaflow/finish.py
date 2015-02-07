@@ -1,21 +1,18 @@
 import logging
-from os import linesep
 
 import git_conflict
 from gitaflow import iteration
-from gitaflow.common import die, say
+from gitaflow.common import die, say, consistency_check_ok, check_iteration, \
+    check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
     STAGING_NAME
-from gitaflow.topic import Topic, TopicRevision, TopicMerge, \
-    consistency_check_ok, MergeNonConflictError
+from gitaflow.topic import TopicRevision, TopicMerge, \
+    MergeNonConflictError
 from gitwrapper.cached import misc, branch, commit
 
 
 def finish(description, type_, name):
-    ci = iteration.get_current_iteration()
-    if ci is None:
-        die('Could not get current iteration, we are probably not in ' +
-            'git-aflow repo')
+    ci = check_iteration()
     cd = iteration.get_develop(ci)
     cb = branch.get_current()
 
@@ -88,29 +85,15 @@ def finish(description, type_, name):
         if not last_v or cr.version > last_v.rev.version + 1:
             die('You should finish version ' + str(cr.version - 1) +
                 ' before finishing ' + cr.get_branch_name())
-    if not Topic.is_valid_tb_name(cr.get_branch_name()):
-        die('Please correct topic name. "..", "~", "^", ":", "?", "*", ' +
-            '"[", "@", "\", spaces and ASCII control characters' +
-            ' are not allowed. */' + RELEASE_NAME + '/*, ' +
-            '*/' + DEVELOP_NAME + ', */' + STAGING_NAME + ' and ' +
-            MASTER_NAME + ' are not ' + 'allowed too. Input something '
-            'like "fix_issue18" or "do_api_refactoring"')
+    check_topic_name_valid(cr.get_branch_name())
 
     logging.info('Consider topic name ' + cr.get_branch_name() + ' as valid, ' +
                  'now checking working tree state..')
 
     # we will checkout develop to make a merge, so prevent lost of modified
     # and untracked files
-    if not misc.is_working_tree_clean():
-        die('Your working tree is dirty. Please, stash or reset your ' +
-            'changes before finishing topic.')
-    intersection = (frozenset(misc.get_untracked_files()) &
-                    frozenset(misc.list_files_differ(cd, ci)))
-    if intersection:
-        die('You have some untracked files which you may loose while ' +
-            'finishing topic branch. Please, delete or commit them. ' +
-            'Here they are: ' + ', '.join(intersection) + '.' + linesep +
-            'Use "git clean" to remove all untracked files')
+    check_working_tree_clean()
+    check_untracked_not_differ(cd)
 
     logging.info('Working tree is OK, checking if revision was already '
                  'in develop...')

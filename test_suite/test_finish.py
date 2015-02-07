@@ -116,19 +116,19 @@ Branch 1/a deleted.""",
         # name format
         misc.checkout('1/a')
         self.assert_aflow_dies_with(
-            'Please correct topic name. "..", "~", "^", ":", "?", "*", "[", '
-            '"@", "", spaces and ASCII control characters are not allowed. '
-            '*/release/*, */develop, */staging and master are not allowed too. '
-            'Input something like "fix_issue18" or "do_api_refactoring"',
+            'Error: invalid topic name 1/\_v1. "..", "~", "^", ":", "?", "*", '
+            '"[", "@", "", spaces and ASCII control characters are not allowed.'
+            ' */release/*, */develop, */staging and master are not allowed too.'
+            ' Input something like "fix_issue18" or "do_api_refactoring"',
             'topic', 'finish', '-n', '\\')
 
         # may lose untracked files
         with open('b', 'w') as b:
             b.write('Does not matter')
         self.assert_aflow_dies_with(
-            'You have some untracked files which you may loose while finishing '
-            'topic branch. Please, delete or commit them. Here they are: b.' +
-            os.linesep + 'Use "git clean" to remove all untracked files',
+            'Error: you have some untracked files which you may loose when '
+            'switching to 1/develop. Please, delete or commit them. '
+            'Here they are: b.',
             'topic', 'finish')
 
         # conflict
@@ -144,8 +144,8 @@ Branch 1/a deleted.""",
         # working tree
         os.remove('a')
         self.assert_aflow_dies_with(
-            'Your working tree is dirty. Please, stash or reset your changes '
-            'before finishing topic.',
+            'Error: your working tree is dirty. Please, stash or reset your '
+            'changes before proceeding.',
             'topic', 'finish')
         branch.reset('HEAD')
 
