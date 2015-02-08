@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-
-
 """TODO:
 
 1 Add support for cross-merges
