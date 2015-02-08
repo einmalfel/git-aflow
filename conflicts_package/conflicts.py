@@ -32,6 +32,13 @@ _get_scopes.hunk_re = re.compile(
     '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
 
 
+def _scopes_differ(scopes1, scopes2):
+    for scope1, scope2 in itertools.product(scopes1, scopes2):
+        if not (scope1[0] > scope2[1] or scope1[1] < scope2[0]):
+            return True
+    return False
+
+
 def get_first_conflict(heads_list):
     """ Returns tuple describing first found conflict: (HEAD1, HEAD2, filename)
     If no conflicts, returns None
@@ -86,15 +93,9 @@ def get_first_conflict(heads_list):
                             logging.debug('File ' + file + ' changes in ' +
                                           head + ' relative to ' + base + ': ' +
                                           str(list(diffs[head][file])))
-                    for scope1, scope2 in itertools.product(diffs[head1][file],
-                                                            diffs[head2][file]):
-                        logging.debug('Comparing hunk scope ' + str(scope1) +
-                                      ' with ' + str(scope2) + ' file ' + file)
-                        if not (scope1[0] > scope2[1] or scope1[1] < scope2[0]):
-                            logging.info('Found conflict in ' + file +
-                                         ' between ' + head1 + ' and ' + head2 +
-                                         ' hunk scopes ' + str(scope1) +
-                                         ' and ' + str(scope2))
-                            return head1, head2, file
+                    if _scopes_differ(diffs[head1][file], diffs[head2][file]):
+                        logging.info('Found conflict in ' + file + ' between ' +
+                                     head1 + ' and ' + head2)
+                        return head1, head2, file
     return None
 
