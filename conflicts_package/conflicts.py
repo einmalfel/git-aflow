@@ -25,6 +25,13 @@ def _hunk_to_scope(hunk):
         return int(hunk[2]), 1
 
 
+def _get_scopes(base, head, file):
+    return tuple(_hunk_to_scope(h) for h in _get_scopes.hunk_re.findall(
+        misc.get_diff(base, head, [file])))
+_get_scopes.hunk_re = re.compile(
+    '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
+
+
 def get_first_conflict(heads_list):
     """ Returns tuple describing first found conflict: (HEAD1, HEAD2, filename)
     If no conflicts, returns None
@@ -75,10 +82,7 @@ def get_first_conflict(heads_list):
                                  head1 + ' and ' + head2)
                     for head in head1, head2:
                         if not diffs[head][file]:
-                            diffs[head][file] = tuple(
-                                hunk_to_scope(hunk) for hunk in
-                                get_first_conflict.regex.findall(
-                                    misc.get_diff(base, head, [file])))
+                            diffs[head][file] = _get_scopes(base, head, file)
                             logging.debug('File ' + file + ' changes in ' +
                                           head + ' relative to ' + base + ': ' +
                                           str(list(diffs[head][file])))
@@ -93,6 +97,4 @@ def get_first_conflict(heads_list):
                                          ' and ' + str(scope2))
                             return head1, head2, file
     return None
-get_first_conflict.regex = re.compile(
-    '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
 
