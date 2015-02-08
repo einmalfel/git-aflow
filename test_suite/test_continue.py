@@ -24,9 +24,13 @@ class ContinueTests(utils.LocalTest):
                                s:-a1
                                d:-a1
                                a:-1a
-                               2:
-                               d:-a2
-                               a:-2a""").actualize()
+                               2:""").actualize()
+        misc.checkout('2/develop')
+        self.assert_aflow_returns_0(
+            '2/a_v2 created and checked out. Use "git af topic finish" to '
+            'merge new revision of topic into develop', 'continue', 'a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(None, 'finish')
         self.assert_aflow_dies_with(
             'Failed to find merges of b in iterations: 2, 1.',
             'continue', 'b')
@@ -49,6 +53,20 @@ class ContinueTests(utils.LocalTest):
             '3/a_v3 created and checked out. Use "git af topic finish" to '
             'merge new revision of topic into develop',
             'continue', 'a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(None, 'finish')
+        self.assertEqual(Fixture.from_repo(), Fixture.from_scheme("""
+            1:-a1
+            s:-a1
+            d:-a1
+            a:-1a
+            2:-a2
+            s:-a2
+            d:-a2
+            a:-2-
+            3:
+            d:-a3
+            a:-3-"""))
 
     def test_checks(self):
         Fixture.from_scheme("""1:
