@@ -65,8 +65,8 @@ class CheckoutTests(utils.LocalTest):
         misc.checkout('1/a')
         os.remove('a')
         self.assert_aflow_dies_with(
-            'Your working tree is dirty. Please, stash or reset your changes '
-            'before checkout.',
+            'Error: your working tree is dirty. Please, stash or reset your '
+            'changes before proceeding.',
             'checkout', 'develop')
 
 

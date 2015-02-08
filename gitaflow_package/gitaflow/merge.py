@@ -2,10 +2,11 @@ import logging
 import itertools
 
 from gitaflow import iteration
-from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME
-from gitaflow.topic import TopicRevision, TopicMerge, consistency_check_ok, \
+from gitaflow.constants import MASTER_NAME
+from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
-from gitaflow.common import say, die
+from gitaflow.common import say, die, consistency_check_ok, check_iteration, \
+    check_working_tree_clean, default_sources, complete_sources
 from gitwrapper.cached import branch, misc, commit
 
 
@@ -21,36 +22,20 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
         die('If you are going to specify topic description and/or type, ' +
             'you should merge one single topic')
 
-    if not misc.is_working_tree_clean():
-        die('Your working tree is dirty. Please, stash or reset your ' +
-            'changes before merge')
+    check_working_tree_clean()
 
-    ci = iteration.get_current_iteration()
-    if ci is None:
-        die('Cannot get current iteration, we are probably not in ' +
-            'git-aflow repo')
+    ci = check_iteration()
 
     if iteration.is_develop(cb):
         die('You cannot merge into develop, use git af topic finish instead')
 
     if not sources:
-        if iteration.is_master(cb):
-            sources = [STAGING_NAME]
-        elif iteration.is_release(cb):
-            sources = [MASTER_NAME, STAGING_NAME]
-        else:
-            sources = [DEVELOP_NAME]
-        logging.info('Auto-sources: ' + ', '.join(sources))
-
-    for idx, source in enumerate(sources):
-        if (not source == MASTER_NAME and not source.startswith(ci + '/') and
-                not branch.exists(source)):
-            sources[idx] = ci + '/' + source
-            logging.info('Correcting ' + source + ' to ' + sources[idx])
-        if (not branch.exists(sources[idx]) or
-                not ci == iteration.get_iteration_by_branch(sources[idx])):
-            die('Cannot find branch ' + sources[idx] + '. Note: sources may ' +
-                'contain only master and branches from current iteration')
+        sources = default_sources()
+    sources = complete_sources(sources, ci)
+    for source in sources:
+        if not iteration.get_iteration_by_branch(source) == ci:
+            die('Merge sources should belong to current iteration. ' + source +
+                " doesn't.")
 
     if not consistency_check_ok(sources + [cb]):
         die('Please, fix aforementioned problems and rerun merge.')
