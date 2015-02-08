@@ -352,7 +352,7 @@ class Fixture:
                 misc.checkout(branch_name)
             else:
                 check_aflow('checkout', branch_name)
-            check_aflow('topic', 'finish')
+            check_aflow('finish')
 
     class RevertCommit(Commit):
         def __init__(self, topic, version):
