@@ -17,7 +17,7 @@ import itertools
 from gitwrapper.cached import misc
 
 
-def hunk_to_scope(hunk):
+def _hunk_to_scope(hunk):
     if hunk[1] and hunk[1] != '0':
         start = int(hunk[0])
         return start, start + int(hunk[1])
