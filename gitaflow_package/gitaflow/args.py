@@ -11,6 +11,7 @@ import argparse
 import sys
 
 from gitaflow.common import say
+from gitaflow.constants import FIX_NAME, EUF_NAME, DEV_NAME
 
 
 def parse_args(args_list):
@@ -137,23 +138,37 @@ release checked out now')
 
     list_parser = main_subparsers.add_parser(
         'list',
-        help='Listing branches',
-        description='Listing branches')
-    list_mode = list_parser.add_mutually_exclusive_group()
-    list_mode.add_argument(
-        '-s', '--staged', dest='listmode',
-        action='store_const', const='staged',
-        help='List staged branches. These branches may not conflict \
-with each other and may be merged in release or master')
-    list_mode.add_argument(
-        '-d', '--developing', dest='listmode',
-        action='store_const', const='developing',
-        help='List topics not yet reviewed and staged. These branches \
-may conflict with each other')
-    list_mode.add_argument(
-        '-a', '--all', dest='listmode',
-        action='store_const', const=None,
-        help='List all finished topics in repo')
+        help='Listing topics',
+        description='Lists topics merged in specified sources.')
+    list_parser.add_argument(
+        'source', nargs='*',
+        help='Topic or branch names to be used as sources for listing. '
+             'Defaults to staging if master is current branch, '
+             'to master+staging if current branch is release branch, '
+             'to develop otherwise.')
+    list_parser.add_argument(
+        '-a', '--all',
+        action='store_true',
+        help='List all finished topics in master, staging and develop of '
+             'current iteration.')
+    list_parser.add_argument(
+        '-F', '--FIX',
+        action='append_const',
+        const=FIX_NAME,
+        dest='filters',
+        help='Filter fix-topics.')
+    list_parser.add_argument(
+        '-D', '--DEV',
+        action='append_const',
+        const=DEV_NAME,
+        dest='filters',
+        help='Filter developer topics.')
+    list_parser.add_argument(
+        '-E', '--EUF',
+        action='append_const',
+        const=EUF_NAME,
+        dest='filters',
+        help='Filter end-user features.')
 
     rebase_parser = main_subparsers.add_parser(
         'rebase',
@@ -265,4 +280,10 @@ one of [-u|-a] options.')
             merge_parser.error('Cannot process --all or --update with topic \
 list. You may choose to merge all topics from sources OR update your topics \
 OR specify a list of topics to merge.')
+    elif args.subcommand == 'list':
+        if args.source and args.all:
+            list_parser.error(
+                'Cannot process -a/--all together with sources list. You may '
+                'choose to list topics from all branches (master, develop and '
+                'staging) OR specify sources manually')
     return args
