@@ -2,21 +2,17 @@ import logging
 import itertools
 
 from gitaflow import iteration
-from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
-from gitaflow.common import say, die, consistency_check_ok, check_iteration, \
-    check_working_tree_clean, default_sources, complete_sources
+from gitaflow.common import say, die, consistency_check, check_iteration, \
+    check_working_tree_clean, default_sources, complete_branch_name, \
+    check_current_branch
 from gitwrapper.cached import branch, misc, commit
 
 
 def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
           topics=None, description=None):
-    cb = branch.get_current()
-    if not cb:
-        die('Cannot merge while in detached head state. Please check out a ' +
-            'branch into which you are going to merge, e.g. "git af ' +
-            'checkout staging"')
+    cb = check_current_branch()
 
     if (merge_type or description) and (not topics or len(topics) != 1):
         die('If you are going to specify topic description and/or type, ' +
@@ -31,14 +27,13 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     if not sources:
         sources = default_sources()
-    sources = complete_sources(sources, ci)
+    sources = tuple(complete_branch_name(s, ci) for s in sources)
     for source in sources:
         if not iteration.get_iteration_by_branch(source) == ci:
             die('Merge sources should belong to current iteration. ' + source +
                 " doesn't.")
 
-    if not consistency_check_ok(sources + [cb]):
-        die('Please, fix aforementioned problems and rerun merge.')
+    consistency_check(sources + (cb, ))
 
     # Topics in own_merges will be excluded from merge
     own_merges = list(TopicMerge.get_effective_merges_in(
