@@ -1,6 +1,6 @@
 import logging
 
-import conflicts
+from conflicts import get_first_conflict_for_treeish
 from gitaflow import iteration
 from gitaflow.common import die, say, consistency_check, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
@@ -173,17 +173,14 @@ def finish(description, type_, name):
     logging.info('Consistency OK. Checking if topic conflicts with '
                  'others...')
 
-    cfl = conflicts.get_first_conflict([cr.SHA] + [r.SHA for r in revs_cd])
+    cfl, file = get_first_conflict_for_treeish(cr.SHA, (r.SHA for r in revs_cd))
     if cfl:
-        # getting names of conflicted branches: might be two branches from
-        # develop or branch from develop and current one
-        conflict_revisions = [
-            r.get_branch_name() for s in cfl[:2] for r in revs_cd if r.SHA == s]
-        if len(conflict_revisions) == 1:
-            conflict_revisions.append(cr.get_branch_name())
-        die('Finish failed because of conflicts in develop and current topic. '
-            'First found conflict is between ' + conflict_revisions[0] +
-            ' and ' + conflict_revisions[1] + ' in file ' + cfl[2])
+        for r in revs_cd:
+            if r.SHA == cfl:
+                cfl = r.get_branch_name()
+                break
+        die('Finish failed because of conflicts between current topic and ' +
+            cfl + ' in file ' + file)
 
     logging.info('No conflicts found, checking out develop and merging...')
 
