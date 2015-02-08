@@ -9,6 +9,26 @@ from gitwrapper.cached import commit, misc, branch
 
 
 class FinishTests(utils.LocalTest):
+    def test_conflict_with_deps_first(self):
+        Fixture.from_scheme("""1:
+                               d:-a1-b1-c1-e1
+                               a:-1a
+                               b:-a1-1b
+                               c:-a1----1c
+                               e:-a1-------1e
+                               """).actualize()
+        self.assert_aflow_returns_0(None, 'start', 'f')
+        with open('a', 'w') as a:
+            a.write('Does not matter')
+        misc.add('a')
+        commit.commit('No matter')
+        # bug isn't reproduced stably, but probably it fails on the first try
+        for i in range(0, 5):
+            self.assert_aflow_dies_with(
+                'Finish failed because of conflicts in develop and current '
+                'topic. First found conflict is between 1/a_v1 and 1/f_v1 in '
+                'file a', 'finish')
+
     def test_refinish(self):
         Fixture.from_scheme("""1:
                                d:-a1
