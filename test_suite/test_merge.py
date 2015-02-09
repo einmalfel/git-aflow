@@ -77,6 +77,7 @@ class MergeTests(utils.LocalTest):
             None, 'merge', '-e', 'No matter.', '-D', 'a')
         self.assertEqual(commit.get_full_message('HEAD'),
                          """Merge branch '1/a_v1' into 1/staging
+
 DEV
 No matter.""")
 
@@ -85,6 +86,7 @@ No matter.""")
         self.assert_aflow_returns_0(None, 'merge', 'a')
         self.assertEqual(commit.get_full_message('HEAD'),
                          """Merge branch '1/a_v1'
+
 DEV
 No matter.""")
 
