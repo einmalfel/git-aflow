@@ -42,19 +42,20 @@ def checkout(name):
     rev = TopicRevision.from_branch_name(name, default_iteration=ci)
     logging.info('Searching for branch of revision ' + str(rev))
     branches = rev.topic.get_branches()
-    last = 0, None  # version and name of last branch of this topic in ci
+    last_v, last_name = 0, None
     for b in branches:
         b_rev = TopicRevision.from_branch_name(b)
         if rev.default_version:
-            if b_rev.iteration == rev.iteration and b_rev.version > last[0]:
+            if b_rev.iteration == rev.iteration and b_rev.version > last_v:
                 logging.info('Latest branch so far: ' + b)
-                last = b_rev.version, b
+                last_v = b_rev.version
+                last_name = b
         else:
             if b_rev == rev:
                 logging.info('Found branch for this revision: ' + b)
-                last = b_rev.version, b
-    if last[1]:
-        return _checkout(ci, last[1])
+                last_name = b
+    if last_name:
+        return _checkout(ci, last_name)
 
     logging.info('No branch found for ' + name +
                  ', looking for merged topics in ' +
