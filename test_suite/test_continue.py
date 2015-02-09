@@ -29,7 +29,8 @@ class ContinueTests(utils.LocalTest):
             '1/b_v1 created and checked out. Use "git af topic finish" to '
             'merge new revision of topic into develop', 'continue', '-u', 'b')
         self.assert_aflow_returns_0(
-            """1/b_v1 merged into 1/develop successfully.
+            """Using "End User Feature" as default topic type.
+1/b_v1 merged into 1/develop successfully.
 Branch 1/b_v1 deleted.""",
             'finish')
         self.assertEqual(Fixture.from_repo(), Fixture.from_scheme("""

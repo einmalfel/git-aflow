@@ -40,6 +40,7 @@ class FinishTests(utils.LocalTest):
         self.assert_aflow_returns_0(None, 'checkout', 'a')
         self.assert_aflow_returns_0(
             'Assuming topic you are finishing is 1/a_v1.' + os.linesep +
+            'Taking topic type from previous merge of 1/a_v1.' + os.linesep +
             '1/a_v1 merged into 1/develop successfully.',
             'finish')
         self.assertEqual(Fixture.from_repo(), Fixture.from_scheme("""
@@ -59,7 +60,8 @@ class FinishTests(utils.LocalTest):
         misc.checkout('2/a_v2')
         commit.commit('No matter', allow_empty=True)
         self.assert_aflow_returns_0(
-            """2/a_v2 merged into 2/develop successfully.
+            """Taking topic type from previous merge of 1/a_v1.
+2/a_v2 merged into 2/develop successfully.
 Branch 2/a_v2 deleted.""", 'finish')
 
     def test_unexpected_conflict(self):
@@ -72,6 +74,7 @@ Branch 2/a_v2 deleted.""", 'finish')
         commit.commit('No matter')
         misc.checkout('1/a_v1')
         self.assert_aflow_dies_with(
+            'Using "End User Feature" as default topic type.' + os.linesep +
             'Merge of 1/a_v1 conflicted unexpectedly. Conflict detector gave '
             'false negative result. 1/develop reset.',
             'finish')
@@ -123,6 +126,7 @@ Branch 2/a_v2 deleted.""", 'finish')
         misc.checkout('1/a')
         self.assert_aflow_returns_0(
             """Using topic version 2 as default.
+Taking topic type from previous merge of 1/a_v1.
 1/a_v2 merged into 1/develop successfully.
 Branch 1/a deleted.""",
             'finish')
@@ -131,6 +135,7 @@ Branch 1/a deleted.""",
         self.assert_aflow_returns_0(None, 'checkout', 'a')
         self.assert_aflow_returns_0(
             """Using version 2 of already merged revision with same head SHA.
+Taking topic type from previous merge of 1/a_v2.
 1/a_v2 merged into 1/develop successfully.""",
             'finish', '-n', 'a')
 
