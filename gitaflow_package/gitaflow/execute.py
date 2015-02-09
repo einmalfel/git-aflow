@@ -64,7 +64,7 @@ def execute(cli_args):
         elif args_namespace.subcommand == 'start':
             start.start(args_namespace.name)
         elif args_namespace.subcommand == 'continue':
-            continue_.continue_(args_namespace.name)
+            continue_.continue_(args_namespace.name, args_namespace.unfinish)
         elif args_namespace.subcommand == 'finish':
             finish.finish(args_namespace.description,
                           args_namespace.topic_finish_type,
