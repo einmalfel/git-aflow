@@ -195,6 +195,22 @@ release checked out now')
         dest='port',
         help='Do not rebase any topics, just start new iteration.')
 
+    revert_parser = main_subparsers.add_parser(
+        'revert',
+        help='Revert topic merges from current branch',
+        description='Reverts merges of specified topics from current branch '
+                    'along with merges of their newer versions. If no topic '
+                    'version specified will revert all merges if a topic')
+    revert_parser.add_argument(
+        'name',
+        nargs='+',
+        help='Names of topics to revert')
+    revert_parser.add_argument(
+        '-d', '--dependencies',
+        action='store_true',
+        help='If given topics depend on other topics their merges will be '
+             'reverted too')
+
     merge_parser = main_subparsers.add_parser(
         'merge',
         help='Merge topics into current branch',

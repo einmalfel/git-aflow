@@ -139,6 +139,12 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
             return False
         return True
 
+    def is_in_merges(self, merges):
+        for merge in merges:
+            if merge.rev.topic == self:
+                return True
+        return False
+
     def get_branches(self):
         relevant_branches = branch.get_list(['*' + self.name + '*'])
         return [b for b in relevant_branches
@@ -483,10 +489,6 @@ class TopicMerge(collections.namedtuple(
                     logging.debug('Searching for topics in ' +
                                   treeish1 + '..' + treeish2 +
                                   ' Adding ' + str(merge))
-
-        for merge in result:
-            if merge.is_fake():
-                merge.rev = merge.get_original().rev
 
         if recursive:
             recursive_result = []
