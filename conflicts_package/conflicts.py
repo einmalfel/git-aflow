@@ -39,6 +39,34 @@ def _scopes_differ(scopes1, scopes2):
     return False
 
 
+def get_first_conflict_for_treeish(treeish, others):
+    """ Checks whether treeish conflicts with any others. Processes others in
+    order they are given and return first encountered conflict in a form of
+    tuple (other_treeish, absolute filename). Returns None, None if no
+    conflicts found
+    """
+
+    treeish_diffs = {}  # caches diffs between treeish and merge bases
+                        # values are dicts filename: scopes
+    root = misc.get_root_dir()
+    for other in others:
+        base = misc.get_merge_base([treeish, other])
+        if base not in treeish_diffs:
+            treeish_diffs[base] = {os.path.join(root, file): None for file in
+                                   misc.list_files_differ(base, treeish)}
+        changed_in_other = frozenset(os.path.join(root, file) for file in
+                                     misc.list_files_differ(base, other))
+        for file in treeish_diffs[base].keys() & changed_in_other:
+            if treeish_diffs[base][file] is None:
+                treeish_diffs[base][file] = _get_scopes(base, treeish, file)
+            other_scopes = _get_scopes(base, other, file)
+            if _scopes_differ(treeish_diffs[base][file], other_scopes):
+                logging.info('Conflict detected between ' + treeish + ' and ' +
+                             other + ' in a file ' + file)
+                return other, file
+    return None, None
+
+
 def get_first_conflict(heads_list):
     """ Returns tuple describing first found conflict: (HEAD1, HEAD2, filename)
     If no conflicts, returns None
