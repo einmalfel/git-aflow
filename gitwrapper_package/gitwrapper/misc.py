@@ -62,6 +62,10 @@ def get_git_dir():
     return get_output(['git', 'rev-parse', '--git-dir'])
 
 
+def get_root_dir():
+    return get_output(['git', 'rev-parse', '--show-toplevel'])
+
+
 @cache('branches', 'commits', 'tags')
 def rev_parse(treeish):
     return get_output(['git', 'rev-parse', treeish])
