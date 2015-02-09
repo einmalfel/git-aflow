@@ -53,6 +53,7 @@ def get_first_conflict(heads_list):
                 groups[base].append(set(heads_pair_frozen))
     logging.info('Groups: ' + os.linesep + str(groups))
 
+    root = misc.get_root_dir()
     for base, group_list in groups.items():
         diffs = {}  # dictionary of dictionaries of diffs for current base.
                     # First key is head, second is filename. Diffs are
@@ -66,8 +67,8 @@ def get_first_conflict(heads_list):
                     if head not in diffs:
                         logging.info('Reading files changed for head ' + head +
                                      ' relative to base ' + base)
-                        diffs[head] = dict.fromkeys(
-                            misc.list_files_differ(base, head))
+                        diffs[head] = {os.path.join(root, f): None for f in
+                                       misc.list_files_differ(base, head)}
                 for file in diffs[head1].keys() & diffs[head2].keys():
                     logging.info('File ' + file + ' was changed in both ' +
                                  head1 + ' and ' + head2)
