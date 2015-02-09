@@ -1,5 +1,5 @@
 from gitaflow.common import say, default_sources, check_iteration, \
-    complete_sources
+    complete_branch_name
 from gitaflow.topic import TopicMerge
 
 
@@ -14,9 +14,9 @@ def list_(sources, all_, filters):
     if not sources:
         sources = default_sources()
     ci = check_iteration()
-    sources = complete_sources(sources, ci)
 
     for s in sources:
+        s = complete_branch_name(s, ci)
         listed = []
         say((s[:NAME_WIDTH]).ljust(NAME_WIDTH, '-') +
             'Type |Ver| Description'.ljust(TERM_WIDTH - NAME_WIDTH, '-'))
