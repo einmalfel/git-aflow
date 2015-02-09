@@ -94,6 +94,14 @@ stage. Defaults to current branch')
                     'then call "git af topic finish" to merge new '
                     'version of topic into develop')
     topic_continue_parser.add_argument(
+        '-u', '--unfinish',
+        action='store_true',
+        help='Removes merges of last revision of this topic from develop '
+             'branch. Will only work if this revision was never merged in '
+             'master, staging or other topics. Will also fail if merge of '
+             'this revision was pushed to remote (aflow will check '
+             'origin/IterName/develop).')
+    topic_continue_parser.add_argument(
         'name',
         nargs='?',
         help='Name of topic to be continued. If none given, aflow will check '

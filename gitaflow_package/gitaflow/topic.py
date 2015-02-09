@@ -19,6 +19,37 @@ class IncompleteMergeObjectError(Exception):
     """ Merge object is not complete enough to execute called method."""
 
 
+def get_merges_and_reverts(treeish1, treeish2, reduce=False):
+    """ Returns a list of merges and reverts parse starts from treeish1 and
+    ends on treeish2"""
+    result = []
+    commits = commit.get_commits_between(treeish1, treeish2, True,
+                                         ['^Revert "Merge branch .*"$',
+                                          "^Merge branch .*$"])
+    for sha in commits:
+        revert = TopicRevert.from_treeish(sha)
+        if revert:
+            if reduce:
+                for obj in reversed(result):
+                    if isinstance(obj, TopicMerge) and obj.rev == revert.rev:
+                        result.remove(obj)
+                        logging.debug('Searching for topics in ' + treeish1 +
+                                      '..' + treeish2 + ' Removing ' + str(obj))
+                        break
+                else:
+                    result.append(revert)
+            else:
+                result.append(revert)
+        else:
+            merge = TopicMerge.from_treeish(sha)
+            if merge:
+                result.append(merge)
+                logging.debug('Searching for topics in ' + treeish1 +
+                              '..' + treeish2 + ' Adding ' + str(merge))
+
+    return tuple(result)
+
+
 class Topic(collections.namedtuple('TopicT', ('name',))):
     """ This class represents topic. Topic is a sequence of commits merged
     one or multiple times somewhere in history into develop, staging or master.
@@ -540,10 +571,19 @@ class TopicRevert(collections.namedtuple('TopicRevertT', (
         s += '}'
         return s
 
+    def revert(self):
+        assert self.reverted_SHA
+        if commit.get_parent(self.reverted_SHA, 2):
+            return commit.revert(self.reverted_SHA, 1)
+        else:
+            return commit.revert(self.reverted_SHA)
+
     @classmethod
     @cache('branches', 'tags')
     def from_treeish(cls, treeish):
         headline, sha = cls.parse_message(commit.get_full_message(treeish))
+        if not headline:
+            return None
         branch_name, target = TopicMerge.parse_headline(headline)
         return TopicRevert(
             TopicRevision.from_branch_name(

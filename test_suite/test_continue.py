@@ -9,6 +9,38 @@ from gitwrapper.cached import misc, commit
 
 
 class ContinueTests(utils.LocalTest):
+    def test_unfinish(self):
+        Fixture.from_scheme("""1:
+                               s:-a1
+                               d:-a1-e1-b1-c1-B1-b1-B1-b1
+                               a:-1a
+                               b:-a1-e1-1b
+                               c:----------1c
+                               e:----1e""").actualize()
+        self.assert_aflow_dies_with(
+            "1/a_v1 was previously merged in 1/staging, so it's impossible to "
+            "unfinish it.", 'continue', '-u', 'a')
+        dev_head = misc.rev_parse('1/develop')
+        self.assert_aflow_dies_with(
+            'Failed to continue 1/e_v1. It is merged in 1/b_v1 which was later '
+            'merged in 1/develop. 1/develop reset back to ' + dev_head + '.',
+            'continue', '-u', 'e')
+        self.assert_aflow_returns_0(
+            '1/b_v1 created and checked out. Use "git af topic finish" to '
+            'merge new revision of topic into develop', 'continue', '-u', 'b')
+        self.assert_aflow_returns_0(
+            """1/b_v1 merged into 1/develop successfully.
+Branch 1/b_v1 deleted.""",
+            'finish')
+        self.assertEqual(Fixture.from_repo(), Fixture.from_scheme("""
+            1:-
+            s:-a1
+            d:-a1-e1-c1-b1
+            c:-1c
+            e:-1e
+            a:-1a
+            b:-a1-e1-1b"""))
+
     def test_auto_name(self):
         Fixture.from_scheme("""1:
                                d:-a1
