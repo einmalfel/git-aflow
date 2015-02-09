@@ -59,6 +59,29 @@ class FinishTests(utils.LocalTest):
             'false negative result. 1/develop reset.',
             'finish')
 
+    def test_subdirectory_conflict(self):
+        Fixture.from_scheme("""1:
+                               a:
+                               b:""").actualize()
+        misc.checkout('1/a')
+        os.mkdir('subdir')
+        with open('subdir/a', 'w') as a:
+            a.write('A content')
+        misc.add('subdir/a')
+        commit.commit('No matter a')
+        self.assert_aflow_returns_0(None, 'finish')
+        misc.checkout('1/b')
+        os.mkdir('subdir')
+        with open('subdir/a', 'w') as a:
+            a.write('B content')
+        misc.add('subdir/a')
+        commit.commit('No matter b')
+        os.chdir('subdir')
+        self.assert_aflow_dies_with(
+            'Finish failed because of conflicts in develop and current topic. '
+            'First found conflict is between 1/a_v1 and 1/b_v1 in file ' +
+            os.path.join(os.getcwd(), 'a'), 'finish')
+
     def test_complex(self):
         Fixture.from_scheme("""1:
                                d:-a1-b1-a2-b2-c1
@@ -154,7 +177,8 @@ Branch 1/a deleted.""",
         commit.commit('no matter')
         self.assert_aflow_dies_with(
             'Finish failed because of conflicts in develop and current topic. '
-            'First found conflict is between 1/b_v1 and 1/a_v1 in file b',
+            'First found conflict is between 1/b_v1 and 1/a_v1 in file ' +
+            os.path.join(os.getcwd(), 'b'),
             'finish')
         os.remove('b')
         branch.reset('HEAD^')
