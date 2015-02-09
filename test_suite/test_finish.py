@@ -25,9 +25,9 @@ class FinishTests(utils.LocalTest):
         # bug isn't reproduced stably, but probably it fails on the first try
         for i in range(0, 5):
             self.assert_aflow_dies_with(
-                'Finish failed because of conflicts in develop and current '
-                'topic. First found conflict is between 1/a_v1 and 1/f_v1 in '
-                'file a', 'finish')
+                'Finish failed because of conflicts between current '
+                'topic and 1/a_v1 in file ' + os.path.join(os.getcwd(), 'a'),
+                'finish')
 
     def test_refinish(self):
         Fixture.from_scheme("""1:
@@ -80,9 +80,9 @@ class FinishTests(utils.LocalTest):
         commit.commit('No matter b')
         os.chdir('subdir')
         self.assert_aflow_dies_with(
-            'Finish failed because of conflicts in develop and current topic. '
-            'First found conflict is between 1/a_v1 and 1/b_v1 in file ' +
-            os.path.join(os.getcwd(), 'a'), 'finish')
+            'Finish failed because of conflicts between current '
+            'topic and 1/a_v1 in file ' + os.path.join(os.getcwd(), 'a'),
+            'finish')
 
     def test_complex(self):
         Fixture.from_scheme("""1:
@@ -178,10 +178,8 @@ Branch 1/a deleted.""",
         misc.add('b')
         commit.commit('no matter')
         self.assert_aflow_dies_with(
-            'Finish failed because of conflicts in develop and current topic. '
-            'First found conflict is between 1/b_v1 and 1/a_v1 in file ' +
-            os.path.join(os.getcwd(), 'b'),
-            'finish')
+            'Finish failed because of conflicts between current topic and '
+            '1/b_v1 in file ' + os.path.join(os.getcwd(), 'b'), 'finish')
         os.remove('b')
         branch.reset('HEAD^')
 
