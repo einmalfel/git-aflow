@@ -80,9 +80,8 @@ def finish(description, type_, name):
                     say('Using topic version ' + str(cr.version) +
                         ' as default.')
     elif cr.version > 1:
-        if all_m_cd:
-            last_v = cr.topic.get_latest_merge(all_m_cd)
-        else:
+        last_v = cr.topic.get_latest_merge(all_m_cd) if all_m_cd else None
+        if not last_v:
             eff_m_master = TopicMerge.get_effective_merges_in(
                 ci, treeish1=iteration.get_first_iteration())
             last_v = cr.topic.get_latest_merge(eff_m_master)

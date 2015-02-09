@@ -47,6 +47,21 @@ class FinishTests(utils.LocalTest):
             d:-a1-A1-a1
             a:-1a"""))
 
+    def test_update_for_prev_iter_topic(self):
+        Fixture.from_scheme("""1:-a1
+                               s:-a1
+                               d:-a1
+                               a:-1a
+                               2:
+                               d:-b1
+                               b:-1b""").actualize()
+        branch.create('2/a_v2', '2')
+        misc.checkout('2/a_v2')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(
+            """2/a_v2 merged into 2/develop successfully.
+Branch 2/a_v2 deleted.""", 'finish')
+
     def test_unexpected_conflict(self):
         Fixture.from_scheme("""1:
                                a:-1a""").actualize()
