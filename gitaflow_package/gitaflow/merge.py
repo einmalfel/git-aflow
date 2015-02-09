@@ -160,7 +160,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     for idx, m in enumerate(merges_with_versions):
         logging.info('Merging ' + m.rev.get_branch_name())
         try:
-            merge_result = m.merge(description, merge_type)
+            merge_result = m.get_original().merge(description, merge_type)
         except MergeNonConflictError:
             logging.critical('Unexpected merge error, falling back to ' +
                              fallback_sha)
