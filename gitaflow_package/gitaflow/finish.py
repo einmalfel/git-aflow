@@ -1,6 +1,6 @@
 import logging
 
-from conflicts import get_first_conflict_for_treeish
+from git_conflict import get_first_conflict_for_treeish
 from gitaflow import iteration
 from gitaflow.common import die, say, consistency_check, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
