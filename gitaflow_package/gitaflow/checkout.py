@@ -1,25 +1,18 @@
 """ git af checkout implementation"""
 import logging
-from os import linesep
 
 from gitaflow import iteration
-from gitaflow.common import say, die
+from gitaflow.common import say, die, check_iteration, \
+    check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import STAGING_NAME, DEVELOP_NAME
 from gitaflow.topic import TopicRevision, TopicMerge
 from gitwrapper.cached import branch, misc
 
 
 def _checkout(ci, treeish):
-    intersection = (frozenset(misc.get_untracked_files()) &
-                    frozenset(misc.list_files_differ(ci, treeish)))
-    if intersection:
-        die('You have some untracked files which you may loose while ' +
-            'checking out ' + treeish + '. Please, commit or delete '
-            '(Use "git clean" to remove all untracked files) them. ' +
-            'Here they are: ' + linesep + (linesep + ', ').join(intersection))
-
+    check_untracked_not_differ(treeish)
     misc.checkout(treeish)
-    new_ci = iteration.get_current_iteration()
+    new_ci = check_iteration()
     if not new_ci == ci:
         say('Iteration switched from ' + ci + ' to ' + new_ci)
     cb = branch.get_current()
@@ -30,12 +23,10 @@ def _checkout(ci, treeish):
 
 
 def checkout(name):
-    if not misc.is_working_tree_clean():
-        die('Your working tree is dirty. Please, stash or reset your ' +
-            'changes before checkout.')
+    check_working_tree_clean()
 
     # 1 named branch exists (includes master, iter/develop, etc)
-    ci = iteration.get_current_iteration()
+    ci = check_iteration()
     if branch.exists(name):
         logging.info('Found branch ' + name)
         return _checkout(ci, name)
