@@ -119,6 +119,43 @@ Branch 2/a_v2 deleted.""", 'finish')
             b:-1b-a1-a2-2--c1-3-
             c:-a1-a2-b1-b2-1c"""))
 
+    def test_preserve_description(self):
+        Fixture.from_scheme("""1:-a1
+                               s:-a1
+                               d:-a1
+                               a:-1a
+                               2:""").actualize()
+        branch.create('2/a_v2', '2')
+        misc.checkout('2/a_v2')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(
+            """Taking topic type from previous merge of 1/a_v1.
+2/a_v2 merged into 2/develop successfully.
+Branch 2/a_v2 deleted.""",
+            'finish', 'Some description')
+        misc.checkout('2/staging')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        misc.checkout('master')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        self.assert_aflow_returns_0(None, 'continue', 'a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(None, 'finish', '-D', 'Other description')
+        self.assert_aflow_returns_0(None, 'rebase', '-n', '3')
+        self.assert_aflow_returns_0(None, 'continue', '3/a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(
+            """Taking topic description from previous merge of 2/a_v3.
+Taking topic type from previous merge of 2/a_v3.
+3/a_v3 merged into 3/develop successfully.
+Branch 3/a_v3 deleted.""",
+            'finish')
+        self.assertEqual(
+            commit.get_full_message('HEAD'),
+            """Merge branch '3/a_v3' into 3/develop
+
+DEV
+Other description""")
+
     def test_auto_version(self):
         Fixture.from_scheme("""1:
                                d:-a1
