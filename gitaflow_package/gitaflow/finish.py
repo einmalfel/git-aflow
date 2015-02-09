@@ -2,7 +2,7 @@ import logging
 
 import conflicts
 from gitaflow import iteration
-from gitaflow.common import die, say, consistency_check_ok, check_iteration, \
+from gitaflow.common import die, say, consistency_check, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
     STAGING_NAME
@@ -168,8 +168,7 @@ def finish(description, type_, name):
 
     logging.info('Dependencies are OK. Checking develop and cb consistency...')
 
-    if not consistency_check_ok([cd, cb if cb else cr.SHA]):
-        die('Please, fix aforementioned problems and rerun topic finish.')
+    consistency_check([cd, cb if cb else cr.SHA])
 
     logging.info('Consistency OK. Checking if topic conflicts with '
                  'others...')

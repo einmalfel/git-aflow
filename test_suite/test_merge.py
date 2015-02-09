@@ -162,9 +162,8 @@ No matter.""")
         # detached head
         misc.checkout('1/a^')
         self.assert_aflow_dies_with(
-            'Cannot merge while in detached head state. Please check out a '
-            'branch into which you are going to merge, e.g. "git af checkout '
-            'staging"', 'merge', 'no_matter')
+            'Error: detached head state. Please checkout some branch before '
+            'proceed', 'merge', 'no_matter')
 
         # topic description applicable
         misc.checkout('1/a')
@@ -231,7 +230,7 @@ No matter.""")
         misc.checkout('master')
         self.assert_aflow_returns_0(None, 'merge', 'a')
         self.assert_aflow_returns_0(None, 'rebase', '-n', '2')
-        self.assert_aflow_returns_0(None, 'topic', 'start', 'wrong_source')
+        self.assert_aflow_returns_0(None, 'start', 'wrong_source')
         misc.checkout('1/staging')
         self.assert_aflow_dies_with(
             "Merge sources should belong to current iteration. 2/wrong_source"
