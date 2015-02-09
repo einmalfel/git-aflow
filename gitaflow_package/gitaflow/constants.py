@@ -1,6 +1,9 @@
 """Git-aflow constants"""
 
 
+VERSION = '0.1'
+
+
 DEVELOP_NAME = 'develop'
 STAGING_NAME = 'staging'
 MASTER_NAME = 'master'

@@ -1,10 +1,9 @@
 from itertools import dropwhile
 import logging
 
-
-from conflicts import get_first_conflict_for_treeish
 from gitaflow.iteration import get_iterations, get_staging, get_develop, \
     get_master_head
+from git_conflict import get_first_conflict_for_treeish
 from gitaflow import iteration
 from gitaflow.common import die, say, consistency_check, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
