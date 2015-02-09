@@ -17,12 +17,54 @@ import itertools
 from gitwrapper.cached import misc
 
 
-def hunk_to_scope(hunk):
+def _hunk_to_scope(hunk):
     if hunk[1] and hunk[1] != '0':
         start = int(hunk[0])
         return start, start + int(hunk[1])
     else:
         return int(hunk[2]), 1
+
+
+def _get_scopes(base, head, file):
+    return tuple(_hunk_to_scope(h) for h in _get_scopes.hunk_re.findall(
+        misc.get_diff(base, head, [file])))
+_get_scopes.hunk_re = re.compile(
+    '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
+
+
+def _scopes_differ(scopes1, scopes2):
+    for scope1, scope2 in itertools.product(scopes1, scopes2):
+        if not (scope1[0] > scope2[1] or scope1[1] < scope2[0]):
+            return True
+    return False
+
+
+def get_first_conflict_for_treeish(treeish, others):
+    """ Checks whether treeish conflicts with any others. Processes others in
+    order they are given and return first encountered conflict in a form of
+    tuple (other_treeish, absolute filename). Returns None, None if no
+    conflicts found
+    """
+
+    treeish_diffs = {}  # caches diffs between treeish and merge bases
+                        # values are dicts filename: scopes
+    root = misc.get_root_dir()
+    for other in others:
+        base = misc.get_merge_base([treeish, other])
+        if base not in treeish_diffs:
+            treeish_diffs[base] = {os.path.join(root, file): None for file in
+                                   misc.list_files_differ(base, treeish)}
+        changed_in_other = frozenset(os.path.join(root, file) for file in
+                                     misc.list_files_differ(base, other))
+        for file in treeish_diffs[base].keys() & changed_in_other:
+            if treeish_diffs[base][file] is None:
+                treeish_diffs[base][file] = _get_scopes(base, treeish, file)
+            other_scopes = _get_scopes(base, other, file)
+            if _scopes_differ(treeish_diffs[base][file], other_scopes):
+                logging.info('Conflict detected between ' + treeish + ' and ' +
+                             other + ' in a file ' + file)
+                return other, file
+    return None, None
 
 
 def get_first_conflict(heads_list):
@@ -76,23 +118,12 @@ def get_first_conflict(heads_list):
                                  head1 + ' and ' + head2)
                     for head in head1, head2:
                         if not diffs[head][file]:
-                            diffs[head][file] = tuple(
-                                hunk_to_scope(hunk) for hunk in
-                                get_first_conflict.regex.findall(
-                                    misc.get_diff(base, head, [file])))
+                            diffs[head][file] = _get_scopes(base, head, file)
                             logging.debug('File ' + file + ' changes in ' +
                                           head + ' relative to ' + base + ': ' +
                                           str(list(diffs[head][file])))
-                    for scope1, scope2 in itertools.product(diffs[head1][file],
-                                                            diffs[head2][file]):
-                        logging.debug('Comparing hunk scope ' + str(scope1) +
-                                      ' with ' + str(scope2) + ' file ' + file)
-                        if not (scope1[0] > scope2[1] or scope1[1] < scope2[0]):
-                            logging.info('Found conflict in ' + file +
-                                         ' between ' + head1 + ' and ' + head2 +
-                                         ' hunk scopes ' + str(scope1) +
-                                         ' and ' + str(scope2))
-                            return head1, head2, file
+                    if _scopes_differ(diffs[head1][file], diffs[head2][file]):
+                        logging.info('Found conflict in ' + file + ' between ' +
+                                     head1 + ' and ' + head2)
+                        return head1, head2, file
     return None
-get_first_conflict.regex = re.compile(
-    '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
