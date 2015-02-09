@@ -1,11 +1,14 @@
+from itertools import dropwhile
 import logging
 
 import conflicts
+from gitaflow.iteration import get_iterations, get_staging, get_develop, \
+    get_master_head
 from gitaflow import iteration
 from gitaflow.common import die, say, consistency_check_ok, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
-    STAGING_NAME
+    STAGING_NAME, EUF_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitwrapper.cached import misc, branch, commit
@@ -186,8 +189,28 @@ def finish(description, type_, name):
             'First found conflict is between ' + conflict_revisions[0] +
             ' and ' + conflict_revisions[1] + ' in file ' + cfl[2])
 
-    logging.info('No conflicts found, checking out develop and merging...')
+    if not description or not type_:
+        logging.info('Searching previous merges for topic description/type..')
+        for version in reversed(range(1, cr.version + 1)):
+            for i in dropwhile(lambda x: x != ci, get_iterations(sort=True)):
+                for b in get_master_head(i), get_staging(i), get_develop(i):
+                    for m in reversed(TopicMerge.get_all_merges_in(b)):
+                        if m.rev.topic == cr.topic and m.rev.version == version:
+                            if not description and m.description:
+                                description = m.description
+                                say('Taking topic description from previous '
+                                    'merge of ' + m.rev.get_branch_name() + '.')
+                            if not type_:
+                                type_ = m.type
+                                say('Taking topic type from previous '
+                                    'merge of ' + m.rev.get_branch_name() + '.')
+                            if description:
+                                break
+    if not type_:
+        say('Using "End User Feature" as default topic type.')
+        type_ = EUF_NAME
 
+    logging.info('Checking out develop and merging...')
     misc.checkout(cd)
     fallback_sha = commit.get_current_sha()
     try:
