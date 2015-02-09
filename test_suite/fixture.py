@@ -76,6 +76,7 @@ class Fixture:
                     name = 'develop'
                 elif name == 's':
                     name = 'staging'
+                assert name not in new_i.branches
                 new_i.branches[name] = Fixture.Branch.from_line(name, ln, new_i)
             for b in 'develop', 'staging':
                 if b not in new_i.branches:
@@ -189,7 +190,7 @@ class Fixture:
 
     class Commit(metaclass=abc.ABCMeta):
         __merge_e = re.compile(
-            "^Merge branch '\w*/(\w*)_v(\d)'(?: into 1/(\w*))?.*$")
+            "^Merge branch '\w*/(\w*)_v(\d)'(?: into \w+/(\w*))?.*$")
         __commit_e = re.compile("^(?:change (\w*))? ?(?:del (\w*))?$")
         __revert_e = re.compile("^Revert \"Merge branch '\w*/(\w*)_v(\d)'.*\"$")
 
@@ -343,8 +344,14 @@ class Fixture:
             super().__init__(topic, version)
 
         def _commit(self):
-            misc.checkout(branch.get_current().split('/')[0] + '/' +
-                          self.topic + '_v' + self.version)
+            # develop should be checked out when this method gets called
+            branch_name = (branch.get_current().split('/')[0] + '/' +
+                           self.topic + '_v' + self.version)
+            # if rev was merged and reverted, finish has already deleted branch
+            if branch.exists(branch_name):
+                misc.checkout(branch_name)
+            else:
+                check_aflow('checkout', branch_name)
             check_aflow('finish')
 
     class RevertCommit(Commit):
@@ -354,7 +361,7 @@ class Fixture:
             self.version = version
 
         def __str__(self):
-            return self.topic + self.version
+            return self.topic.upper() + self.version
 
         def __eq__(self, other):
             return (type(other) == type(self) and
