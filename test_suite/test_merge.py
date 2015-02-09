@@ -168,9 +168,9 @@ No matter.""")
 
         # topic description applicable
         misc.checkout('1/a')
-        self.assert_aflow_returns_0(None, 'topic', 'finish')
+        self.assert_aflow_returns_0(None, 'finish')
         misc.checkout('1/b')
-        self.assert_aflow_returns_0(None, 'topic', 'finish')
+        self.assert_aflow_returns_0(None, 'finish')
         misc.checkout('1/staging')
         expected = 'If you are going to specify topic description and/or ' \
                    'type, you should merge one single topic'
@@ -178,7 +178,7 @@ No matter.""")
         self.assert_aflow_dies_with(expected, 'merge', 'a', 'b', '-D')
 
         # working tree
-        self.assert_aflow_returns_0(None, 'topic', 'continue', 'a')
+        self.assert_aflow_returns_0(None, 'continue', 'a')
         os.remove('a')
         self.assert_aflow_dies_with(
             'Error: your working tree is dirty. Please, stash or reset your '
@@ -203,9 +203,9 @@ No matter.""")
             'merge', '-a')
 
         # dependency check
-        self.assert_aflow_returns_0(None, 'topic', 'start', 'c')
+        self.assert_aflow_returns_0(None, 'start', 'c')
         self.assert_aflow_returns_0(None, 'merge', 'a')
-        self.assert_aflow_returns_0(None, 'topic', 'finish')
+        self.assert_aflow_returns_0(None, 'finish')
         misc.checkout('1/staging')
         self.assert_aflow_dies_with(
             'Using default topic source(s): develop' + os.linesep +
