@@ -75,15 +75,6 @@ verbosity level by one')
         '-F', '--FIX', dest='topic_finish_type',
         action='store_const', const='FIX',
         help='Set topic type to FIX (bug fix)')
-    topic_stage_parser = main_subparsers.add_parser(
-        'stage',
-        help='Finish topic and put it into develop',
-        description='Finish topic and put it into develop')
-    topic_stage_parser.add_argument(
-        'name',
-        nargs='?',
-        help='Topic will be checked for conflicts against and merged into \
-stage. Defaults to current branch')
     continue_parser = main_subparsers.add_parser(
         'continue',
         help='Create a branch for new version of topic',
@@ -106,41 +97,6 @@ stage. Defaults to current branch')
              'if your HEAD points to last commit of some topic. Aflow will '
              'use iteration prefix to switch iteration before proceeding and '
              'will ignore version suffix.')
-
-    release_parser = main_subparsers.add_parser(
-        'release',
-        help='Release branches management',
-        description='Release branches management')
-    release_subparsers = release_parser.add_subparsers(
-        title='Release subcommands',
-        dest='subsubcommand')
-    release_minor_parser = release_subparsers.add_parser(
-        'minor',
-        help='Branch new minor release',
-        description='Branch new minor release')
-    release_minor_parser.add_argument(
-        'prev-release',
-        nargs='?',
-        help='Specify release on which this one will base. Defaults to \
-release checked out now')
-    release_minor_parser.add_argument(
-        '-n', '--name',
-        help='Name of new release. If not specified will ask interactively')
-    release_major_parser = release_subparsers.add_parser(
-        'major',
-        help='Branch out new major release from master',
-        description='Branch out new major release from master')
-    release_major_parser.add_argument(
-        '-n', '--name',
-        help='Name of new release. If not specified will ask interactively')
-    release_finish_parser = release_subparsers.add_parser(
-        'finish',
-        help='Branch out new major release from master',
-        description='Branch out new major release from master')
-    release_finish_parser.add_argument(
-        'name',
-        nargs='?',
-        help='Which release to finish. Defaults to currently checked out')
 
     list_parser = main_subparsers.add_parser(
         'list',
@@ -290,10 +246,6 @@ from the top of master branch')
     if args.subcommand is None:
         say(main_parser.format_help())
         return None
-    elif args.subcommand == 'release':
-        if args.subsubcommand is None:
-            say(release_parser.format_help())
-            return None
     elif args.subcommand == 'merge':
         if args.merge_object is None and not args.topic:
             merge_parser.error('Please, specify topics you wish to merge, or \
