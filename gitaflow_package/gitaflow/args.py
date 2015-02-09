@@ -43,35 +43,35 @@ verbosity level by one')
     # description is what (s)he sees in git af topic -h
     #
     # TODO more detailed description
-    topic_start_parser = main_subparsers.add_parser(
+    start_parser = main_subparsers.add_parser(
         'start',
         help='Start new topic branch and switch to it',
         description='Start new topic branch and switch to it')
-    topic_start_parser.add_argument('name', help='Name for new topic branch')
-    topic_finish_parser = main_subparsers.add_parser(
+    start_parser.add_argument('name', help='Name for new topic branch')
+    finish_parser = main_subparsers.add_parser(
         'finish',
         help='Finish topic and merge it into develop',
         description='Finish topic: checks if it conflicts with other topics, ' +
                     'merges it into develop branch and deletes topic branch')
-    topic_finish_parser.add_argument(
+    finish_parser.add_argument(
         '-n', '--name',
         help='Set name of topic. Defaults to topic branch name. Use it if you '
              'want to change topic name given on topic start')
-    topic_finish_parser.add_argument(
+    finish_parser.add_argument(
         'description',
         nargs='?',
         help='Some text describing purpose of this topic branch and what was '
              'done in it.')
-    topic_finish_type = topic_finish_parser.add_mutually_exclusive_group()
-    topic_finish_type.add_argument(
+    finish_type = finish_parser.add_mutually_exclusive_group()
+    finish_type.add_argument(
         '-D', '--DEV', dest='topic_finish_type',
         action='store_const', const='DEV',
         help='Set topic type to DEV (e.g. refactoring)')
-    topic_finish_type.add_argument(
+    finish_type.add_argument(
         '-E', '--EUF', dest='topic_finish_type',
         action='store_const', const='EUF',
         help='Set topic type to EUF (end user feature)')
-    topic_finish_type.add_argument(
+    finish_type.add_argument(
         '-F', '--FIX', dest='topic_finish_type',
         action='store_const', const='FIX',
         help='Set topic type to FIX (bug fix)')
@@ -84,14 +84,14 @@ verbosity level by one')
         nargs='?',
         help='Topic will be checked for conflicts against and merged into \
 stage. Defaults to current branch')
-    topic_continue_parser = main_subparsers.add_parser(
+    continue_parser = main_subparsers.add_parser(
         'continue',
         help='Create a branch for new version of topic',
         description='Use this to update topic by making a new version of it. '
                     'Commit changes to branch created by this command, '
                     'then call "git af topic finish" to merge new '
                     'version of topic into develop')
-    topic_continue_parser.add_argument(
+    continue_parser.add_argument(
         '-u', '--unfinish',
         action='store_true',
         help='Removes merges of last revision of this topic from develop '
@@ -99,7 +99,7 @@ stage. Defaults to current branch')
              'master, staging or other topics. Will also fail if merge of '
              'this revision was pushed to remote (aflow will check '
              'origin/IterName/develop).')
-    topic_continue_parser.add_argument(
+    continue_parser.add_argument(
         'name',
         nargs='?',
         help='Name of topic to be continued. If none given, aflow will check '
