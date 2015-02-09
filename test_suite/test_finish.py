@@ -40,6 +40,7 @@ class FinishTests(utils.LocalTest):
         self.assert_aflow_returns_0(None, 'checkout', 'a')
         self.assert_aflow_returns_0(
             'Assuming topic you are finishing is 1/a_v1.' + os.linesep +
+            'Taking topic type from previous merge of 1/a_v1.' + os.linesep +
             '1/a_v1 merged into 1/develop successfully.',
             'finish')
         self.assertEqual(Fixture.from_repo(), Fixture.from_scheme("""
@@ -77,7 +78,8 @@ class FinishTests(utils.LocalTest):
         misc.checkout('2/a_v2')
         commit.commit('No matter', allow_empty=True)
         self.assert_aflow_returns_0(
-            """2/a_v2 merged into 2/develop successfully.
+            """Taking topic type from previous merge of 1/a_v1.
+2/a_v2 merged into 2/develop successfully.
 Branch 2/a_v2 deleted.""", 'finish')
 
     def test_unexpected_conflict(self):
@@ -90,6 +92,7 @@ Branch 2/a_v2 deleted.""", 'finish')
         commit.commit('No matter')
         misc.checkout('1/a_v1')
         self.assert_aflow_dies_with(
+            'Using "End User Feature" as default topic type.' + os.linesep +
             'Merge of 1/a_v1 conflicted unexpectedly. Conflict detector gave '
             'false negative result. 1/develop reset.',
             'finish')
@@ -134,6 +137,43 @@ Branch 2/a_v2 deleted.""", 'finish')
             b:-1b-a1-a2-2--c1-3-
             c:-a1-a2-b1-b2-1c"""))
 
+    def test_preserve_description(self):
+        Fixture.from_scheme("""1:-a1
+                               s:-a1
+                               d:-a1
+                               a:-1a
+                               2:""").actualize()
+        branch.create('2/a_v2', '2')
+        misc.checkout('2/a_v2')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(
+            """Taking topic type from previous merge of 1/a_v1.
+2/a_v2 merged into 2/develop successfully.
+Branch 2/a_v2 deleted.""",
+            'finish', 'Some description')
+        misc.checkout('2/staging')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        misc.checkout('master')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        self.assert_aflow_returns_0(None, 'continue', 'a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(None, 'finish', '-D', 'Other description')
+        self.assert_aflow_returns_0(None, 'rebase', '-n', '3')
+        self.assert_aflow_returns_0(None, 'continue', '3/a')
+        commit.commit('No matter', allow_empty=True)
+        self.assert_aflow_returns_0(
+            """Taking topic description from previous merge of 2/a_v3.
+Taking topic type from previous merge of 2/a_v3.
+3/a_v3 merged into 3/develop successfully.
+Branch 3/a_v3 deleted.""",
+            'finish')
+        self.assertEqual(
+            commit.get_full_message('HEAD'),
+            """Merge branch '3/a_v3' into 3/develop
+
+DEV
+Other description""")
+
     def test_auto_version(self):
         Fixture.from_scheme("""1:
                                d:-a1
@@ -141,6 +181,7 @@ Branch 2/a_v2 deleted.""", 'finish')
         misc.checkout('1/a')
         self.assert_aflow_returns_0(
             """Using topic version 2 as default.
+Taking topic type from previous merge of 1/a_v1.
 1/a_v2 merged into 1/develop successfully.
 Branch 1/a deleted.""",
             'finish')
@@ -149,6 +190,7 @@ Branch 1/a deleted.""",
         self.assert_aflow_returns_0(None, 'checkout', 'a')
         self.assert_aflow_returns_0(
             """Using version 2 of already merged revision with same head SHA.
+Taking topic type from previous merge of 1/a_v2.
 1/a_v2 merged into 1/develop successfully.""",
             'finish', '-n', 'a')
 
