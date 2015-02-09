@@ -187,7 +187,7 @@ class Fixture:
                     return
             self.actualized = True
 
-    class Commit(abc.ABC):
+    class Commit(metaclass=abc.ABCMeta):
         __merge_e = re.compile(
             "^Merge branch '\w*/(\w*)_v(\d)'(?: into 1/(\w*))?.*$")
         __commit_e = re.compile("^(?:change (\w*))? ?(?:del (\w*))?$")
