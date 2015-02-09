@@ -123,6 +123,18 @@ def get_staging(iteration=None):
             '/' + STAGING_NAME)
 
 
+def get_master_head(iteration):
+    """ Returns last master commit for given iteration. For last iteration,
+    returns 'master'.
+    """
+    next_ = None
+    for i in get_iterations(sort=True):
+        if i == iteration:
+            break
+        next_ = i
+    return misc.rev_parse(next_) if next_ else 'master'
+
+
 def is_staging(branch_name):
     iteration, name = parse_branch_name(branch_name)
     return is_iteration(iteration) and name == STAGING_NAME
