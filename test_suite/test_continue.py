@@ -121,4 +121,4 @@ Branch 1/b_v1 deleted.""",
 
 
 if __name__ == '__main__':
-    unittest.main(module='test_rebase')
+    unittest.main(module='test_continue')
