@@ -8,10 +8,9 @@ ArgumentParser
 """
 
 import argparse
-import sys
 
 from gitaflow.common import say
-from gitaflow.constants import FIX_NAME, EUF_NAME, DEV_NAME
+from gitaflow.constants import FIX_NAME, EUF_NAME, DEV_NAME, VERSION
 
 
 def parse_args(args_list):
@@ -25,8 +24,7 @@ def parse_args(args_list):
         description='Git-aflow helper tool. Use "git af SUBCOMMAND -h" to \
 learn more about using subcommands listed below')
     main_parser.add_argument(
-        '--version', action='version', version='%(prog)s '
-        + str(sys.modules['gitaflow'].VERSION))
+        '--version', action='version', version='%(prog)s ' + VERSION)
     main_parser.add_argument('--log-file', '-l')
     output_mode = main_parser.add_mutually_exclusive_group()
     output_mode.add_argument(
