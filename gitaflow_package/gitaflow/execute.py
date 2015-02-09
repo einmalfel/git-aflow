@@ -5,7 +5,7 @@ import sys
 import traceback
 
 from gitaflow import init, merge, start, rebase, continue_, checkout, finish,\
-    args, list_
+    args, list_, revert
 from gitaflow.common import die
 from gitaflow.constants import VERSION
 from gitwrapper.cached import misc
@@ -85,5 +85,7 @@ def execute(cli_args=sys.argv[1:]):
             list_.list_(args_namespace.source,
                         args_namespace.all,
                         args_namespace.filters)
+        elif args_namespace.subcommand == 'revert':
+            revert.revert(args_namespace.name, args_namespace.dependencies)
 
     die(None, 0)
