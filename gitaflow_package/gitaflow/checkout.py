@@ -51,7 +51,7 @@ def checkout(name):
                 last_v = b_rev.version
                 last_name = b
         else:
-            if b_rev == rev:
+            if not b_rev.default_version and b_rev == rev:
                 logging.info('Found branch for this revision: ' + b)
                 last_name = b
     if last_name:
