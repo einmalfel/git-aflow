@@ -48,6 +48,24 @@ class FinishTests(utils.LocalTest):
             d:-a1-A1-a1
             a:-1a"""))
 
+    def test_reverts(self):
+        Fixture.from_scheme("""1:
+                               d:-a1
+                               a:-1a
+                               b:-a1""").actualize()
+        misc.checkout('1/b')
+        self.assert_aflow_returns_0(None, 'revert', 'a')
+        self.assert_aflow_dies_with(
+            "Current topic contains reverts of topics from current iteration "
+            "which is forbidden. Please rebase your topic excluding merges you "
+            "don't like and try to finish it again.", 'finish')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        self.assert_aflow_returns_0(None, 'revert', 'a')
+        self.assert_aflow_dies_with(
+            "Current topic contains reverts of topics from current iteration "
+            "which is forbidden. Please rebase your topic excluding merges you "
+            "don't like and try to finish it again.", 'finish')
+
     def test_update_for_prev_iter_topic(self):
         Fixture.from_scheme("""1:-a1
                                s:-a1

@@ -103,9 +103,11 @@ def finish(description, type_, name):
 
     eff_m_cd = TopicMerge.get_effective_merges_in(cd)
     last_eff_m_cd = cr.topic.get_latest_merge(eff_m_cd)
-    if (last_eff_m_cd and (cr.SHA == last_eff_m_cd.rev.SHA or
-                           commit.is_based_on(cr.SHA, last_eff_m_cd.rev.SHA))):
-        die(cd + ' already contains this revision of ' + cr.topic.name)
+    if last_eff_m_cd:
+        last_eff_m_cd = last_eff_m_cd.get_original()
+        if (cr.SHA == last_eff_m_cd.rev.SHA or
+                commit.is_based_on(cr.SHA, last_eff_m_cd.rev.SHA)):
+            die(cd + ' already contains this revision of ' + cr.topic.name)
 
     logging.info('Checking topic base...')
 
@@ -169,7 +171,16 @@ def finish(description, type_, name):
             die('Finish failed. Your topic depends on ' +
                 dep.rev.get_branch_name() + ' which is absent in ' + cd)
 
-    logging.info('Dependencies are OK. Checking develop and cb consistency...')
+    logging.info('Dependencies are OK. Checking reverts of topics from ' + ci)
+
+    for m in TopicMerge.get_reverted_merges_in(tb_head, original_only=True):
+        if iteration.get_iteration_by_sha(m.rev.SHA) == ci:
+            die('Current topic contains reverts of topics from current '
+                'iteration which is forbidden. Please rebase your topic '
+                "excluding merges you don't like and try to finish it again.")
+
+    logging.info('Forbidden reverts not found. '
+                 'Checking develop and cb consistency...')
 
     consistency_check([cd, cb if cb else cr.SHA])
 

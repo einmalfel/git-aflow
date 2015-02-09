@@ -9,6 +9,10 @@ from gitwrapper.cached import tag, branch, misc, commit
 from gitwrapper.grouped_cache import cache
 
 
+class WrongIterationNameError(Exception):
+    """ Raised when wrong iteration name is given"""
+
+
 def parse_branch_name(branch_name):
     """Returns (iteration, name) tuple or (None, None) if cannot parse.
     E.g.: parse_branch_name("master") produces (None, "master")
@@ -149,3 +153,21 @@ def is_master(branch_name):
 def is_release(branch_name):
     iteration, name = parse_branch_name(branch_name)
     return is_iteration(iteration) and name.startswith(RELEASE_NAME + '/')
+
+
+def __get_next_in(iteration, i_list):
+    next_ = None
+    for i in i_list:
+        if i == iteration:
+            return next_
+        next_ = i
+    else:
+        raise WrongIterationNameError(str(iteration) + ' not in ' + str(i_list))
+
+
+def get_next(iteration):
+    return __get_next_in(iteration, get_iterations(True))
+
+
+def get_previous(iteration):
+    return __get_next_in(iteration, reversed(get_iterations(True)))
