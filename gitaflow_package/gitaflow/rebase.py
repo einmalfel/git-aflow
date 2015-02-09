@@ -1,9 +1,8 @@
-from gitaflow.common import die
-from gitaflow import iteration
+from gitaflow.common import die, start_iteration
 
 
 def rebase(name, port):
     if port:
         die('NIY')
     else:
-        iteration.start_iteration(name)
+        start_iteration(name)
