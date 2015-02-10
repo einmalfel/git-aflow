@@ -5,14 +5,14 @@ tag, branch and commit modules.
 import collections
 import sys
 
-from gitwrapper.aux import get_output, call, \
+from thingitwrapper.aux import get_output, call, \
     get_output_and_exit_code, GitUnexpectedError, check_01
 
 
-if 'gitwrapper.cached' in sys.modules:
-    from gitwrapper.grouped_cache import cache, invalidate
+if 'thingitwrapper.cached' in sys.modules:
+    from thingitwrapper.grouped_cache import cache, invalidate
 else:
-    from gitwrapper.stub_cache import cache, invalidate
+    from thingitwrapper.stub_cache import cache, invalidate
 
 
 def is_working_tree_clean(untracked=False):

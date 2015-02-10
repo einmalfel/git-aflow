@@ -10,7 +10,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.txt')) as f:
     readme_contents = f.read()
 
 
-setup(name='gitwrapper',
+setup(name='thingitwrapper',
       version='0.1',
       description='Wrapper for git command line tool. For now functionality is '
                   'limited to git commands needed for git-aflow project.',
@@ -29,5 +29,5 @@ setup(name='gitwrapper',
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
       long_description=readme_contents,
-      provides=["gitwrapper"],
+      provides=["thingitwrapper"],
       )

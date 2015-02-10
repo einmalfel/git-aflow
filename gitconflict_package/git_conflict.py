@@ -12,7 +12,7 @@ import logging
 import itertools
 from sys import argv
 
-from gitwrapper.cached import misc
+from thingitwrapper.cached import misc
 
 
 def _hunk_to_scope(hunk):

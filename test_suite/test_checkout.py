@@ -5,7 +5,7 @@ import unittest
 
 from fixture import Fixture
 import utils
-from gitwrapper.cached import misc, branch
+from thingitwrapper.cached import misc, branch
 
 
 class CheckoutTests(utils.LocalTest):
