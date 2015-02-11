@@ -127,8 +127,8 @@ def add(path):
     invalidate('index')
 
 
-def rm(path):
-    call(['git', 'rm', '-f', path])
+def rm(path, recursively=False):
+    call(['git', 'rm', '-f'] + (['-r'] if recursively else []) + [path])
     invalidate('index')
 
 
