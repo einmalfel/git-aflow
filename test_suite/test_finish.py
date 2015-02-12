@@ -119,6 +119,25 @@ Branch 2/a_v2 deleted.""", 'finish')
             'Finish failed because of conflicts between current '
             'topic and 1/a_v1 in file ' + os.path.join(os.getcwd(), 'a'),
             'finish')
+        os.chdir(misc.get_root_dir())
+        misc.checkout('1/staging')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        misc.checkout('master')
+        self.assert_aflow_returns_0(None, 'merge', 'a')
+        self.assert_aflow_returns_0(None, 'rebase', '-n', '2')
+        self.assert_aflow_returns_0(None, 'continue', 'a')
+        with open('subdir/a', 'w') as a:
+            a.write('A new content')
+        misc.add('subdir/a')
+        commit.commit('No matter a2')
+        self.assert_aflow_returns_0(None, 'finish')
+        self.assert_aflow_returns_0(None, 'start', 'b')
+        misc.rm('subdir', recursively=True)
+        commit.commit('delete a')
+        self.assert_aflow_dies_with(
+            'Finish failed because of conflicts between current '
+            'topic and 2/a_v2 in file subdir/a',
+            'finish')
 
     def test_complex(self):
         Fixture.from_scheme("""1:
