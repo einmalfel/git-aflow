@@ -26,7 +26,7 @@ class FinishTests(utils.LocalTest):
         for i in range(0, 5):
             self.assert_aflow_dies_with(
                 'Finish failed because of conflicts between current '
-                'topic and 1/a_v1 in file ' + os.path.join(os.getcwd(), 'a'),
+                'topic and 1/a_v1 in file a',
                 'finish')
 
     def test_refinish(self):
@@ -117,7 +117,7 @@ Branch 2/a_v2 deleted.""", 'finish')
         os.chdir('subdir')
         self.assert_aflow_dies_with(
             'Finish failed because of conflicts between current '
-            'topic and 1/a_v1 in file ' + os.path.join(os.getcwd(), 'a'),
+            'topic and 1/a_v1 in file subdir/a',
             'finish')
         os.chdir(misc.get_root_dir())
         misc.checkout('1/staging')
@@ -273,7 +273,7 @@ Taking topic type from previous merge of 1/a_v2.
         commit.commit('no matter')
         self.assert_aflow_dies_with(
             'Finish failed because of conflicts between current topic and '
-            '1/b_v1 in file ' + os.path.join(os.getcwd(), 'b'), 'finish')
+            '1/b_v1 in file b', 'finish')
         os.remove('b')
         branch.reset('HEAD^')
 
