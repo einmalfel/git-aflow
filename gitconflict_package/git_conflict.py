@@ -49,14 +49,12 @@ def get_first_conflict_for_treeish(treeish, others):
 
     treeish_diffs = {}  # caches diffs between treeish and merge bases
                         # values are dicts filename: scopes
-    root = misc.get_root_dir()
     for other in others:
         base = misc.get_merge_base([treeish, other])
         if base not in treeish_diffs:
-            treeish_diffs[base] = {os.path.join(root, file): None for file in
-                                   misc.list_files_differ(base, treeish)}
-        changed_in_other = frozenset(os.path.join(root, file) for file in
-                                     misc.list_files_differ(base, other))
+            treeish_diffs[base] = dict.fromkeys(
+                misc.list_files_differ(base, treeish))
+        changed_in_other = frozenset(misc.list_files_differ(base, other))
         for file in treeish_diffs[base].keys() & changed_in_other:
             if treeish_diffs[base][file] is None:
                 treeish_diffs[base][file] = _get_scopes(base, treeish, file)
