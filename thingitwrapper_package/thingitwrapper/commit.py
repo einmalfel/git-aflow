@@ -5,15 +5,15 @@ import os
 import re
 import sys
 
-from gitwrapper.aux import get_output, get_output_and_exit_code,\
+from thingitwrapper.aux import get_output, get_output_and_exit_code,\
     GitUnexpectedError, call, check_01, get_output_01
-from gitwrapper import misc
+from thingitwrapper import misc
 
 
-if 'gitwrapper.cached' in sys.modules:
-    from gitwrapper.grouped_cache import cache, invalidate
+if 'thingitwrapper.cached' in sys.modules:
+    from thingitwrapper.grouped_cache import cache, invalidate
 else:
-    from gitwrapper.stub_cache import cache, invalidate
+    from thingitwrapper.stub_cache import cache, invalidate
 
 
 class AlreadyMergedError(Exception):

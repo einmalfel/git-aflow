@@ -5,8 +5,8 @@ import re
 
 from gitaflow.constants import DEVELOP_NAME, MASTER_NAME, STAGING_NAME, \
     RELEASE_NAME
-from gitwrapper.cached import tag, branch, misc, commit
-from gitwrapper.grouped_cache import cache
+from thingitwrapper.cached import tag, branch, misc, commit
+from thingitwrapper.grouped_cache import cache
 
 
 class WrongIterationNameError(Exception):

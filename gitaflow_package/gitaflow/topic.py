@@ -5,8 +5,8 @@ from os import linesep
 import re
 import collections
 
-from gitwrapper.grouped_cache import cache
-from gitwrapper.cached import misc, branch, commit
+from thingitwrapper.grouped_cache import cache
+from thingitwrapper.cached import misc, branch, commit
 from gitaflow import iteration
 from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
 

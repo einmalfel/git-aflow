@@ -3,9 +3,8 @@
 import unittest
 
 from fixture import Fixture
-from gitwrapper import branch
 import utils
-from gitwrapper.cached import misc, commit
+from thingitwrapper.cached import misc, commit, branch
 
 
 class RevertTests(utils.LocalTest):
