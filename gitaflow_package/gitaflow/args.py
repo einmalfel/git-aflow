@@ -43,55 +43,46 @@ verbosity level by one')
     # description is what (s)he sees in git af topic -h
     #
     # TODO more detailed description
-    topic_start_parser = main_subparsers.add_parser(
+    start_parser = main_subparsers.add_parser(
         'start',
         help='Start new topic branch and switch to it',
         description='Start new topic branch and switch to it')
-    topic_start_parser.add_argument('name', help='Name for new topic branch')
-    topic_finish_parser = main_subparsers.add_parser(
+    start_parser.add_argument('name', help='Name for new topic branch')
+    finish_parser = main_subparsers.add_parser(
         'finish',
         help='Finish topic and merge it into develop',
         description='Finish topic: checks if it conflicts with other topics, ' +
                     'merges it into develop branch and deletes topic branch')
-    topic_finish_parser.add_argument(
+    finish_parser.add_argument(
         '-n', '--name',
         help='Set name of topic. Defaults to topic branch name. Use it if you '
              'want to change topic name given on topic start')
-    topic_finish_parser.add_argument(
+    finish_parser.add_argument(
         'description',
         nargs='?',
         help='Some text describing purpose of this topic branch and what was '
              'done in it.')
-    topic_finish_type = topic_finish_parser.add_mutually_exclusive_group()
-    topic_finish_type.add_argument(
+    finish_type = finish_parser.add_mutually_exclusive_group()
+    finish_type.add_argument(
         '-D', '--DEV', dest='topic_finish_type',
         action='store_const', const='DEV',
         help='Set topic type to DEV (e.g. refactoring)')
-    topic_finish_type.add_argument(
+    finish_type.add_argument(
         '-E', '--EUF', dest='topic_finish_type',
         action='store_const', const='EUF',
         help='Set topic type to EUF (end user feature)')
-    topic_finish_type.add_argument(
+    finish_type.add_argument(
         '-F', '--FIX', dest='topic_finish_type',
         action='store_const', const='FIX',
         help='Set topic type to FIX (bug fix)')
-    topic_stage_parser = main_subparsers.add_parser(
-        'stage',
-        help='Finish topic and put it into develop',
-        description='Finish topic and put it into develop')
-    topic_stage_parser.add_argument(
-        'name',
-        nargs='?',
-        help='Topic will be checked for conflicts against and merged into \
-stage. Defaults to current branch')
-    topic_continue_parser = main_subparsers.add_parser(
+    continue_parser = main_subparsers.add_parser(
         'continue',
         help='Create a branch for new version of topic',
         description='Use this to update topic by making a new version of it. '
                     'Commit changes to branch created by this command, '
                     'then call "git af topic finish" to merge new '
                     'version of topic into develop')
-    topic_continue_parser.add_argument(
+    continue_parser.add_argument(
         '-u', '--unfinish',
         action='store_true',
         help='Removes merges of last revision of this topic from develop '
@@ -99,48 +90,13 @@ stage. Defaults to current branch')
              'master, staging or other topics. Will also fail if merge of '
              'this revision was pushed to remote (aflow will check '
              'origin/IterName/develop).')
-    topic_continue_parser.add_argument(
+    continue_parser.add_argument(
         'name',
         nargs='?',
         help='Name of topic to be continued. If none given, aflow will check '
              'if your HEAD points to last commit of some topic. Aflow will '
              'use iteration prefix to switch iteration before proceeding and '
              'will ignore version suffix.')
-
-    release_parser = main_subparsers.add_parser(
-        'release',
-        help='Release branches management',
-        description='Release branches management')
-    release_subparsers = release_parser.add_subparsers(
-        title='Release subcommands',
-        dest='subsubcommand')
-    release_minor_parser = release_subparsers.add_parser(
-        'minor',
-        help='Branch new minor release',
-        description='Branch new minor release')
-    release_minor_parser.add_argument(
-        'prev-release',
-        nargs='?',
-        help='Specify release on which this one will base. Defaults to \
-release checked out now')
-    release_minor_parser.add_argument(
-        '-n', '--name',
-        help='Name of new release. If not specified will ask interactively')
-    release_major_parser = release_subparsers.add_parser(
-        'major',
-        help='Branch out new major release from master',
-        description='Branch out new major release from master')
-    release_major_parser.add_argument(
-        '-n', '--name',
-        help='Name of new release. If not specified will ask interactively')
-    release_finish_parser = release_subparsers.add_parser(
-        'finish',
-        help='Branch out new major release from master',
-        description='Branch out new major release from master')
-    release_finish_parser.add_argument(
-        'name',
-        nargs='?',
-        help='Which release to finish. Defaults to currently checked out')
 
     list_parser = main_subparsers.add_parser(
         'list',
@@ -290,10 +246,6 @@ from the top of master branch')
     if args.subcommand is None:
         say(main_parser.format_help())
         return None
-    elif args.subcommand == 'release':
-        if args.subsubcommand is None:
-            say(release_parser.format_help())
-            return None
     elif args.subcommand == 'merge':
         if args.merge_object is None and not args.topic:
             merge_parser.error('Please, specify topics you wish to merge, or \
