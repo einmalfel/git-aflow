@@ -29,7 +29,7 @@ setup(name='gitconflict',
       keywords='git merge conflict detector git-aflow',
       author_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
-      install_requires=["gitwrapper"],
+      install_requires=["thingitwrapper"],
       provides=["gitconflict"],
       long_description=readme_contents,
       )

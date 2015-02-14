@@ -4,7 +4,7 @@ import unittest
 
 from fixture import Fixture
 import utils
-from gitwrapper.cached import misc
+from thingitwrapper.cached import misc
 
 
 class StartTests(utils.LocalTest):

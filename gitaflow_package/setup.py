@@ -35,5 +35,5 @@ alternative to git-flow',
       maintainer_email="einmalfel@gmail.com",
       url="https://github.com/einmalfel/git-aflow",
       long_description=readme_contents,
-      install_requires=["gitconflict", "gitwrapper"],
+      install_requires=["gitconflict", "thingitwrapper"],
       )
