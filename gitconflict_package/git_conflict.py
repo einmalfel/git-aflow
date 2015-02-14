@@ -24,10 +24,13 @@ def _hunk_to_scope(hunk):
 
 
 def _get_scopes(base, head, file):
+    if not _get_scopes.root:
+        _get_scopes.root = misc.get_root_dir()
     return tuple(_hunk_to_scope(h) for h in _get_scopes.hunk_re.findall(
-        misc.get_diff(base, head, [file])))
+        misc.get_diff(base, head, files=[file], working_dir=_get_scopes.root)))
 _get_scopes.hunk_re = re.compile(
     '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
+_get_scopes.root = None
 
 
 def _scopes_differ(scopes1, scopes2):
@@ -46,14 +49,12 @@ def get_first_conflict_for_treeish(treeish, others):
 
     treeish_diffs = {}  # caches diffs between treeish and merge bases
                         # values are dicts filename: scopes
-    root = misc.get_root_dir()
     for other in others:
         base = misc.get_merge_base([treeish, other])
         if base not in treeish_diffs:
-            treeish_diffs[base] = {os.path.join(root, file): None for file in
-                                   misc.list_files_differ(base, treeish)}
-        changed_in_other = frozenset(os.path.join(root, file) for file in
-                                     misc.list_files_differ(base, other))
+            treeish_diffs[base] = dict.fromkeys(
+                misc.list_files_differ(base, treeish))
+        changed_in_other = frozenset(misc.list_files_differ(base, other))
         for file in treeish_diffs[base].keys() & changed_in_other:
             if treeish_diffs[base][file] is None:
                 treeish_diffs[base][file] = _get_scopes(base, treeish, file)
@@ -95,7 +96,6 @@ def get_first_conflict(heads_list):
                 groups[base].append(set(heads_pair_frozen))
     logging.info('Groups: ' + os.linesep + str(groups))
 
-    root = misc.get_root_dir()
     for base, group_list in groups.items():
         diffs = {}  # dictionary of dictionaries of diffs for current base.
                     # First key is head, second is filename. Diffs are
@@ -109,8 +109,8 @@ def get_first_conflict(heads_list):
                     if head not in diffs:
                         logging.info('Reading files changed for head ' + head +
                                      ' relative to base ' + base)
-                        diffs[head] = {os.path.join(root, f): None for f in
-                                       misc.list_files_differ(base, head)}
+                        diffs[head] = dict.fromkeys(
+                            misc.list_files_differ(base, head))
                 for file in diffs[head1].keys() & diffs[head2].keys():
                     logging.info('File ' + file + ' was changed in both ' +
                                  head1 + ' and ' + head2)
