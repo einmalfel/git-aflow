@@ -7,7 +7,7 @@ from gitaflow.topic import TopicRevision, TopicMerge, \
 from gitaflow.common import say, die, consistency_check, check_iteration, \
     check_working_tree_clean, default_sources, complete_branch_name, \
     check_current_branch
-from gitwrapper.cached import branch, misc, commit
+from thingitwrapper.cached import branch, misc, commit
 
 
 def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,

@@ -6,7 +6,7 @@ from gitaflow.common import say, die, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import STAGING_NAME, DEVELOP_NAME
 from gitaflow.topic import TopicRevision, TopicMerge
-from gitwrapper.cached import branch, misc
+from thingitwrapper.cached import branch, misc
 
 
 def _checkout(ci, treeish):

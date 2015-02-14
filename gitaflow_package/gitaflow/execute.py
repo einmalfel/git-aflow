@@ -8,7 +8,7 @@ from gitaflow import init, merge, start, rebase, continue_, checkout, finish,\
     args, list_, revert
 from gitaflow.common import die
 from gitaflow.constants import VERSION
-from gitwrapper.cached import misc
+from thingitwrapper.cached import misc
 
 
 def log_unhandled_exception(type_, value, traceback_):
