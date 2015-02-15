@@ -13,7 +13,7 @@ import time
 
 from gitaflow import execute
 from gitaflow.debug import TestDebugState
-from gitwrapper import aux, grouped_cache
+from thingitwrapper import aux, grouped_cache
 
 
 class AflowUnexpectedResult(Exception):

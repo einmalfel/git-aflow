@@ -3,9 +3,8 @@
 import unittest
 
 from fixture import Fixture
-from gitwrapper import commit
 import utils
-from gitwrapper.cached import misc
+from thingitwrapper.cached import misc, commit
 
 
 class ListTests(utils.LocalTest):

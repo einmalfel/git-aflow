@@ -3,7 +3,7 @@
 import unittest
 
 import utils
-from gitwrapper.cached import misc, branch, commit
+from thingitwrapper.cached import misc, branch, commit
 
 
 class InitTests(utils.LocalTest):
