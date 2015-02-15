@@ -5,7 +5,7 @@ from gitaflow.common import die, say, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, get_merges_and_reverts
-from gitwrapper.cached import commit, branch, misc
+from thingitwrapper.cached import commit, branch, misc
 
 
 def continue_(name=None, unfinish=False):

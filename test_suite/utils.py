@@ -14,7 +14,7 @@ import sys
 import io
 
 from gitaflow import execute
-from gitwrapper import aux, grouped_cache
+from thingitwrapper import aux, grouped_cache
 
 
 class AflowUnexpectedResult(Exception):

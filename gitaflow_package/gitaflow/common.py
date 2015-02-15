@@ -6,7 +6,7 @@ import itertools
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME, \
     RELEASE_NAME
-from gitwrapper.cached import misc, branch, commit, tag
+from thingitwrapper.cached import misc, branch, commit, tag
 from gitaflow.topic import TopicMerge, Topic
 
 

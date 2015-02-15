@@ -5,7 +5,7 @@ from gitaflow.common import say, die, check_iteration, check_current_branch, \
     consistency_check
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicMerge, TopicRevision
-from gitwrapper import commit
+from thingitwrapper import commit
 
 
 def find_dependent_topic_merges(merge, cb_merges):

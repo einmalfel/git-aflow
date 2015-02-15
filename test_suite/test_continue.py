@@ -5,7 +5,7 @@ import unittest
 
 from fixture import Fixture
 import utils
-from gitwrapper.cached import misc, commit
+from thingitwrapper.cached import misc, commit
 
 
 class ContinueTests(utils.LocalTest):
