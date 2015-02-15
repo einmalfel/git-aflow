@@ -60,6 +60,13 @@ def execute(cli_args=sys.argv[1:]):
         except FileNotFoundError:
             die('Git not found. You need to install it to use git-aflow')
 
+        if misc.get_config('user.email') is None:
+            die('Please set user.email config key for git (`git config '
+                '--global user.email "your@email.com"`). It is a good idea '
+                'to set also user.name (git will display it in a log along '
+                'with email). Git will refuse to commit anything until you '
+                'set user.email.')
+
         if args_namespace.subcommand == 'init':
             init.init_aflow(args_namespace.name)
         elif args_namespace.subcommand == 'start':
