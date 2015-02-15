@@ -14,12 +14,12 @@ def _checkout(ci, treeish):
     misc.checkout(treeish)
     new_ci = check_iteration()
     if not new_ci == ci:
-        say('Iteration switched from ' + ci + ' to ' + new_ci)
+        say('Iteration switched from', ci, 'to', new_ci)
     cb = branch.get_current()
     if cb:
-        say(cb + ' checked out.')
+        say(cb, 'checked out.')
     else:
-        say(treeish + ' checked out. You are in "detached HEAD" state now.')
+        say(treeish, 'checked out. You are in "detached HEAD" state now.')
 
 
 def checkout(name):
@@ -77,4 +77,4 @@ def checkout(name):
     if last_m:
         _checkout(ci, last_m.rev.SHA)
     else:
-        die('Failed to found ' + name + ' in iteration ' + ci + '.')
+        die('Failed to found', name, 'in iteration', ci + '.')
