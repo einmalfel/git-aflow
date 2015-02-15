@@ -5,7 +5,6 @@ from gitaflow.common import die, say, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, get_merges_and_reverts
-from gitaflow.debug import TestDebugState
 from gitwrapper.cached import commit, branch, misc
 
 
@@ -121,8 +120,6 @@ def continue_(name=None, unfinish=False):
                         die('Failed to revert (unexpected conflict) ' +
                             o.rev.get_branch_name() + '. ' + cd +
                             ' reset back to ' + fallback + '.')
-        except TestDebugState.AflowStopped:
-            raise
         except Exception:
             logging.error('Something went wrong while rebuilding develop, '
                           'restoring its state')

@@ -88,4 +88,4 @@ def execute(cli_args=sys.argv[1:]):
         elif args_namespace.subcommand == 'revert':
             revert.revert(args_namespace.name, args_namespace.dependencies)
 
-    die(None, 0)
+    exit(0)

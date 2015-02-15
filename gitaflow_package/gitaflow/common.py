@@ -6,21 +6,21 @@ import itertools
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME, \
     RELEASE_NAME
-from gitaflow.debug import TestDebugState
 from gitwrapper.cached import misc, branch, commit, tag
 from gitaflow.topic import TopicMerge, Topic
 
 
 def say(message):
     logging.info('Say to user: ' + message)
-    TestDebugState.output(message)
+    print(message)
 
 
-def die(message, exit_code=1):
+def die(message):
     if message:
         logging.info('Before exit say: ' + message)
-        TestDebugState.output(message)
-    TestDebugState.exit(exit_code)
+        exit(message)
+    else:
+        exit(1)
 
 
 def start_iteration(iteration_name):
