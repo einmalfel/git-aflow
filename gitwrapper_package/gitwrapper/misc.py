@@ -113,13 +113,13 @@ def get_merge_base(shas):
     return get_output(["git", "merge-base", "--octopus"] + shas)
 
 
-def get_diff(from_treeish, to_treeish, files=None):
+def get_diff(from_treeish, to_treeish, files=None, working_dir=None):
     """Returns changes of files between from_treeish and to_treeish. If files is
     None, return changes for all files.
     """
     # need '--' at the end because to_treeish may be interpreted as filename
     return get_output(["git", "diff", from_treeish, to_treeish, '--'] +
-                      (files if files else []))
+                      (files if files else []), cwd=working_dir)
 
 
 def add(path):
@@ -127,8 +127,8 @@ def add(path):
     invalidate('index')
 
 
-def rm(path):
-    call(['git', 'rm', '-f', path])
+def rm(path, recursively=False):
+    call(['git', 'rm', '-f'] + (['-r'] if recursively else []) + [path])
     invalidate('index')
 
 
