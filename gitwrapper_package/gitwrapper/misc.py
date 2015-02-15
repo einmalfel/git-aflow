@@ -6,7 +6,7 @@ import collections
 import sys
 
 from gitwrapper.aux import get_output, call, \
-    get_output_and_exit_code, GitUnexpectedError, check_01
+    get_output_and_exit_code, GitUnexpectedError, check_01, get_output_01
 
 
 if 'gitwrapper.cached' in sys.modules:
@@ -136,3 +136,18 @@ def rm(path, recursively=False):
 def init(bare=False):
     call(['git', 'init'] + (['--bare'] if bare else []))
     invalidate()
+
+
+def get_config(name, file=None):
+    """ Gets git configuration key. file could be global, local,
+    system or None (which means look in local first, then in global, then in
+    system).
+    Returns None if value is empty/invalid, raises exception on
+    other errors.
+    """
+    return get_output_01(
+        ['git', 'config'] + (['--' + file] if file else []) + [name])
+
+
+def set_config(name, value, file='local'):
+    call(['git', 'config', '--' + file, name, value])
