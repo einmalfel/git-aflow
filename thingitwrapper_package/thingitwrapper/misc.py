@@ -25,7 +25,7 @@ def is_working_tree_clean(untracked=False):
 
 
 def checkout(treeish):
-    call(['git', 'checkout'] + [treeish])
+    call(['git', 'checkout'] + [treeish] + ['--'])
     invalidate('branches', 'index')
 
 
