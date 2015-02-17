@@ -78,7 +78,7 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     """
     list_of_treeish = list(list_of_treeish)
     if not list_of_treeish:
-        return tuple()
+        return ()
     shas = get_output(['git', 'rev-list'] +
                       ['--date-order' if by_date else '--topo-order'] +
                       (['--reverse'] if reverse else []) +
@@ -86,7 +86,7 @@ def sort(list_of_treeish, by_date=False, reverse=False):
     sha_treeish = collections.defaultdict(list)
     for treeish in list_of_treeish:
         sha_treeish[rev_parse(treeish)].append(treeish)
-    return tuple(t for sha in shas for t in sha_treeish.get(sha, tuple()))
+    return tuple(t for sha in shas for t in sha_treeish.get(sha, ()))
 
 
 def is_valid_ref_name(name):
