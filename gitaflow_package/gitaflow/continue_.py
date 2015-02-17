@@ -5,7 +5,6 @@ from gitaflow.common import die, say, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, get_merges_and_reverts
-from gitaflow.debug import TestDebugState
 from thingitwrapper.cached import commit, branch, misc
 
 
@@ -35,8 +34,8 @@ def continue_(name=None, unfinish=False):
                                      i + ': ' + str(last_m))
                         break
             if not last_m:
-                die('Failed to find merges of ' + str(nr.topic) +
-                    ' in iterations: ' + ', '.join((ci,) + p_iters) + '.')
+                die('Failed to find merges of', str(nr.topic),
+                    'in iterations:', ', '.join((ci,) + p_iters) + '.')
     else:
         ci = check_iteration()
         cd = iteration.get_develop(ci)
@@ -63,8 +62,8 @@ def continue_(name=None, unfinish=False):
             last_m.rev.version + 1, ci)
     tb_name = new_r.get_branch_name()
     if branch.exists(tb_name):
-        die(tb_name + ' already exists. Use "git af checkout ' + tb_name +
-            '" to continue your work on topic')
+        die(tb_name + ' already exists. Use "git af checkout',
+            tb_name + '" to continue your work on topic')
     if not head == new_r.SHA:
         logging.info('Check working tree')
         check_working_tree_clean()
@@ -73,9 +72,8 @@ def continue_(name=None, unfinish=False):
         new_r.topic.get_all_merges()).rev.version
     if last_v_ever > new_r.version or (last_v_ever == new_r.version and
                                        not unfinish):
-        say('Please, note that ' +
-            new_r.topic.name + '_v' + str(new_r.version) +
-            ' is already present in other iteration(s), so changes you will '
+        say('Please, note that', new_r.topic.name + '_v' + str(new_r.version),
+            'is already present in other iteration(s), so changes you will '
             'make for this revision in current iteration should correspond to '
             'changes made for same revision in other iterations. You may '
             'also use "git af port" to bring commits of some revision from '
@@ -86,7 +84,7 @@ def continue_(name=None, unfinish=False):
                      ' is merged somewhere and rebuilding develop.')
         for b in MASTER_NAME, iteration.get_staging(ci):
             if commit.is_ancestor(new_r.SHA, b):
-                die(new_r.get_branch_name() + ' was previously merged in ' +
+                die(new_r.get_branch_name(), 'was previously merged in',
                     b + ", so it's impossible to unfinish it.")
         fallback = misc.rev_parse(cd)
         check_working_tree_clean()
@@ -103,26 +101,24 @@ def continue_(name=None, unfinish=False):
                 if isinstance(o, TopicMerge):
                     if commit.is_ancestor(new_r.SHA, o.get_original().rev.SHA):
                         branch.reset(fallback)
-                        die('Failed to continue ' +
-                            new_r.get_branch_name() +
-                            '. It is merged in ' + o.rev.get_branch_name() +
-                            ' which was later merged in ' + cd + '. ' + cd +
-                            ' reset back to ' + fallback + '.')
+                        die('Failed to continue',
+                            new_r.get_branch_name() + '. It is merged in',
+                            o.rev.get_branch_name(),
+                            'which was later merged in', cd + '.', cd,
+                            'reset back to', fallback + '.')
                     # original merge could be reduced, we need it's rev.SHA
                     # take description/type from the last non reverted merge
                     if not o.get_original().merge(o.description, o.type):
                         branch.reset(fallback)
-                        die('Failed to merge (unexpected conflict) ' +
-                            o.rev.get_branch_name() + '. ' + cd +
-                            ' reset back to ' + fallback + '.')
+                        die('Failed to merge (unexpected conflict)',
+                            o.rev.get_branch_name() + '.', cd, 'reset back to',
+                            fallback + '.')
                 else:
                     if not o.revert():
                         branch.reset(fallback)
-                        die('Failed to revert (unexpected conflict) ' +
-                            o.rev.get_branch_name() + '. ' + cd +
-                            ' reset back to ' + fallback + '.')
-        except TestDebugState.AflowStopped:
-            raise
+                        die('Failed to revert (unexpected conflict)',
+                            o.rev.get_branch_name() + '.', cd, 'reset back to',
+                            fallback + '.')
         except Exception:
             logging.error('Something went wrong while rebuilding develop, '
                           'restoring its state')

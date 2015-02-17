@@ -6,28 +6,29 @@ import itertools
 from gitaflow import iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME, \
     RELEASE_NAME
-from gitaflow.debug import TestDebugState
 from thingitwrapper.cached import misc, branch, commit, tag
 from gitaflow.topic import TopicMerge, Topic
 
 
-def say(message):
-    logging.info('Say to user: ' + message)
-    TestDebugState.output(message)
+def say(*messages):
+    logging.info('Say to user: ' + ' '.join(messages))
+    print(*messages)
 
 
-def die(message, exit_code=1):
-    if message:
-        logging.info('Before exit say: ' + message)
-        TestDebugState.output(message)
-    TestDebugState.exit(exit_code)
+def die(*messages):
+    if messages:
+        messages = ' '.join(messages)
+        logging.info('Before exit say: ' + messages)
+        exit(messages)
+    else:
+        exit(1)
 
 
 def start_iteration(iteration_name):
     for tag_ in tag.find_by_target(MASTER_NAME):
         if iteration.is_iteration(tag_):
-            die('There is already an iteration ' + tag_ +
-                ' started from the top of master branch')
+            die('There is already an iteration', tag_,
+                'started from the top of master branch')
     if not iteration.is_valid_iteration_name(iteration_name):
         die('Please, correct your iteration name. "..", "~", "^", ":", "?",' +
             ' "*", "[", "@", "\", spaces and ASCII control characters' +
@@ -35,11 +36,11 @@ def start_iteration(iteration_name):
     develop_name = iteration.get_develop(iteration_name)
     staging_name = iteration.get_staging(iteration_name)
     if tag.exists(iteration_name):
-        die('Cannot start iteration, tag ' + iteration_name + ' exists')
+        die('Cannot start iteration, tag', iteration_name, 'exists')
     if branch.exists(develop_name):
-        die('Cannot start iteration, branch ' + develop_name + ' exists')
+        die('Cannot start iteration, branch', develop_name, 'exists')
     if branch.exists(staging_name):
-        die('Cannot start iteration, branch ' + staging_name + ' exists')
+        die('Cannot start iteration, branch', staging_name + ' exists')
     try:
         tag.create(iteration_name, MASTER_NAME)
         branch.create(develop_name, MASTER_NAME)
@@ -50,7 +51,7 @@ def start_iteration(iteration_name):
         branch.delete(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
         raise
-    say('Iteration ' + iteration_name + ' created successfully')
+    say('Iteration', iteration_name, 'created successfully')
     return True
 
 
@@ -76,8 +77,8 @@ def consistency_check(list_of_treeish):
         for m1, m2 in itertools.combinations(merges[topic], 2):
             if m1.rev.version == m2.rev.version:
                 if not m1.rev.SHA == m2.rev.SHA:
-                    say(m1.rev.get_branch_name() + ' was merged into ' +
-                        m1.origin + '(merge SHA: ' + m1.SHA + ') and into ' +
+                    say(m1.rev.get_branch_name(), 'was merged into',
+                        m1.origin + '(merge SHA: ' + m1.SHA + ') and into',
                         m2.origin + '(merge SHA: ' + m2.SHA + ') with '
                         'different head SHA (' + m1.rev.SHA + ' and ' +
                         m2.rev.SHA + ').')
@@ -87,11 +88,11 @@ def consistency_check(list_of_treeish):
                     m1, m2 = m2, m1
                 # assuming m2 is the newer revision as we got here
                 if not commit.is_based_on(m1.rev.SHA, m2.rev.SHA):
-                    say(m2.rev.get_branch_name() + ' merged into ' + m2.origin +
-                        '(merge SHA: ' + m2.SHA + ') is newer version of ' +
-                        m1.rev.get_branch_name() + ' merged into ' + m1.origin +
-                        '(merge SHA: ' + m1.SHA + '), but newer one is not ' +
-                        'based on elder.')
+                    say(m2.rev.get_branch_name(), 'merged into', m2.origin +
+                        '(merge SHA: ' + m2.SHA + ') is newer version of',
+                        m1.rev.get_branch_name(), 'merged into',
+                        m1.origin + '(merge SHA: ' + m1.SHA +
+                        '), but newer one is not based on elder.')
                     result = False
 
     if not result:
@@ -117,8 +118,8 @@ def check_untracked_not_differ(treeish):
                     frozenset(misc.list_files_differ('HEAD', treeish)))
     if intersection:
         die('Error: you have some untracked files which you may loose when ' +
-            'switching to ' + treeish + '. Please, delete or commit them. ' +
-            'Here they are: ' + ', '.join(intersection) + '.')
+            'switching to', treeish + '. Please, delete or commit them.',
+            'Here they are:', ', '.join(intersection) + '.')
 
 
 def default_sources():
@@ -130,19 +131,17 @@ def default_sources():
         sources = [MASTER_NAME, STAGING_NAME]
     else:
         sources = [DEVELOP_NAME]
-    say('Using default topic source(s): ' + ', '.join(sources))
+    say('Using default topic source(s):', ', '.join(sources))
     return sources
 
 
 def check_topic_name_valid(name):
     if not Topic.is_valid_tb_name(name):
-        die('Error: invalid topic name ' + name +
-            '. "..", "~", "^", ":", "?", "*", ' +
-            '"[", "@", "\", spaces and ASCII control characters' +
-            ' are not allowed. */' + RELEASE_NAME + '/*, ' +
-            '*/' + DEVELOP_NAME + ', */' + STAGING_NAME + ' and ' +
-            MASTER_NAME + ' are not ' + 'allowed too. Input something '
-            'like "fix_issue18" or "do_api_refactoring"')
+        die('Error: invalid topic name', name + '. "..", "~", "^", ":", "?",',
+            '"*", "[", "@", "\", spaces and ASCII control characters are not',
+            'allowed. */' + RELEASE_NAME + '/*, */' + DEVELOP_NAME + ', */' +
+            STAGING_NAME, 'and', MASTER_NAME + ' are not allowed too. Input',
+            'something like "fix_issue18" or "do_api_refactoring"')
 
 
 def complete_branch_name(name, iteration_):
@@ -153,7 +152,7 @@ def complete_branch_name(name, iteration_):
         if branch.exists(iter_n):
             return iter_n
         else:
-            die('Cannot find branch ' + iter_n + ' or ' + name + '.')
+            die('Cannot find branch', iter_n, 'or', name + '.')
 
 
 def check_current_branch():
