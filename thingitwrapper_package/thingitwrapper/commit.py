@@ -183,3 +183,10 @@ def commit(message=None, allow_empty=False):
         else:
             raise GitUnexpectedError('Git commit returns ' + code +
                                      '. Output: ' + output)
+
+
+def get_root_commits():
+    """Requires Git 1.7.4.2"""
+    return get_output(
+        ['git', 'rev-list', '--max-parents=0', 'HEAD']).splitlines()
+
