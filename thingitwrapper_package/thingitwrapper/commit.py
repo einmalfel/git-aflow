@@ -92,6 +92,11 @@ def get_parent(treeish, number=1):
                           treeish + '^' + str(number)])
 
 
+def get_parents(treeish):
+    return re.findall(' (\w+)', get_output(['git', 'rev-list', '-n1',
+                                            '--parents', treeish, '--']))
+
+
 def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
                         match_all=False):
     """Get list of commits between treeish1 and treeish2 in form of list of
