@@ -79,11 +79,11 @@ def is_based_on(ancestor, descendant):
         # git rev-list --first-parent will print some commits even if ancestor
         # is not reachable via traverse by first parent, so check if ancestor
         # is indeed first parent of last commit rev-list returned
-        return misc.rev_parse(ancestor) == get_parent(rev_list[-1])
+        return misc.rev_parse(ancestor) == get_parent(rev_list[-1], 1)
 
 
 @cache('branches', 'tags', 'commits')  # any ref may be given
-def get_parent(treeish, number=1):
+def get_parent(treeish, number):
     """Get parent commit SHA. If commit is merge commit, use number to select
     which parent to return. Parent #1 belongs to merge target. If specified
     parent doesn't exist, returns None
