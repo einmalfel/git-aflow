@@ -5,7 +5,7 @@ import unittest
 
 from fixture import Fixture
 import utils
-from gitwrapper.cached import misc, branch
+from gitwrapper.cached import misc, branch, commit
 
 
 class CheckoutTests(utils.LocalTest):
@@ -68,6 +68,17 @@ class CheckoutTests(utils.LocalTest):
             'Error: your working tree is dirty. Please, stash or reset your '
             'changes before proceeding.',
             'checkout', 'develop')
+
+    def test_default_v_for_branch(self):
+        Fixture.from_scheme("""1:""").actualize()
+        self.assert_aflow_returns_0(None, 'start', 'a')
+        commit.commit('No matter', allow_empty=True)
+        topic_head = commit.get_current_sha()
+        self.assert_aflow_returns_0(None, 'finish')
+        branch.create('1/a')
+        self.assert_aflow_returns_0(
+            topic_head + ' checked out. You are in "detached HEAD" state now.',
+            'checkout', '1/a_v1')
 
 
 if __name__ == '__main__':
