@@ -16,10 +16,10 @@ class GitUnexpectedError(Exception):
     """Git subprocess returns unexpected error"""
 
 
-def get_output_01(command_and_args):
+def get_output_01(command_and_args, **p_args):
     """Returns command output if it runs successfully, None if it returns 1"""
     if debug_mode:
-        output, exit_code = get_output_and_exit_code(command_and_args)
+        output, exit_code = get_output_and_exit_code(command_and_args, **p_args)
         if exit_code == 0:
             return output
         elif exit_code == 1:
@@ -30,8 +30,9 @@ def get_output_01(command_and_args):
                                      '. 0 or 1 expected. Output: ' + output)
     else:
         try:
-            return subprocess.check_output(
-                command_and_args, stderr=subprocess.STDOUT).decode()[:-1]
+            return subprocess.check_output(command_and_args,
+                                           stderr=subprocess.STDOUT,
+                                           **p_args).decode()[:-1]
         except subprocess.CalledProcessError as error:
             if error.returncode == 1:
                 return None
@@ -39,9 +40,9 @@ def get_output_01(command_and_args):
                 raise
 
 
-def check_01(command_and_args):
+def check_01(command_and_args, **p_args):
     if debug_mode:
-        output, exit_code = get_output_and_exit_code(command_and_args)
+        output, exit_code = get_output_and_exit_code(command_and_args, **p_args)
         if exit_code == 0:
             return True
         elif exit_code == 1:
@@ -53,7 +54,8 @@ def check_01(command_and_args):
     else:
         exit_code = subprocess.call(command_and_args,
                                     stderr=DEVNULL,
-                                    stdout=DEVNULL)
+                                    stdout=DEVNULL,
+                                    **p_args)
         if exit_code == 0:
             return True
         elif exit_code == 1:
@@ -63,9 +65,9 @@ def check_01(command_and_args):
                                      str(exit_code) + '. 0 or 1 expected.')
 
 
-def call(command_and_args):
+def call(command_and_args, **p_args):
     if debug_mode:
-        output, exit_code = get_output_and_exit_code(command_and_args)
+        output, exit_code = get_output_and_exit_code(command_and_args, **p_args)
         if exit_code != 0:
             raise GitUnexpectedError(' '.join(command_and_args) + ' returns ' +
                                      str(exit_code) + '. Zero expected. ' +
@@ -73,12 +75,13 @@ def call(command_and_args):
     else:
         subprocess.check_call(command_and_args,
                               stderr=DEVNULL,
-                              stdout=DEVNULL)
+                              stdout=DEVNULL,
+                              **p_args)
 
 
-def get_output(command_and_args):
+def get_output(command_and_args, **p_args):
     if debug_mode:
-        output, exit_code = get_output_and_exit_code(command_and_args)
+        output, exit_code = get_output_and_exit_code(command_and_args, **p_args)
         if exit_code != 0:
             raise GitUnexpectedError(' '.join(command_and_args) + ' returns ' +
                                      str(exit_code) + '. Zero expected. ' +
@@ -87,24 +90,27 @@ def get_output(command_and_args):
             return output
     else:
         return subprocess.check_output(
-            command_and_args, stderr=subprocess.STDOUT).decode()[:-1]
+            command_and_args, stderr=subprocess.STDOUT, **p_args).decode()[:-1]
 
 
-def get_exit_code(command_and_args):
+def get_exit_code(command_and_args, **p_args):
     if debug_mode:
-        return get_output_and_exit_code(command_and_args)[1]
+        return get_output_and_exit_code(command_and_args, **p_args)[1]
     else:
         return subprocess.call(command_and_args,
                                stderr=DEVNULL,
-                               stdout=DEVNULL)
+                               stdout=DEVNULL,
+                               **p_args)
 
 
-def get_output_and_exit_code(command_and_args):
+def get_output_and_exit_code(command_and_args, **p_args):
     if debug_mode:
-        logging.debug('Calling ' + ' '.join(command_and_args))
+        logging.debug('Calling ' + ' '.join(command_and_args) +
+                      ('. Popen args: ' + str(p_args) if p_args else ''))
     try:
-        result = subprocess.check_output(
-            command_and_args, stderr=subprocess.STDOUT).decode()[:-1], 0
+        result = subprocess.check_output(command_and_args,
+                                         stderr=subprocess.STDOUT,
+                                         **p_args).decode()[:-1], 0
     except subprocess.CalledProcessError as error:
         result = (error.output.decode()[:-1], error.returncode)
     except FileNotFoundError:
