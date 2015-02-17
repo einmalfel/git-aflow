@@ -11,7 +11,7 @@ from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
     STAGING_NAME, EUF_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
-from gitwrapper.cached import misc, branch, commit
+from thingitwrapper.cached import misc, branch, commit
 
 
 def finish(description, type_, name):
