@@ -9,4 +9,4 @@ are heads which do not conflict with each other, and 0 otherwise.
 Both function and script accept arguments in tree-ish form, for instance:
 master, 123abcde(SHA), HEAD^^.
 
-Written and tested with Python 3.3 runtime.
+Written and tested with Python 3.2 runtime.
