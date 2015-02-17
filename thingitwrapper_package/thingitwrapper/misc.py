@@ -55,7 +55,7 @@ def in_git_repo():
                            'parent directories):'):
         return False
     else:
-        raise GitUnexpectedError('Strange git rev-parse --git-dir output :' +
+        raise GitUnexpectedError('Unexpected git rev-parse --git-dir output :' +
                                  output + ' Exit-code: ' + str(code))
 
 
