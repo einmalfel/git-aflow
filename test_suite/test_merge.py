@@ -5,7 +5,7 @@ import unittest
 
 from fixture import Fixture
 import utils
-from gitwrapper.cached import commit, misc, branch
+from thingitwrapper.cached import commit, misc, branch
 
 
 class MergeTests(utils.LocalTest):

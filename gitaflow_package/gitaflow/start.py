@@ -4,7 +4,7 @@ from gitaflow import iteration
 from gitaflow.common import die, say, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
 from gitaflow.topic import Topic
-from gitwrapper.cached import misc, branch
+from thingitwrapper.cached import misc, branch
 
 
 def start(name):

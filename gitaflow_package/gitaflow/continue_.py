@@ -6,7 +6,7 @@ from gitaflow.common import die, say, check_iteration, \
 from gitaflow.constants import MASTER_NAME
 from gitaflow.topic import TopicRevision, TopicMerge, get_merges_and_reverts
 from gitaflow.debug import TestDebugState
-from gitwrapper.cached import commit, branch, misc
+from thingitwrapper.cached import commit, branch, misc
 
 
 def continue_(name=None, unfinish=False):
