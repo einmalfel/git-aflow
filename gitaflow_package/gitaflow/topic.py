@@ -7,8 +7,8 @@ import collections
 
 from thingitwrapper.grouped_cache import cache
 from thingitwrapper.cached import misc, branch, commit
-from gitaflow import iteration
-from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME
+from gitaflow.iteration import Iteration
+from gitaflow.constants import FIX_NAME, DEV_NAME, EUF_NAME, MASTER_NAME
 
 
 class MergeNonConflictError(Exception):
@@ -76,7 +76,7 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
     def get_all_merges_in(self, treeish):
         """ Searches for merges of this topic between RP and specified treeish
         """
-        iter_name = iteration.get_iteration_by_treeish(treeish)
+        iter_name = Iteration.get_by_treeish(treeish)
         logging.debug('Searching ' + self.name + ' in ' + str(treeish))
         shas = commit.get_commits_between(
             iter_name, treeish, True,
@@ -92,10 +92,10 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         """ Searches for merges of this topic into all develops, stagings and
         master branches
         """
-        iters = iteration.get_iterations()
+        iters = Iteration.get_all()
         heads = ['master']
-        heads.extend(iteration.get_develop(i) for i in iters)
-        heads.extend(iteration.get_staging(i) for i in iters)
+        heads.extend(i.get_develop() for i in iters)
+        heads.extend(i.get_staging() for i in iters)
         logging.info('Searching ' + self.name + ' in branches ' + str(heads))
         shas = commit.find(heads, True, ["^Merge branch '([^/]+/)?" +
                                          self.name + "(_v[0-9]+)?'.*$"])
@@ -104,9 +104,9 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         for sha in shas:
             m = TopicMerge.from_treeish(sha)
             if (m and (m.rev.topic == self) and (
-                    iteration.is_master(m.merge_target) or
-                    iteration.is_develop(m.merge_target) or
-                    iteration.is_staging(m.merge_target))):
+                    MASTER_NAME == m.merge_target or
+                    Iteration.is_develop(m.merge_target) or
+                    Iteration.is_staging(m.merge_target))):
                 result.append(m)
         logging.debug('After checks: ' + str(result))
         return result
@@ -132,10 +132,9 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         else:
             return False
         if (not misc.is_valid_ref_name(branch_name) or
-                iteration.is_develop(branch_name) or
-                iteration.is_master(branch_name) or
-                iteration.is_release(branch_name) or
-                iteration.is_staging(branch_name)):
+                Iteration.is_develop(branch_name) or
+                branch_name == MASTER_NAME or
+                Iteration.is_staging(branch_name)):
             return False
         return True
 
@@ -182,7 +181,7 @@ class TopicRevision(collections.namedtuple('TopicRevisionT', (
     def __str__(self):
         s = str(self.topic)
         if self.iteration:
-            s = self.iteration + '/' + s
+            s = self.iteration.name + '/' + s
         if self.version:
             if self.default_version:
                 s += '(_v' + str(self.version) + ')'
@@ -228,11 +227,9 @@ class TopicRevision(collections.namedtuple('TopicRevisionT', (
         Returns None if conflict happened, TopicMerge otherwise.
         Raises MergeNonConflictError for other errors
         """
-        iter_ = iteration.get_current_iteration()
-        commits = commit.get_commits_between(iter_, commit.get_current_sha(),
-                                             False,
-                                             ['^Revert "Merge branch .*"$',
-                                              "^Merge branch .*$"])
+        commits = commit.get_commits_between(
+            Iteration.get_current().name, commit.get_current_sha(), False,
+            ['^Revert "Merge branch .*"$', "^Merge branch .*$"])
 
         # Before merging new revision we should merge revisions that:
         #  - are revisions of self.topic
@@ -320,7 +317,8 @@ class TopicRevision(collections.namedtuple('TopicRevisionT', (
     @classmethod
     def from_branch_name(cls, branch_name, sha=None, default_iteration=None):
         n, v, i = cls.parse_branch_name(branch_name)
-        return TopicRevision(Topic(n), sha, v, i if i else default_iteration)
+        return TopicRevision(Topic(n), sha, v,
+                             Iteration(i) if i else default_iteration)
 
     @classmethod
     def parse_branch_name(cls, branch_name):
@@ -333,17 +331,18 @@ class TopicRevision(collections.namedtuple('TopicRevisionT', (
                       (str(result.groups()) if result else ' failed'))
         if not result:
             return None, None, None
-        iteration_, name, version = result.groups()
+        iter_name, topic_name, version = result.groups()
 
         # TB names may contain slash
-        if iteration_ and not iteration.is_iteration(iteration_):
-            name = iteration_ + '/' + name
-            iteration_ = None
+        if iter_name and not Iteration(iter_name).valid_and_exists():
+            topic_name = iter_name + '/' + topic_name
+            iter_name = None
 
-        return name, version, iteration_
+        return topic_name, version, iter_name
 
     def get_branch_name(self):
-        return self.iteration + '/' + self.topic.name + '_v' + str(self.version)
+        return self.iteration.name + '/' + self.topic.name + '_v' + str(
+            self.version)
 
 
 class TopicMerge(collections.namedtuple(
@@ -423,9 +422,9 @@ class TopicMerge(collections.namedtuple(
         if not headline:
             return None
         branch_name, target = cls.parse_headline(headline)
-        default_i = iteration.parse_branch_name(target)[0] if target else None
+        default_i = Iteration.from_branch_name(target) if target else None
         if not default_i:
-            default_i = iteration.get_iteration_by_treeish(treeish)
+            default_i = Iteration.get_by_treeish(treeish)
         revision = TopicRevision.from_branch_name(branch_name,
                                                   commit.get_parent(treeish, 2),
                                                   default_i)
@@ -435,17 +434,17 @@ class TopicMerge(collections.namedtuple(
     @cache('tags', 'branches')
     def get_all_merges_in(cls, treeish):
         """ Returns all (including reverted) in BP..treeish"""
-        iter_name = iteration.get_iteration_by_treeish(treeish)
-        shas = commit.get_commits_between(iter_name, treeish, True,
-                                          ["^Merge branch .*$"])
+        shas = commit.get_commits_between(
+            Iteration.get_by_treeish(treeish).name,
+            treeish, True, ["^Merge branch .*$"])
         return tuple(m for m in (cls.from_treeish(sha) for sha in shas) if m)
 
     @staticmethod
     def get_reverted_merges_in(treeish, original_only=False):
-        iter_name = iteration.get_iteration_by_treeish(treeish)
         result = []
-        commits = commit.get_commits_between(iter_name, treeish, False,
-                                             ['^Revert "Merge branch .*"$'])
+        commits = commit.get_commits_between(
+            Iteration.get_by_treeish(treeish).name, treeish, False,
+            ['^Revert "Merge branch .*"$'])
         for sha in commits:
             revert = TopicRevert.from_treeish(sha)
             if revert:
@@ -465,7 +464,7 @@ class TopicMerge(collections.namedtuple(
         merges contain actual type/descriptions
         """
         if not treeish1:
-            treeish1 = iteration.get_iteration_by_treeish(treeish2)
+            treeish1 = Iteration.get_by_treeish(treeish2).name
         assert treeish1
         result = []
         commits = commit.get_commits_between(treeish1, treeish2, True,
@@ -508,7 +507,7 @@ class TopicMerge(collections.namedtuple(
     @staticmethod
     def get_merge_message(revision, target, type_=None, description=None):
         result = "Merge branch '" + revision.get_branch_name() + "'"
-        if not iteration.is_master(target):
+        if not target == MASTER_NAME:
             result += ' into ' + target
         result = result + linesep * 2 + (type_ if type_ else EUF_NAME)
         if description:
@@ -536,17 +535,18 @@ class TopicMerge(collections.namedtuple(
         if self.rev.iteration:
             ci = self.rev.iteration
         else:
-            if self.merge_target and not iteration.is_master(self.merge_target):
-                ci = iteration.get_iteration_by_branch(self.merge_target)
+            if self.merge_target and not self.merge_target == MASTER_NAME:
+                ci = Iteration.get_by_branch(self.merge_target)
             if not ci:
-                ci = iteration.get_iteration_by_sha(self.SHA)
+                ci = Iteration.get_by_sha(self.SHA)
         if not ci:
             raise IncompleteMergeObjectError(
                 'Unable to find iteration of merge ' + str(self))
 
         for sha in commit.get_commits_between(
-                ci, self.SHA, True, ["^Merge branch '([^/]+/)?" +
-                                     self.rev.topic.name + "(_v[0-9]+)?'.*$"]):
+                ci.name, self.SHA, True, ["^Merge branch '([^/]+/)?" +
+                                          self.rev.topic.name +
+                                          "(_v[0-9]+)?'.*$"]):
             merge = self.__class__.from_treeish(sha)
             if merge and merge.rev == self.rev and merge.rev.SHA:
                 return merge
@@ -590,7 +590,7 @@ class TopicRevert(collections.namedtuple('TopicRevertT', (
         return TopicRevert(
             TopicRevision.from_branch_name(
                 branch_name,
-                default_iteration=iteration.get_iteration_by_treeish(treeish)),
+                default_iteration=Iteration.get_by_treeish(treeish)),
             misc.rev_parse(treeish),
             target,
             sha)
