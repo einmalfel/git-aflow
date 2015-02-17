@@ -181,7 +181,7 @@ def commit(message=None, allow_empty=False):
             logging.info('Commit failed due to unresolved conflicts')
             return False
         else:
-            raise GitUnexpectedError('Git commit returns ' + code +
+            raise GitUnexpectedError('Git commit returns ' + str(code) +
                                      '. Output: ' + output)
 
 
