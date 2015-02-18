@@ -29,7 +29,7 @@ class Iteration(collections.namedtuple('IterationT', ('name',))):
     def from_branch_name(cls, branch_name):
         if '/' not in branch_name:
             return None
-        new = cls(branch_name.split('/', maxsplit=1)[0])
+        new = cls(branch_name.split('/', 1)[0])
         return new if new.valid_and_exists() else None
 
     def name_valid(self):
@@ -121,12 +121,12 @@ class Iteration(collections.namedtuple('IterationT', ('name',))):
     def is_staging(branch_name):
         if '/' not in branch_name:
             return None
-        i_name, staging = branch_name.split('/', maxsplit=1)
+        i_name, staging = branch_name.split('/', 1)
         return Iteration(i_name).valid_and_exists() and staging == STAGING_NAME
 
     @staticmethod
     def is_develop(branch_name):
         if '/' not in branch_name:
             return None
-        i_name, staging = branch_name.split('/', maxsplit=1)
+        i_name, staging = branch_name.split('/', 1)
         return Iteration(i_name).valid_and_exists() and staging == DEVELOP_NAME
