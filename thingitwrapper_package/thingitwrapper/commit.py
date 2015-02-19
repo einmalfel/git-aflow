@@ -79,17 +79,22 @@ def is_based_on(ancestor, descendant):
         # git rev-list --first-parent will print some commits even if ancestor
         # is not reachable via traverse by first parent, so check if ancestor
         # is indeed first parent of last commit rev-list returned
-        return misc.rev_parse(ancestor) == get_parent(rev_list[-1])
+        return misc.rev_parse(ancestor) == get_parent(rev_list[-1], 1)
 
 
 @cache('branches', 'tags', 'commits')  # any ref may be given
-def get_parent(treeish, number=1):
+def get_parent(treeish, number):
     """Get parent commit SHA. If commit is merge commit, use number to select
     which parent to return. Parent #1 belongs to merge target. If specified
     parent doesn't exist, returns None
     """
     return get_output_01(['git', 'rev-parse', '-q', '--verify',
                           treeish + '^' + str(number)])
+
+
+def get_parents(treeish):
+    return re.findall(' (\w+)', get_output(['git', 'rev-list', '-n1',
+                                            '--parents', treeish, '--']))
 
 
 def get_commits_between(treeish1, treeish2, reverse=False, regexps=None,
@@ -176,5 +181,12 @@ def commit(message=None, allow_empty=False):
             logging.info('Commit failed due to unresolved conflicts')
             return False
         else:
-            raise GitUnexpectedError('Git commit returns ' + code +
+            raise GitUnexpectedError('Git commit returns ' + str(code) +
                                      '. Output: ' + output)
+
+
+def get_root_commits():
+    """Requires Git 1.7.4.2"""
+    return get_output(
+        ['git', 'rev-list', '--max-parents=0', 'HEAD']).splitlines()
+
