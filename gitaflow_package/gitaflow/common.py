@@ -3,7 +3,7 @@
 import logging
 import itertools
 
-from gitaflow import iteration
+from gitaflow.iteration import Iteration
 from gitaflow.constants import STAGING_NAME, MASTER_NAME, DEVELOP_NAME, \
     RELEASE_NAME
 from thingitwrapper.cached import misc, branch, commit, tag
@@ -26,15 +26,16 @@ def die(*messages):
 
 def start_iteration(iteration_name):
     for tag_ in tag.find_by_target(MASTER_NAME):
-        if iteration.is_iteration(tag_):
+        if Iteration(tag_).valid_and_exists():
             die('There is already an iteration', tag_,
                 'started from the top of master branch')
-    if not iteration.is_valid_iteration_name(iteration_name):
+    new = Iteration(iteration_name)
+    if not new.name_valid():
         die('Please, correct your iteration name. "..", "~", "^", ":", "?",' +
-            ' "*", "[", "@", "\", spaces and ASCII control characters' +
+            ' "*", "[", "@", "\", "/", spaces and ASCII control characters' +
             ' are not allowed. Input something like "iter_1" or "start"')
-    develop_name = iteration.get_develop(iteration_name)
-    staging_name = iteration.get_staging(iteration_name)
+    develop_name = new.get_develop()
+    staging_name = new.get_staging()
     if tag.exists(iteration_name):
         die('Cannot start iteration, tag', iteration_name, 'exists')
     if branch.exists(develop_name):
@@ -100,7 +101,7 @@ def consistency_check(list_of_treeish):
 
 
 def check_iteration():
-    ci = iteration.get_current_iteration()
+    ci = Iteration.get_current()
     if ci is None:
         die('Error: could not get current iteration, we are probably not in ' +
             'git-aflow repo.')
@@ -125,10 +126,8 @@ def check_untracked_not_differ(treeish):
 def default_sources():
     cb = branch.get_current()
     assert cb
-    if iteration.is_master(cb):
+    if cb == MASTER_NAME:
         sources = [STAGING_NAME]
-    elif iteration.is_release(cb):
-        sources = [MASTER_NAME, STAGING_NAME]
     else:
         sources = [DEVELOP_NAME]
     say('Using default topic source(s):', ', '.join(sources))
@@ -148,7 +147,7 @@ def complete_branch_name(name, iteration_):
     if branch.exists(name):
         return name
     else:
-        iter_n = iteration_ + '/' + name
+        iter_n = iteration_.name + '/' + name
         if branch.exists(iter_n):
             return iter_n
         else:

@@ -1,9 +1,9 @@
 import logging
 
-from gitaflow import iteration
 from gitaflow.common import say, die, check_iteration, check_current_branch, \
     consistency_check
 from gitaflow.constants import MASTER_NAME
+from gitaflow.iteration import Iteration
 from gitaflow.topic import TopicMerge, TopicRevision
 from thingitwrapper import commit
 
@@ -90,16 +90,16 @@ def revert(names, dependencies):
                  '. Checking upstream..')
 
     # check topics to revert aren't effectively merged in upstream branches
-    if iteration.is_develop(cb):
-        upstream = iteration.get_staging(ci)
+    if Iteration.is_develop(cb):
+        upstream = ci.get_staging()
         upstream_merges = TopicMerge.get_effective_merges_in(upstream)
-    elif iteration.is_staging(cb):
+    elif Iteration.is_staging(cb):
         upstream = MASTER_NAME
         # pick merges from BP of next iteration if present,
         # from master otherwise
-        next_iteration = iteration.get_next(ci)
+        next_iteration = ci.next()
         upstream_merges = TopicMerge.get_effective_merges_in(
-            next_iteration if next_iteration else upstream)
+            next_iteration.name if next_iteration else upstream)
     else:
         upstream = upstream_merges = None
     if upstream:

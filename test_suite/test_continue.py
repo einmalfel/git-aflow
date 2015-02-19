@@ -65,7 +65,7 @@ Branch 1/b_v1 deleted.""",
         commit.commit('No matter', allow_empty=True)
         self.assert_aflow_returns_0(None, 'finish')
         self.assert_aflow_dies_with(
-            'Failed to find merges of b in iterations: 2, 1.',
+            'Failed to find merges of b in 2 and previous iterations.',
             'continue', 'b')
         self.assert_aflow_returns_0(
             'Please, note that a_v2'

@@ -1,7 +1,7 @@
 """Git-aflow repo initialization functionality"""
 
 from gitaflow.common import say, die, start_iteration
-from gitaflow.iteration import get_iterations
+from gitaflow.iteration import Iteration
 
 
 def init_aflow(iteration_name):
@@ -15,4 +15,4 @@ def init_aflow(iteration_name):
 
 
 def in_aflow_repo():
-    return bool(get_iterations())
+    return bool(Iteration.get_all())
