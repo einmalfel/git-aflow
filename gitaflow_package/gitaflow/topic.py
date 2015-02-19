@@ -77,6 +77,7 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         """ Searches for merges of this topic between RP and specified treeish
         """
         iter_name = Iteration.get_by_treeish(treeish)
+        assert iter_name
         logging.debug('Searching ' + self.name + ' in ' + str(treeish))
         shas = commit.get_commits_between(
             iter_name, treeish, True,
@@ -434,17 +435,19 @@ class TopicMerge(collections.namedtuple(
     @cache('tags', 'branches')
     def get_all_merges_in(cls, treeish):
         """ Returns all (including reverted) in BP..treeish"""
-        shas = commit.get_commits_between(
-            Iteration.get_by_treeish(treeish).name,
-            treeish, True, ["^Merge branch .*$"])
+        iteration = Iteration.get_by_treeish(treeish)
+        assert iteration
+        shas = commit.get_commits_between(iteration.name, treeish, True,
+                                          ["^Merge branch .*$"])
         return tuple(m for m in (cls.from_treeish(sha) for sha in shas) if m)
 
     @staticmethod
     def get_reverted_merges_in(treeish, original_only=False):
         result = []
-        commits = commit.get_commits_between(
-            Iteration.get_by_treeish(treeish).name, treeish, False,
-            ['^Revert "Merge branch .*"$'])
+        iteration = Iteration.get_by_treeish(treeish)
+        assert iteration
+        commits = commit.get_commits_between(iteration.name, treeish, False,
+                                             ['^Revert "Merge branch .*"$'])
         for sha in commits:
             revert = TopicRevert.from_treeish(sha)
             if revert:
