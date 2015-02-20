@@ -1,7 +1,8 @@
 import logging
 import itertools
 
-from gitaflow import iteration
+from gitaflow.constants import MASTER_NAME
+from gitaflow.iteration import Iteration
 from gitaflow.topic import TopicRevision, TopicMerge, \
     MergeNonConflictError
 from gitaflow.common import say, die, consistency_check, check_iteration, \
@@ -22,14 +23,14 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     ci = check_iteration()
 
-    if iteration.is_develop(cb):
+    if Iteration.is_develop(cb):
         die('You cannot merge into develop, use git af topic finish instead')
 
     if not sources:
         sources = default_sources()
     sources = tuple(complete_branch_name(s, ci) for s in sources)
     for source in sources:
-        if not iteration.get_iteration_by_branch(source) == ci:
+        if not Iteration.get_by_branch(source) == ci:
             die('Merge sources should belong to current iteration.', source,
                 "doesn't.")
 
@@ -37,11 +38,10 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
 
     # Topics in own_merges will be excluded from merge
     own_merges = list(TopicMerge.get_effective_merges_in(
-        cb, treeish1=iteration.get_first_iteration()))
-    if (not iteration.is_master(cb) and not iteration.is_staging(cb) and
-            not iteration.is_release(cb) and
-            not commit.get_current_sha() == misc.rev_parse(ci)):
-        for m in TopicMerge.get_all_merges_in(iteration.get_develop()):
+        cb, treeish1=Iteration.get_first().name))
+    if (cb != MASTER_NAME and not Iteration.is_staging(cb) and
+            not commit.get_current_sha() == misc.rev_parse(ci.name)):
+        for m in TopicMerge.get_all_merges_in(ci.get_develop()):
             if m.rev.SHA and (commit.is_based_on(m.rev.SHA, cb) or
                               m.rev.SHA == misc.rev_parse(cb)):
                 own_merges.append(m)
@@ -167,8 +167,7 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             branch.reset(fallback_sha)
             raise
         if not merge_result:
-            if (iteration.is_master(cb) or iteration.is_staging(cb) or
-                    iteration.is_release(cb)):
+            if cb == MASTER_NAME or Iteration.is_staging(cb):
                 commit.abort_merge()
                 die('Merge of', m.rev.get_branch_name(), 'failed. '
                     'Something went wrong, did not expect conflict there (' +

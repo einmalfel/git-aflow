@@ -1,10 +1,8 @@
-from itertools import dropwhile
+from itertools import takewhile
 import logging
 
-from gitaflow.iteration import get_iterations, get_staging, get_develop, \
-    get_master_head
+from gitaflow.iteration import Iteration
 from git_conflict import get_first_conflict_for_treeish
-from gitaflow import iteration
 from gitaflow.common import die, say, consistency_check, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ, check_topic_name_valid
 from gitaflow.constants import RELEASE_NAME, DEVELOP_NAME, MASTER_NAME, \
@@ -16,13 +14,12 @@ from thingitwrapper.cached import misc, branch, commit
 
 def finish(description, type_, name):
     ci = check_iteration()
-    cd = iteration.get_develop(ci)
+    cd = ci.get_develop()
     cb = branch.get_current()
 
-    if cb and (iteration.is_develop(cb) or
-               iteration.is_master(cb) or
-               iteration.is_release(cb) or
-               iteration.is_staging(cb)):
+    if cb and (Iteration.is_develop(cb) or
+               Iteration.is_staging(cb) or
+               cb == MASTER_NAME):
         die('Finish failed for branch', cb + '. Cannot finish',
             DEVELOP_NAME + ',', MASTER_NAME + ',', STAGING_NAME, 'or',
             RELEASE_NAME + '/* branches.')
@@ -81,7 +78,7 @@ def finish(description, type_, name):
         last_v = cr.topic.get_latest_merge(all_m_cd) if all_m_cd else None
         if not last_v:
             eff_m_master = TopicMerge.get_effective_merges_in(
-                ci, treeish1=iteration.get_first_iteration())
+                ci.name, treeish1=Iteration.get_first().name)
             last_v = cr.topic.get_latest_merge(eff_m_master)
         if not last_v or cr.version > last_v.rev.version + 1:
             die('You should finish version', str(cr.version - 1),
@@ -110,22 +107,20 @@ def finish(description, type_, name):
     logging.info('Checking topic base...')
 
     # Topic should not be empty
-    if cr.SHA == misc.rev_parse(ci):
+    if cr.SHA == misc.rev_parse(ci.name):
         die('Finish failed. Topic must contain at least one commit.')
     # Topic should be based on ci
     # And should not be based on any later iteration
-    if not commit.is_based_on(ci, cr.SHA):
+    if not commit.is_based_on(ci.name, cr.SHA):
         die('Finish failed. Current topic branch is not based on iteration '
             'start which is not allowed in git-aflow')
-    for iter_ in iteration.get_iterations(sort=True):
-        if ci == iter_:
-            break
-        else:
-            if (misc.rev_parse(iter_) == cr.SHA or
-                    commit.is_based_on(iter_, cr.SHA)):
-                die('Current topic branch is based on',
-                    iter_ + '. Use "git af topic port" to bring it to current '
-                    'iteration and then call "git af topic finish"')
+
+    for i in takewhile(lambda x: x != ci, reversed(Iteration.get_all(True))):
+        if misc.rev_parse(i.name) == cr.SHA or commit.is_based_on(
+                i.name, cr.SHA):
+            die('Current topic branch is based on',
+                i.name + '. Use "git af topic port" to bring it to current '
+                'iteration and then call "git af topic finish"')
 
     # If there are revisions of this topic in ci, later revisions are based
     # on elder.
@@ -169,10 +164,10 @@ def finish(description, type_, name):
             die('Finish failed. Your topic depends on',
                 dep.rev.get_branch_name(), 'which is absent in', cd)
 
-    logging.info('Dependencies are OK. Checking reverts of topics from ' + ci)
+    logging.info('Dependencies OK. Checking reverts of topics from ' + ci.name)
 
     for m in TopicMerge.get_reverted_merges_in(tb_head, original_only=True):
-        if iteration.get_iteration_by_sha(m.rev.SHA) == ci:
+        if Iteration.get_by_sha(m.rev.SHA) == ci:
             die('Current topic contains reverts of topics from current '
                 'iteration which is forbidden. Please rebase your topic '
                 "excluding merges you don't like and try to finish it again.")
@@ -197,8 +192,9 @@ def finish(description, type_, name):
     if not description or not type_:
         logging.info('Searching previous merges for topic description/type..')
         for version in reversed(range(1, cr.version + 1)):
-            for i in dropwhile(lambda x: x != ci, get_iterations(sort=True)):
-                for b in get_master_head(i), get_staging(i), get_develop(i):
+            i = ci
+            while i:
+                for b in i.get_master_head(), i.get_staging(), i.get_develop():
                     for m in reversed(TopicMerge.get_all_merges_in(b)):
                         if m.rev.topic == cr.topic and m.rev.version == version:
                             if not description and m.description:
@@ -211,6 +207,7 @@ def finish(description, type_, name):
                                     'merge of', m.rev.get_branch_name() + '.')
                             if description:
                                 break
+                i = i.prev()
     if not type_:
         say('Using "End User Feature" as default topic type.')
         type_ = EUF_NAME
