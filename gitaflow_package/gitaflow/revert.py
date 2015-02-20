@@ -31,7 +31,7 @@ def revert(names, dependencies):
     for n in names:
         rev = TopicRevision.from_branch_name(n)
         if rev.topic in ver_by_t:
-            die('Error: topic ' + str(rev.topic) + ' specified more than once')
+            die('Error: topic', str(rev.topic), 'specified more than once')
         else:
             ver_by_t[rev.topic] = 0 if rev.default_version else rev.version
     logging.info('Revisions to revert:' +
@@ -63,10 +63,10 @@ def revert(names, dependencies):
                 if m.rev.version == ver_by_t[t]:
                     break
             else:
-                die("Didn't found non-reverted merges of " + t.name + '_v' +
-                    str(ver_by_t[t]) + ' in ' + cb)
+                die("Didn't found non-reverted merges of",
+                    t.name + '_v' + str(ver_by_t[t]), 'in', cb)
         elif not m_list:
-            die("Didn't found non-reverted merges of " + t.name + ' in ' + cb)
+            die("Didn't found non-reverted merges of", t.name, 'in', cb)
         merges_to_revert.extend(m_list)
     logging.info('Merges to revert:' +
                  ', '.join(str(m) for m in merges_to_revert) +
@@ -80,9 +80,9 @@ def revert(names, dependencies):
                 if d.rev.is_in_merges(merges_to_revert) or dependencies:
                     merges_to_revert_with_deps.append(d)
                 else:
-                    die('Unable to revert ' + m.rev.get_branch_name() +
-                        ' since ' + d.rev.get_branch_name() +
-                        ' depends on it. Revert it first or use '
+                    die('Unable to revert', m.rev.get_branch_name(),
+                        'since', d.rev.get_branch_name(),
+                        'depends on it. Revert it first or use '
                         '"git af revert -d" revert dependent topics '
                         'automatically.')
     logging.info('Merges to revert with deps:' +
@@ -105,7 +105,7 @@ def revert(names, dependencies):
     if upstream:
         for m in merges_to_revert_with_deps:
             if m.rev.is_in_merges(upstream_merges):
-                die('Error: ' + m.rev.get_branch_name() + ' is merged in ' +
+                die('Error:', m.rev.get_branch_name(), 'is merged in',
                     upstream + '. In git-aflow you cannot revert a topic until '
                     'it is reverted from the upstream branch.')
 
@@ -117,8 +117,8 @@ def revert(names, dependencies):
         else:
             revert_result = commit.revert(m.SHA)
         if revert_result:
-            say(m.rev.get_branch_name() + ' reverted successfully.')
+            say(m.rev.get_branch_name(), 'reverted successfully.')
         else:
             say('Revert failed unexpectedly, aborting..')
             commit.abort_revert()
-            die(None)
+            die()

@@ -30,8 +30,8 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
     sources = tuple(complete_branch_name(s, ci) for s in sources)
     for source in sources:
         if not iteration.get_iteration_by_branch(source) == ci:
-            die('Merge sources should belong to current iteration. ' + source +
-                " doesn't.")
+            die('Merge sources should belong to current iteration.', source,
+                "doesn't.")
 
     consistency_check(sources + (cb, ))
 
@@ -86,11 +86,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                     if last_merge.is_newest_in(own_merges + merges_to_commit):
                         merges_to_commit.append(last_merge)
                     else:
-                        say('Latest revision of ' + topic + ' in sources is ' +
+                        say('Latest revision of', topic, 'in sources is',
                             last_merge.rev.get_branch_name() + '. We '
-                            'already have it merged in ' + cb + '. Skipping..')
+                            'already have it merged in', cb + '. Skipping..')
                 else:
-                    die('Merge failed. No topic ' + topic + ' in sources ' +
+                    die('Merge failed. No topic', topic, 'in sources',
                         ', '.join(sources))
             else:
                 for m in source_merges:
@@ -98,11 +98,11 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         if m.is_newest_in(own_merges + merges_to_commit):
                             merges_to_commit.append(m)
                         else:
-                            say('We already have this version of ' +
-                                topic + ' in ' + cb + '. Skipping..')
+                            say('We already have this version of', topic, 'in',
+                                cb + '. Skipping..')
                         break
                 else:
-                    die('Merge failed. No topic ' + topic + ' in sources ' +
+                    die('Merge failed. No topic', topic, 'in sources',
                         ', '.join(sources))
     else:
         logging.critical('Unknown merge object ' + str(merge_object))
@@ -126,9 +126,9 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                 elif m.rev.topic != dependency.rev.topic:
                     # merging some version of topic we don't depend on its elder
                     # versions
-                    die('Merge failed. Topic ' + m.rev.get_branch_name() +
-                        ' depends on ' + dependency.rev.get_branch_name() +
-                        '. Try merge it first or use "git af merge -d" to ' +
+                    die('Merge failed. Topic', m.rev.get_branch_name(),
+                        'depends on', dependency.rev.get_branch_name() +
+                        '. Try merge it first or use "git af merge -d" to '
                         'merge dependencies automatically')
         merges_with_deps.append(m)
 
@@ -145,10 +145,10 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
                         break
                 else:
                     if rev.is_newest_in(own_revisions):
-                        die('Merge failed. We should merge ' +
-                            m.rev.get_branch_name() + ' along with ' +
-                            rev.get_branch_name() + ', but ' +
-                            rev.get_branch_name() + ' is absent in sources.')
+                        die('Merge failed. We should merge',
+                            m.rev.get_branch_name(), 'along with',
+                            rev.get_branch_name() + ', but',
+                            rev.get_branch_name(), 'is absent in sources.')
         merges_with_versions.append(m)
 
     logging.info(
@@ -170,22 +170,22 @@ def merge(sources=None, merge_type=None, dependencies=False, merge_object=None,
             if (iteration.is_master(cb) or iteration.is_staging(cb) or
                     iteration.is_release(cb)):
                 commit.abort_merge()
-                die('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
+                die('Merge of', m.rev.get_branch_name(), 'failed. '
                     'Something went wrong, did not expect conflict there (' +
                     cb + '). Please check carefully what you are doing. ' +
                     'Merge aborted.')
-            say('Merge of ' + m.rev.get_branch_name() + ' failed. ' +
+            say('Merge of', m.rev.get_branch_name(), 'failed. '
                 'See conflicted files via "git status", resolve conflicts, ' +
                 'add files to index ("git add") and do ' +
                 '"git commit --no-edit" to finish the merge.')
             if idx + 1 < len(merges_with_versions):
                 remain = merges_with_versions[idx + 1:]
                 say('Then call "git af merge [topics]" again to merge ' +
-                    'remaining topics. Topics remaining to merge: ' +
+                    'remaining topics. Topics remaining to merge:',
                     ', '.join([r.rev.get_branch_name() for r in remain]))
             die('Alternatively, you may abort failed merge via ' +
                 '"git merge --abort"')
         else:
-            say(m.rev.get_branch_name() + ' merged successfully')
+            say(m.rev.get_branch_name(), 'merged successfully')
 
     return True

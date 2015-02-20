@@ -10,9 +10,10 @@ import atexit
 import logging
 import inspect
 import time
+import sys
+import io
 
 from gitaflow import execute
-from gitaflow.debug import TestDebugState
 from thingitwrapper import aux, grouped_cache
 
 
@@ -35,13 +36,14 @@ def call_and_measure_aflow(args, call, caller):
     if profiling == 'ALL_CALLS' or (profiling == 'ASSERT_CALLS' and caller):
         print('Profiling ' + call.__name__ + '(["' + '", "'.join(args) + '"])' +
               (' called from ' + os.path.basename(caller.f_code.co_filename) +
-               ':' + str(caller.f_lineno)) if caller else ':')
+               ':' + str(caller.f_lineno)) if caller else ':',
+              file=sys.stderr)
         profiler = profile.Profile()
         try:
             result = profiler.runcall(call, list(args))
         finally:
             profiler.create_stats()
-            stats = pstats.Stats(profiler)
+            stats = pstats.Stats(profiler, stream=sys.stderr)
             stats.sort_stats('cumtime')
             stats.print_stats(30)
         return result
@@ -69,15 +71,22 @@ def call_aflow(*args, caller_frame=None):
         caller_frame = frame.f_back if frame else None
     if log_file:
         args = ('-vv', '-l', log_file) + args
-    if TestDebugState.get_test_debug_mode():
+    if debug:
         grouped_cache.invalidate(dont_print_info=True)
-        TestDebugState.reset()
+        stdout_backup = sys.stdout
+        sys.stdout = io.StringIO(newline=os.linesep)
         try:
             call_and_measure_aflow(args, execute.execute, caller_frame)
             if grouped_cache.output_info:
                 print(('Collecting cache info for ' + str(args)).ljust(80, '-'))
-            raise TestDebugState.AflowStopped(129, '')
-        except TestDebugState.AflowStopped as stop:
+        except SystemExit as stop:
+            output = sys.stdout.getvalue()
+            exit_code = 1
+            if type(stop.code) is int:
+                exit_code = stop.code
+            elif type(stop.code) is str:
+                output += stop.code  # sys.stdout.getvalue() ends with newline
+            output = output.rstrip(os.linesep)
             if grouped_cache.output_info:
                 global average_cache_info, cache_samples
                 info = grouped_cache.get_cache_info()
@@ -90,7 +99,11 @@ def call_aflow(*args, caller_frame=None):
                             average_cache_info[func][field] += info[func][field]
                 print(('Cache info after ' + str(args) + ':').ljust(80, '-'))
                 grouped_cache.print_cache_info()
-            return stop.output, stop.exit_code
+            return output, exit_code
+        else:
+            exit(str(args) + ' call did not ended with SystemExit')
+        finally:
+            sys.stdout = stdout_backup
     else:
         result = call_and_measure_aflow(['git', 'af'] + list(args),
                                         aux.get_output_and_exit_code,
@@ -105,7 +118,7 @@ class FunctionalTest(unittest.TestCase):
         raise value.with_traceback(traceback)
 
     def run(self, result=None):
-        if result and TestDebugState.get_test_debug_mode():
+        if result and debug:
             result.addError = self.add_error_replacement
         super().run(result)
 
@@ -157,7 +170,10 @@ class LocalTest(FunctionalTest):
 if __name__ == '__main__':
     unittest.TextTestRunner().run(unittest.defaultTestLoader.discover('.'))
 else:
-    TestDebugState.notify_test_mode(True)
+    debug = os.environ.get('AFLOW_TEST_DEBUG')
+    if debug is None:
+        debug = sys.gettrace() is not None
+
     profiling = os.environ.get('AFLOW_TEST_PROFILE')
     # AFLOW_TEST_PROFILE=ASSERT_CALLS profiles calls like assert_aflow_*().
     # ASSERT_CALLS may not work with some interpreters
@@ -168,7 +184,7 @@ else:
         print('Wrong AFLOW_TEST_PROFILE value', profiling,
               'choose one of ALL_CALLS, ASSERT_CALLS')
         exit(2)
-    if profiling and not TestDebugState.get_test_debug_mode():
+    if profiling and not debug:
         print('WARNING: profiling with debug mode disabled. There is no sense '
               'in running profiler when child processes do all the work')
 
@@ -210,7 +226,7 @@ else:
 
     average_cache_info = None
     cache_samples = 0
-    if grouped_cache.output_info and TestDebugState.get_test_debug_mode():
+    if grouped_cache.output_info and debug:
         def output_average_cache_info():
             if average_cache_info:
                 to_print = deepcopy(average_cache_info)

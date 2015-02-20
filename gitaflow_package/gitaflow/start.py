@@ -26,7 +26,7 @@ def start(name):
     logging.info('Ok, now check if there was such topic somewhere in history')
     shas = tuple(str(m.SHA) for m in topic.get_all_merges())
     if shas:
-        die('Cannot start topic, it already exists in history, see SHA: ' +
+        die('Cannot start topic, it already exists in history, see SHA:',
             ', '.join(shas))
 
     logging.info('All good, creating branch ' + branch_name)
@@ -40,5 +40,5 @@ def start(name):
     except:
         branch.delete(branch_name)
         raise
-    say('Topic ' + name + ' created. You are in ' + branch_name + ' branch')
+    say('Topic', name, 'created. You are in', branch_name, 'branch')
     return True
