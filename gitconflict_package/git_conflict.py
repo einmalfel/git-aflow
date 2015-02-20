@@ -24,13 +24,11 @@ def _hunk_to_scope(hunk):
 
 
 def _get_scopes(base, head, file):
-    if not _get_scopes.root:
-        _get_scopes.root = misc.get_root_dir()
-    return tuple(_hunk_to_scope(h) for h in _get_scopes.hunk_re.findall(
-        misc.get_diff(base, head, files=[file], working_dir=_get_scopes.root)))
+    diff = misc.get_diff(base, head, files=[file],
+                         working_dir=misc.get_root_dir())
+    return tuple(_hunk_to_scope(h) for h in _get_scopes.hunk_re.findall(diff))
 _get_scopes.hunk_re = re.compile(
     '^@@ \-(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$', re.MULTILINE)
-_get_scopes.root = None
 
 
 def _scopes_differ(scopes1, scopes2):

@@ -59,6 +59,7 @@ def in_git_repo():
                                  output + ' Exit-code: ' + str(code))
 
 
+@cache()
 def get_git_dir():
     return get_output(['git', 'rev-parse', '--git-dir'])
 
