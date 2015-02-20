@@ -1,6 +1,5 @@
 import logging
 
-from gitaflow import iteration
 from gitaflow.common import die, say, check_iteration, \
     check_working_tree_clean, check_untracked_not_differ
 from gitaflow.constants import MASTER_NAME
@@ -18,27 +17,25 @@ def continue_(name=None, unfinish=False):
         ci = nr.iteration if nr.iteration else check_iteration()
         if not nr.default_version:
             say('Version suffix ignored.')
-        cd = iteration.get_develop(ci)
+        cd = ci.get_develop()
         cd_all_merges = TopicMerge.get_all_merges_in(cd)
         last_m = nr.topic.get_latest_merge(cd_all_merges, True)
         if not last_m:
-            p_iters = tuple(i for i in iteration.get_iterations(sort=True)
-                            if commit.is_ancestor(i, ci))
-            # there is nothing before first iteration
-            if p_iters:
-                for i in (ci,) + p_iters[:-1]:
-                    last_m = nr.topic.get_latest_merge(
-                        TopicMerge.get_effective_merges_in(i))
-                    if last_m:
-                        logging.info('Found effective merge in master before ' +
-                                     i + ': ' + str(last_m))
-                        break
+            prev = ci.prev()
+            while prev:
+                last_m = nr.topic.get_latest_merge(
+                    TopicMerge.get_effective_merges_in(prev.get_master_head()))
+                if last_m:
+                    logging.info('Found effective merge in master before ' +
+                                 prev.name + ': ' + str(last_m))
+                    break
+                prev = prev.prev()
             if not last_m:
                 die('Failed to find merges of', str(nr.topic),
-                    'in iterations:', ', '.join((ci,) + p_iters) + '.')
+                    'in', ci.name, 'and previous iterations.')
     else:
         ci = check_iteration()
-        cd = iteration.get_develop(ci)
+        cd = ci.get_develop()
         for m in TopicMerge.get_all_merges_in(cd):
             if m.rev.SHA == head:
                 last_m = m
@@ -56,10 +53,11 @@ def continue_(name=None, unfinish=False):
     else:
         # Let new_r.SHA contain SHA to start TB from. It's either RB or head of
         # previous revision
-        new_r = TopicRevision(
-            last_m.rev.topic,
-            ci if commit.is_ancestor(last_m.rev.SHA, ci) else last_m.rev.SHA,
-            last_m.rev.version + 1, ci)
+        if commit.is_ancestor(last_m.rev.SHA, ci.name):
+            sha = misc.rev_parse(ci.name)
+        else:
+            sha = last_m.rev.SHA
+        new_r = TopicRevision(last_m.rev.topic, sha, last_m.rev.version + 1, ci)
     tb_name = new_r.get_branch_name()
     if branch.exists(tb_name):
         die(tb_name + ' already exists. Use "git af checkout',
@@ -82,7 +80,7 @@ def continue_(name=None, unfinish=False):
     if unfinish:
         logging.info('Checking if ' + new_r.get_branch_name() +
                      ' is merged somewhere and rebuilding develop.')
-        for b in MASTER_NAME, iteration.get_staging(ci):
+        for b in MASTER_NAME, ci.get_staging():
             if commit.is_ancestor(new_r.SHA, b):
                 die(new_r.get_branch_name(), 'was previously merged in',
                     b + ", so it's impossible to unfinish it.")
