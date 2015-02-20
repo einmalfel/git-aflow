@@ -23,9 +23,9 @@ def finish(description, type_, name):
                iteration.is_master(cb) or
                iteration.is_release(cb) or
                iteration.is_staging(cb)):
-        die('Finish failed for branch ' + cb + '. Cannot finish ' +
-            DEVELOP_NAME + ', ' + MASTER_NAME + ', ' + STAGING_NAME +
-            ' or ' + RELEASE_NAME + '/* branches.')
+        die('Finish failed for branch', cb + '. Cannot finish',
+            DEVELOP_NAME + ',', MASTER_NAME + ',', STAGING_NAME, 'or',
+            RELEASE_NAME + '/* branches.')
 
     # Set up TopicRevision describing topic being finished.
     # It is possible to do topic finish for arbitrary SHA using detached
@@ -42,7 +42,7 @@ def finish(description, type_, name):
             for m in reversed(all_m_cd):
                 if m.rev.SHA == tb_head:
                     name = m.rev.get_branch_name()
-                    say('Assuming topic you are finishing is ' + name + '.')
+                    say('Assuming topic you are finishing is', name + '.')
                     break
             else:
                 die('You are in detached head state now. Please check ' +
@@ -58,8 +58,8 @@ def finish(description, type_, name):
     last_m = cr.topic.get_latest_merge(cr.topic.get_all_merges())
     if last_m:
         if last_m.rev.version < cr.version - 1:
-            die('Wrong topic version specified. Latest revision has version ' +
-                '== ' + str(last_m.rev.version) + '. Increment version by 1')
+            die('Wrong topic version specified. Latest revision has version ==',
+                str(last_m.rev.version) + '. Increment version by 1')
     # If no version specified and this topic was ever merged in ci, try to
     # select appropriate version.
     if cr.default_version:
@@ -68,16 +68,15 @@ def finish(description, type_, name):
                 if m.rev.topic == cr.topic and m.rev.SHA == cr.SHA:
                     cr = TopicRevision(cr.topic, cr.SHA,
                                        m.rev.version, cr.iteration)
-                    say('Using version ' + str(cr.version) +
-                        ' of already merged revision with same head SHA.')
+                    say('Using version', str(cr.version),
+                        'of already merged revision with same head SHA.')
                     break
             else:
                 last_m_cd = cr.topic.get_latest_merge(all_m_cd)
                 if last_m_cd and commit.is_based_on(last_m_cd.rev.SHA, cr.SHA):
                     cr = TopicRevision(cr.topic, cr.SHA,
                                        last_m_cd.rev.version + 1, cr.iteration)
-                    say('Using topic version ' + str(cr.version) +
-                        ' as default.')
+                    say('Using topic version', str(cr.version), 'as default.')
     elif cr.version > 1:
         last_v = cr.topic.get_latest_merge(all_m_cd) if all_m_cd else None
         if not last_v:
@@ -85,8 +84,8 @@ def finish(description, type_, name):
                 ci, treeish1=iteration.get_first_iteration())
             last_v = cr.topic.get_latest_merge(eff_m_master)
         if not last_v or cr.version > last_v.rev.version + 1:
-            die('You should finish version ' + str(cr.version - 1) +
-                ' before finishing ' + cr.get_branch_name())
+            die('You should finish version', str(cr.version - 1),
+                'before finishing', cr.get_branch_name())
     check_topic_name_valid(cr.get_branch_name())
 
     logging.info('Consider topic name ' + cr.get_branch_name() + ' as valid, ' +
@@ -106,7 +105,7 @@ def finish(description, type_, name):
         last_eff_m_cd = last_eff_m_cd.get_original()
         if (cr.SHA == last_eff_m_cd.rev.SHA or
                 commit.is_based_on(cr.SHA, last_eff_m_cd.rev.SHA)):
-            die(cd + ' already contains this revision of ' + cr.topic.name)
+            die(cd, 'already contains this revision of', cr.topic.name)
 
     logging.info('Checking topic base...')
 
@@ -124,8 +123,8 @@ def finish(description, type_, name):
         else:
             if (misc.rev_parse(iter_) == cr.SHA or
                     commit.is_based_on(iter_, cr.SHA)):
-                die('Current topic branch is based on ' + iter_ +
-                    '. Use "git af topic port" to bring it to current '
+                die('Current topic branch is based on',
+                    iter_ + '. Use "git af topic port" to bring it to current '
                     'iteration and then call "git af topic finish"')
 
     # If there are revisions of this topic in ci, later revisions are based
@@ -138,18 +137,18 @@ def finish(description, type_, name):
                 if (merge.rev.version < cr.version and
                         not commit.is_based_on(merge.rev.SHA, cr.SHA)):
                     die('Cannot finish. There is elder revision of this '
-                        'topic in ' + cd + ' and SHA you are '
+                        'topic in', cd, 'and SHA you are '
                         'trying to finish is not based on it. Please rebase '
-                        'your work on ' + merge.rev.get_branch_name())
+                        'your work on', merge.rev.get_branch_name())
                 elif (merge.rev.version > cr.version and
                         not commit.is_based_on(cr.SHA, merge.rev.SHA)):
-                    die('Cannot finish. Newer revision ' +
-                        merge.rev.get_branch_name() +
-                        ' was merged into ' + cd + ' and it is '
+                    die('Cannot finish. Newer revision',
+                        merge.rev.get_branch_name(),
+                        'was merged into', cd, 'and it is '
                         'not based on revision you are trying to finish.')
                 elif merge.rev == cr and not merge.rev.SHA == cr.SHA:
-                    die(cr.get_branch_name() + ' was already merged in ' +
-                        cd + ' with different head SHA. Finish failed.')
+                    die(cr.get_branch_name(), 'was already merged in',
+                        cd, 'with different head SHA. Finish failed.')
             elif commit.is_based_on(merge.rev.SHA, cr.SHA):
                 die('TB of current topic is based on another topic, which is '
                     'illegal. You should either merge other topic instead of '
@@ -157,8 +156,8 @@ def finish(description, type_, name):
                     'appropriately.')
             elif commit.is_based_on(cr.SHA, merge.rev.SHA):
                 die('Finish failed. There is another topic (' +
-                    merge.rev.get_branch_name() + ') in ' + cd +
-                    ' which is based on one you are trying to finish.')
+                    merge.rev.get_branch_name() + ') in', cd,
+                    'which is based on one you are trying to finish.')
 
     logging.info('Topic branch was started from correct place. About to '
                  'finish revision ' + cr.get_branch_name() +
@@ -167,8 +166,8 @@ def finish(description, type_, name):
     revs_cd = tuple(m.rev for m in eff_m_cd)
     for dep in cr.get_own_effective_merges(recursive=True):
         if not dep.rev.topic == cr.topic and dep.rev.is_newest_in(revs_cd):
-            die('Finish failed. Your topic depends on ' +
-                dep.rev.get_branch_name() + ' which is absent in ' + cd)
+            die('Finish failed. Your topic depends on',
+                dep.rev.get_branch_name(), 'which is absent in', cd)
 
     logging.info('Dependencies are OK. Checking reverts of topics from ' + ci)
 
@@ -192,8 +191,8 @@ def finish(description, type_, name):
             if r.SHA == cfl:
                 cfl = r.get_branch_name()
                 break
-        die('Finish failed because of conflicts between current topic and ' +
-            cfl + ' in file ' + file)
+        die('Finish failed because of conflicts between current topic and',
+            cfl, 'in file', file)
 
     if not description or not type_:
         logging.info('Searching previous merges for topic description/type..')
@@ -205,11 +204,11 @@ def finish(description, type_, name):
                             if not description and m.description:
                                 description = m.description
                                 say('Taking topic description from previous '
-                                    'merge of ' + m.rev.get_branch_name() + '.')
+                                    'merge of', m.rev.get_branch_name() + '.')
                             if not type_:
                                 type_ = m.type
                                 say('Taking topic type from previous '
-                                    'merge of ' + m.rev.get_branch_name() + '.')
+                                    'merge of', m.rev.get_branch_name() + '.')
                             if description:
                                 break
     if not type_:
@@ -222,18 +221,18 @@ def finish(description, type_, name):
     try:
         if not cr.merge(description, type_):
             branch.reset(fallback_sha)
-            die('Merge of ' + cr.get_branch_name() + ' conflicted '
-                'unexpectedly. Conflict detector gave false negative result. ' +
-                cd + ' reset.')
+            die('Merge of', cr.get_branch_name(), 'conflicted '
+                'unexpectedly. Conflict detector gave false negative result.',
+                cd, 'reset.')
     except MergeNonConflictError:
         logging.critical('Unexpected merge fail. Resetting ' + cd + ' to ' +
                          fallback_sha)
         branch.reset(fallback_sha)
         raise
 
-    say(cr.get_branch_name() + ' merged into ' + cd + ' successfully.')
+    say(cr.get_branch_name(), 'merged into', cd, 'successfully.')
 
     if cb:
         logging.info('Deleting TB...')
         branch.delete(cb)
-        say('Branch ' + cb + ' deleted.')
+        say('Branch', cb, 'deleted.')
