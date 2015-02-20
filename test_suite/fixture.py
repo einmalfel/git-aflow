@@ -153,7 +153,7 @@ class Fixture:
                         iteration_.topic_create_set_version(
                             cmt.topic, cmt.version, second_parent)
                 new_commits.insert(0, cmt)
-                treeish = commit.get_parent(treeish)
+                treeish = commit.get_parent(treeish, 1)
             branch_.commits.extend(new_commits)
             return branch_
 
@@ -224,7 +224,7 @@ class Fixture:
                     topic_name, version = re_result.groups()
                     result = Fixture.RevertCommit(topic_name, version)
                 else:
-                    if not commit.get_parent(treeish):
+                    if not commit.get_parent(treeish, 1):
                         result = Fixture.InitCommit()
                     else:
                         re_result = cls.__commit_e.search(headline)
