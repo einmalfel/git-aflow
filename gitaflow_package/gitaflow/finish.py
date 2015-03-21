@@ -194,7 +194,10 @@ def finish(description, type_, name):
         for version in reversed(range(1, cr.version + 1)):
             i = ci
             while i:
-                for b in i.get_master_head(), i.get_staging(), i.get_develop():
+                branches_to_scan = [i.get_master_head(), i.get_develop()]
+                if i.has_staging():
+                    branches_to_scan.append(i.get_staging())
+                for b in branches_to_scan:
                     for m in reversed(TopicMerge.get_all_merges_in(b)):
                         if m.rev.topic == cr.topic and m.rev.version == version:
                             if not description and m.description:

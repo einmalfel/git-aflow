@@ -126,7 +126,7 @@ def check_untracked_not_differ(treeish):
 def default_sources():
     cb = branch.get_current()
     assert cb
-    if cb == MASTER_NAME:
+    if cb == MASTER_NAME and Iteration.get_current().has_staging():
         sources = [STAGING_NAME]
     else:
         sources = [DEVELOP_NAME]

@@ -43,10 +43,12 @@ class Iteration(collections.namedtuple('IterationT', ('name',))):
     def get_staging(self):
         return self.name + '/' + STAGING_NAME
 
+    def has_staging(self):
+        return branch.exists(self.get_staging())
+
     def valid_and_exists(self):
         return (self.name_valid() and tag.exists(self.name) and
-                branch.exists(self.get_develop()) and
-                branch.exists(self.get_staging()))
+                branch.exists(self.get_develop()))
 
     def next(self):
         all_iterations = Iteration.get_all(True)
