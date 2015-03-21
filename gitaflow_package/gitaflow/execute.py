@@ -68,7 +68,7 @@ def execute(cli_args=sys.argv[1:]):
                 'set user.email.')
 
         if args_namespace.subcommand == 'init':
-            init.init_aflow(args_namespace.name)
+            init.init_aflow(args_namespace.name, args_namespace.use_staging)
         elif args_namespace.subcommand == 'start':
             start.start(args_namespace.name)
         elif args_namespace.subcommand == 'continue':
@@ -85,7 +85,9 @@ def execute(cli_args=sys.argv[1:]):
                         args_namespace.topic,
                         args_namespace.edit_description)
         elif args_namespace.subcommand == 'rebase':
-            rebase.rebase(args_namespace.name, args_namespace.port)
+            rebase.rebase(args_namespace.name,
+                          args_namespace.port,
+                          args_namespace.use_staging)
         elif args_namespace.subcommand == 'checkout':
             checkout.checkout(args_namespace.name)
         elif args_namespace.subcommand == 'list':
