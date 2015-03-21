@@ -240,6 +240,10 @@ from the top of master branch')
     init_parser.add_argument(
         'name',
         help='Name of first iteration.')
+    init_parser.add_argument(
+        '-n', '--no-staging',
+        help='Do not use staging branch in first iteration.',
+        action='store_false', dest='use_staging')
 
     args = main_parser.parse_args(args_list)
 
