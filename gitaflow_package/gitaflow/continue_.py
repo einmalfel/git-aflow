@@ -80,7 +80,10 @@ def continue_(name=None, unfinish=False):
     if unfinish:
         logging.info('Checking if ' + new_r.get_branch_name() +
                      ' is merged somewhere and rebuilding develop.')
-        for b in MASTER_NAME, ci.get_staging():
+        branches_to_scan = [MASTER_NAME]
+        if ci.has_staging():
+            branches_to_scan.append(ci.get_staging())
+        for b in branches_to_scan:
             if commit.is_ancestor(new_r.SHA, b):
                 die(new_r.get_branch_name(), 'was previously merged in',
                     b + ", so it's impossible to unfinish it.")

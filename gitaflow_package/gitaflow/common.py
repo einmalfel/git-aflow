@@ -24,7 +24,7 @@ def die(*messages):
         exit(1)
 
 
-def start_iteration(iteration_name):
+def start_iteration(iteration_name, with_staging):
     for tag_ in tag.find_by_target(MASTER_NAME):
         if Iteration(tag_).valid_and_exists():
             die('There is already an iteration', tag_,
@@ -45,10 +45,12 @@ def start_iteration(iteration_name):
     try:
         tag.create(iteration_name, MASTER_NAME)
         branch.create(develop_name, MASTER_NAME)
-        branch.create(staging_name, MASTER_NAME)
+        if with_staging:
+            branch.create(staging_name, MASTER_NAME)
     except:
         tag.delete(iteration_name)
-        branch.delete(staging_name)
+        if with_staging:
+            branch.delete(staging_name)
         branch.delete(develop_name)
         logging.critical('Failed to create iteration ' + iteration_name)
         raise
@@ -126,7 +128,7 @@ def check_untracked_not_differ(treeish):
 def default_sources():
     cb = branch.get_current()
     assert cb
-    if cb == MASTER_NAME:
+    if cb == MASTER_NAME and Iteration.get_current().has_staging():
         sources = [STAGING_NAME]
     else:
         sources = [DEVELOP_NAME]
