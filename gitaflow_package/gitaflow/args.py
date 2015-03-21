@@ -148,6 +148,17 @@ verbosity level by one')
         action='store_false',
         dest='port',
         help='Do not rebase any topics, just start new iteration.')
+    use_staging = rebase_parser.add_mutually_exclusive_group()
+    use_staging.add_argument(
+        '-N', '--no-staging',
+        help="Don't add staging branch to newly created iteration. This is "
+             "the default choice if last iteration has no staging.",
+        action='store_const', const=False, dest='use_staging')
+    use_staging.add_argument(
+        '-S', '--with-staging',
+        help='Create new iteration with staging. This is the default if last '
+             'iteration has staging branch.',
+        action='store_const', const=True, dest='use_staging')
 
     revert_parser = main_subparsers.add_parser(
         'revert',
