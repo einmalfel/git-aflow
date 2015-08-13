@@ -253,7 +253,8 @@ No matter.""")
             'merge', 'a')
 
         # not valid aflow repo
-        branch.delete('1/staging')
+        misc.checkout('1/staging')
+        branch.delete('1/develop')
         self.assert_aflow_dies_with(
             'Error: could not get current iteration, we are probably not in '
             'git-aflow repo.',

@@ -4,7 +4,7 @@ import unittest
 from fixture import Fixture
 
 import utils
-from thingitwrapper.cached import misc, commit
+from thingitwrapper.cached import misc, commit, branch
 
 
 class RebaseTests(utils.LocalTest):
@@ -31,6 +31,17 @@ class RebaseTests(utils.LocalTest):
             d:-a1
             a:-1a
             2:"""))
+
+    def test_no_staging(self):
+        Fixture.from_scheme("""1:-a1
+                               s:-a1
+                               d:-a1
+                               a:-1a""").actualize()
+        branch.delete('1/staging')
+        self.assert_aflow_returns_0('Iteration 2 created successfully',
+                                    'rebase', '-n', '2')
+        self.assertEqual(set(branch.get_list()),
+                         {'1/a', '1/develop', '2/develop', 'master'})
 
 
 if __name__ == '__main__':
