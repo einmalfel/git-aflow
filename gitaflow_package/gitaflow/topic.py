@@ -96,7 +96,7 @@ class Topic(collections.namedtuple('TopicT', ('name',))):
         iters = Iteration.get_all()
         heads = ['master']
         heads.extend(i.get_develop() for i in iters)
-        heads.extend(i.get_staging() for i in iters)
+        heads.extend(i.get_staging() for i in iters if i.has_staging())
         logging.info('Searching ' + self.name + ' in branches ' + str(heads))
         shas = commit.find(heads, True, ["^Merge branch '([^/]+/)?" +
                                          self.name + "(_v[0-9]+)?'.*$"])
